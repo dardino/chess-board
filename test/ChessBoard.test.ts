@@ -350,7 +350,7 @@ describe('ChessBoard FEN support', () => {
 
     // Add rotation and fairy data to the piece
     const e4Square = element.shadowRoot?.querySelector('[data-coordinate="e4"]') as HTMLElement;
-    const piece = e4Square?.querySelector('chess-piece') as any;
+    const piece = e4Square?.querySelector('chess-piece');
     
     if (piece) {
       piece.setAttribute('rotation', '90');
