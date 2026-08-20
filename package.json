@@ -7,6 +7,8 @@
   "types": "./dist/types/index.d.ts",
   "exports": {
     ".": {
+      "css": "./dist/assets/ScacchiPainter.css",
+      "assets": "./dist/assets",
       "types": "./dist/types/index.d.ts",
       "import": "./dist/chess-board.es.js",
       "require": "./dist/chess-board.umd.js"
