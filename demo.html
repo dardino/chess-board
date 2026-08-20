@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="./assets/ScacchiPainter.css" />
+  <link rel="stylesheet" href="./demo.css" />
+  <link rel="icon" type="image/png" sizes="96x96" href="./assets/favicon-96x96.png">
+  <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" sizes="any">
+  <link rel="icon" href="./assets/favicon.ico">
+  <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
+  <link rel="manifest" href="./assets/site.webmanifest">
+  
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
+
+  <title>Chess Board Demo</title>
+</head>
+<body>
+  <div class="demo-container">
+    <div style="margin-bottom: 1rem;">
+      <a href="index.html" style="color: #667eea; text-decoration: none; font-weight: 600;">&larr; Back to Documentation</a>
+    </div>
+    <h1>Chess Board Web Component</h1>
+    <p>A comprehensive chess board component with support for piece rotation, fairy chess notation, keyboard navigation, and interactive editing. Perfect for chess problem compositions, position analysis, and chess applications.</p>
+    
+    <h2>Key Features</h2>
+    <ul>
+      <li><strong>Piece Rotation</strong>: Rotate pieces in 45° increments using Alt/Option + Arrow keys</li>
+      <li><strong>Fairy Chess Notation</strong>: Add custom annotations for problem compositions</li>
+      <li><strong>Keyboard Navigation</strong>: Full keyboard support for piece placement and manipulation</li>
+      <li><strong>Board Orientation</strong>: Flip between white/black perspective with Meta+Arrow</li>
+      <li><strong>Responsive Design</strong>: Adapts to container size with CSS Container Queries</li>
+      <li><strong>FEN Support</strong>: Load and save positions using standard FEN notation</li>
+    </ul>
+
+    <h2>Interactive Demo - Try It Yourself!</h2>
+    <p>Click on the board below to select a square, then try these keyboard shortcuts:</p>
+    <div style="background: #f0f0f0; padding: 15px; border-radius: 8px; margin: 15px 0;">
+      <strong>📍 Navigation:</strong> Arrow keys to move between squares<br>
+      <strong>✋ Select/Move:</strong> Space or Enter to select, deselect, or move a piece<br>
+      <strong>♟️ Add Pieces:</strong> P/R/N/B/Q/K for white, p/r/n/b/q/k for black<br>
+      <strong>🔄 Rotate:</strong> Alt/Option+Left/Right to rotate ±45°, Alt/Option+Up/Down for 0°/180°<br>
+      <strong>🔃 Flip Board:</strong> Shift+Up (white view) / Shift+Down (black view)<br>
+      <strong>🗑️ Delete:</strong> Delete key to remove piece, Escape to clear board
+    </div>
+    <div class="board-container board-medium">
+      <chess-board id="interactive-demo" fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"></chess-board>
+    </div>
+    <p style="font-style: italic; color: #666;">💡 Tip: Focus the board and experiment with all keyboard shortcuts to see the component in action!</p>
+
+    <h2>Responsive Sizing</h2>
+    <p>The chess board automatically adapts to its container size while maintaining a minimum size of 200px × 200px. The font size scales with the board using CSS Container Queries.</p>
+
+    <h2>Small Board (300px)</h2>
+    <div class="board-container board-small">
+      <chess-board></chess-board>
+    </div>
+
+    <h2>Medium Board (400px)</h2>
+    <div class="board-container board-medium">
+      <chess-board></chess-board>
+    </div>
+
+    <h2>Large Board (500px)</h2>
+    <div class="board-container board-large">
+      <chess-board></chess-board>
+    </div>
+
+    <h2>Board without Labels</h2>
+    <div class="board-container board-medium">
+      <chess-board hide-labels></chess-board>
+    </div>
+
+    <h2>Gray Themed Board</h2>
+    <p>This board demonstrates how to customize the chess board colors using CSS custom properties. The <code>gray-board</code> class applies gray tones instead of the traditional brown colors. You can customize the board appearance by setting CSS variables like <code>--cb-chess-light-square</code>, <code>--cb-chess-dark-square</code>, <code>--cb-chess-border-color</code>, and <code>--cb-chess-label-color</code>.</p>
+    <div class="board-container board-medium gray-board">
+      <chess-board></chess-board>
+    </div>
+
+    <h2>Wood Themed Board</h2>
+    <p>This board demonstrates a warm wood aesthetic perfect for a traditional chess experience. The <code>wood-board</code> class applies rich brown tones reminiscent of walnut and maple wood. The light squares use a honey-colored tone (#f4d7a8) while dark squares feature a deep brown (#8b5a2b), creating an elegant wooden chess board appearance. Custom CSS variables provide full control over the wood coloring with <code>--cb-chess-light-square</code>, <code>--cb-chess-dark-square</code>, <code>--cb-chess-border-color</code>, and <code>--cb-chess-label-color</code>.</p>
+    <div class="board-container board-medium wood-board">
+      <chess-board fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"></chess-board>
+    </div>
+
+    <h2>Board Rotation (Black to Move)</h2>
+    <p>This board automatically rotates 180 degrees when it's black's turn to move, based on the FEN string. The rotation provides a better viewing experience for the player whose turn it is. Compare this with the board above where white is to move.</p>
+    <div class="board-container board-medium">
+      <chess-board fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1"></chess-board>
+    </div>
+
+    <h2>Cell Click Events</h2>
+    <p>The chess board dispatches a <code>cellClick</code> event when any square is clicked. The event detail contains the cell coordinate and piece information including rotation and fairy notation (if present). Click on any square below to see the event details.</p>
+    <div class="board-container board-medium">
+      <chess-board id="clickable-board" fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"></chess-board>
+    </div>
+
+    <div class="click-info">
+      <h3>Last Click Information:</h3>
+      <div id="click-output">Click on a square to see details...</div>
+    </div>
+
+    <div class="code-example">
+      <pre><code>// Listen for cell click events
+const board = document.getElementById('clickable-board');
+const output = document.getElementById('click-output');
+
+board.addEventListener('cellClick', (event) => {
+  const { cell, piece } = event.detail;
+  
+  if (piece) {
+    let info = `Clicked ${cell} - ${piece.color} ${piece.type}`;
+    if (piece.rotation) info += `, rotation: ${piece.rotation}°`;
+    if (piece.fairyName) info += `, fairy-name: ${piece.fairyName}`;
+    if (piece.fairyCondition) info += `, fairy-condition: ${piece.fairyCondition}`;
+    output.textContent = info;
+  } else {
+    output.textContent = `Clicked ${cell} - Empty square`;
+  }
+});</code></pre>
+    </div>
+
+    <h2>Keyboard Navigation</h2>
+    <p>The chess board supports comprehensive keyboard navigation. Click on the board below and try these keys:</p>
+    <ul>
+      <li><strong>Arrow keys</strong>: Navigate between squares</li>
+      <li><strong>Space</strong>: Select/move piece (see Piece Selection & Movement below)</li>
+      <li><strong>Delete</strong>: Remove piece from current square</li>
+      <li><strong>Escape</strong>: Clear board and cancel piece selection</li>
+      <li><strong>P/p, R/r, N/n, B/b, Q/q, K/k</strong>: Add white/black piece (uppercase=white, lowercase=black)</li>
+      <li><strong>E/e, T/t, A/a</strong>: Add fairy pieces (Empress, Dragon, Angel)</li>
+      <li><strong>Alt/Option+Left/Right</strong>: Rotate piece counter-clockwise/clockwise by 45°</li>
+      <li><strong>Alt/Option+Up/Down</strong>: Reset rotation to 0° / Set to 180°</li>
+      <li><strong>Shift+Up/Down</strong>: Flip board to white/black perspective</li>
+    </ul>
+    <div class="board-container board-medium">
+      <chess-board id="keyboard-board" fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"></chess-board>
+    </div>
+
+    <div class="click-info">
+      <h3>Current Selection:</h3>
+      <div id="selection-output">Focus the board and use arrow keys...</div>
+    </div>
+
+    <div class="code-example">
+      <pre><code>// Monitor current square selection
+const keyboardBoard = document.getElementById('keyboard-board');
+const selectionOutput = document.getElementById('selection-output');
+
+// Update display when selection changes
+setInterval(() => {
+  const current = keyboardBoard.getCurrentSquare();
+  selectionOutput.textContent = current ? `Selected: ${current}` : 'No selection';
+}, 100);
+
+// Keyboard shortcuts available:
+// Navigation:
+// - Arrow keys: Navigate between squares
+// - Click: Select square
+//
+// Piece management:
+// - Delete: Remove piece from current square
+// - Escape: Clear board
+// - Shift+Escape: Reset to starting position
+// - P/R/N/B/Q/K (uppercase): Add white pieces
+// - p/r/n/b/q/k (lowercase): Add black pieces
+// - E/T/A (uppercase/lowercase): Add fairy pieces
+//
+// Piece rotation:
+// - Alt/Option+Left: Rotate counter-clockwise 45°
+// - Alt/Option+Right: Rotate clockwise 45°
+// - Alt/Option+Up: Reset rotation to 0°
+// - Alt/Option+Down: Set rotation to 180°
+//
+// Board orientation:
+// - Shift+Up: White perspective
+// - Shift+Down: Black perspective</code></pre>
+    </div>
+
+    <h2>Piece Selection & Movement</h2>
+    <p>Use Space or Enter to select and move pieces on the board:</p>
+    <ul>
+      <li><strong>Space or Enter on occupied square</strong>: Toggle selection of the piece (selected pieces show with scale 1.1 and a blue glow)</li>
+      <li><strong>Space or Enter on empty square with piece selected</strong>: Move the selected piece to the empty square and clear selection</li>
+      <li><strong>Escape</strong>: Cancel piece selection</li>
+      <li><strong>Any other key</strong>: Automatically clears piece selection</li>
+      <li><strong>Board blur (click outside)</strong>: Clears piece selection</li>
+    </ul>
+    <p style="background: #fff3cd; padding: 12px; border-radius: 6px; margin: 1rem 0;">
+      💡 <strong>Tip:</strong> Try this workflow:
+      <ol style="margin: 0.5rem 0; padding-left: 1.5rem;">
+        <li>Navigate to a square with a piece (e.g., 'e4') using arrow keys</li>
+        <li>Press Space or Enter to select it (you'll see it scale up with a blue glow)</li>
+        <li>Navigate to an empty square using arrow keys</li>
+        <li>Press Space or Enter again to move the piece there</li>
+      </ol>
+    </p>
+
+    <h2>Piece Rotation and Fairy Notation</h2>
+    <p>The <code>chess-piece</code> component supports rotation (0-315° in 45° steps) and fairy chess notation for problem compositions. Use the <code>rotation</code> attribute for piece rotation, <code>fairy-name</code> for top-left annotation (max 3 chars), and <code>fairy-condition</code> for bottom-right annotation.</p>
+
+    <div class="pieces-section">
+      <h3>Rotated Pieces</h3>
+      <div class="pieces-grid">
+        <div class="piece-square">
+          <chess-piece piece="n" color="w" rotation="0"></chess-piece>
+          <p>0°</p>
+        </div>
+        <div class="piece-square">
+          <chess-piece piece="n" color="w" rotation="45"></chess-piece>
+          <p>45°</p>
+        </div>
+        <div class="piece-square">
+          <chess-piece piece="n" color="w" rotation="90"></chess-piece>
+          <p>90°</p>
+        </div>
+        <div class="piece-square">
+          <chess-piece piece="n" color="w" rotation="135"></chess-piece>
+          <p>135°</p>
+        </div>
+        <div class="piece-square">
+          <chess-piece piece="n" color="w" rotation="180"></chess-piece>
+          <p>180°</p>
+        </div>
+        <div class="piece-square">
+          <chess-piece piece="n" color="w" rotation="225"></chess-piece>
+          <p>225°</p>
+        </div>
+        <div class="piece-square">
+          <chess-piece piece="n" color="w" rotation="270"></chess-piece>
+          <p>270°</p>
+        </div>
+        <div class="piece-square">
+          <chess-piece piece="n" color="w" rotation="315"></chess-piece>
+          <p>315°</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="pieces-section">
+      <h3>Fairy Chess Notation</h3>
+      <div class="pieces-grid">
+        <div class="piece-square">
+          <chess-piece piece="e" color="w" fairy-name="EMP"></chess-piece>
+          <p>Empress with name</p>
+        </div>
+        <div class="piece-square">
+          <chess-piece piece="t" color="b" fairy-condition="(a)"></chess-piece>
+          <p>Tower with condition</p>
+        </div>
+        <div class="piece-square">
+          <chess-piece piece="a" color="n" fairy-name="A" fairy-condition="(h)"></chess-piece>
+          <p>Neutral Angel</p>
+        </div>
+        <div class="piece-square">
+          <chess-piece piece="q" color="w" rotation="45" fairy-name="Q1" fairy-condition="(b)"></chess-piece>
+          <p>Rotated with notation</p>
+        </div>
+      </div>
+    </div>
+
+    <h2>Chess Pieces Component</h2>
+    <p>The <code>chess-piece</code> component allows you to display individual chess pieces. Use the <code>piece</code> attribute for the piece type (k, q, r, b, n, p, e, t, a) and <code>color</code> attribute for the color (w, b, n for neutral).</p>
+
+    <div class="pieces-container">
+      <div class="pieces-section">
+        <h3>White Pieces</h3>
+        <div class="pieces-grid">
+          <div class="piece-square">
+            <chess-piece piece="k" color="w"></chess-piece>
+          </div>
+          <div class="piece-square">
+            <chess-piece piece="q" color="w"></chess-piece>
+          </div>
+          <div class="piece-square">
+            <chess-piece piece="r" color="w"></chess-piece>
+          </div>
+          <div class="piece-square">
+            <chess-piece piece="b" color="w"></chess-piece>
+          </div>
+          <div class="piece-square">
+            <chess-piece piece="n" color="w"></chess-piece>
+          </div>
+          <div class="piece-square">
+            <chess-piece piece="p" color="w"></chess-piece>
+          </div>
+          <div class="piece-square">
+            <chess-piece piece="e" color="w"></chess-piece>
+          </div>
+          <div class="piece-square">
+            <chess-piece piece="t" color="w"></chess-piece>
+          </div>
+          <div class="piece-square">
+            <chess-piece piece="a" color="w"></chess-piece>
+          </div>
+        </div>
+      </div>
+
+      <div class="pieces-section">
+        <h3>Black Pieces</h3>
+        <div class="pieces-grid">
+          <div class="piece-square">
+            <chess-piece piece="k" color="b"></chess-piece>
+          </div>
+          <div class="piece-square">
+            <chess-piece piece="q" color="b"></chess-piece>
+          </div>
+          <div class="piece-square">
+            <chess-piece piece="r" color="b"></chess-piece>
+          </div>
+          <div class="piece-square">
+            <chess-piece piece="b" color="b"></chess-piece>
+          </div>
+          <div class="piece-square">
+            <chess-piece piece="n" color="b"></chess-piece>
+          </div>
+          <div class="piece-square">
+            <chess-piece piece="p" color="b"></chess-piece>
+          </div>
+          <div class="piece-square">
+            <chess-piece piece="e" color="b"></chess-piece>
+          </div>
+          <div class="piece-square">
+            <chess-piece piece="t" color="b"></chess-piece>
+          </div>
+          <div class="piece-square">
+            <chess-piece piece="a" color="b"></chess-piece>
+          </div>
+        </div>
+      </div>
+
+
+      
+      <div class="pieces-section">
+        <h3>Neutral Pieces</h3>
+        <div class="pieces-grid">
+          <div class="piece-square">
+            <chess-piece piece="k" color="n"></chess-piece>
+          </div>
+          <div class="piece-square">
+            <chess-piece piece="q" color="n"></chess-piece>
+          </div>
+          <div class="piece-square">
+            <chess-piece piece="r" color="n"></chess-piece>
+          </div>
+          <div class="piece-square">
+            <chess-piece piece="b" color="n"></chess-piece>
+          </div>
+          <div class="piece-square">
+            <chess-piece piece="n" color="n"></chess-piece>
+          </div>
+          <div class="piece-square">
+            <chess-piece piece="p" color="n"></chess-piece>
+          </div>
+          <div class="piece-square">
+            <chess-piece piece="e" color="n"></chess-piece>
+          </div>
+          <div class="piece-square">
+            <chess-piece piece="t" color="n"></chess-piece>
+          </div>
+          <div class="piece-square">
+            <chess-piece piece="a" color="n"></chess-piece>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h2>Board with Pieces Example</h2>
+    <p>This example shows how to add pieces to the empty board programmatically.</p>
+    <div class="board-container board-medium">
+      <chess-board id="board-with-pieces"></chess-board>
+    </div>
+
+    <div class="code-example">
+      <pre><code>// Example: Add pieces to create a starting position
+document.addEventListener('DOMContentLoaded', () => {
+  const board = document.getElementById('board-with-pieces');
+  
+  // Add white pieces
+  addPiece(board, 'e1', 'k', 'w'); // White king
+  addPiece(board, 'd1', 'q', 'w'); // White queen
+  addPiece(board, 'a1', 'r', 'w'); // White rook
+  addPiece(board, 'h1', 'r', 'w'); // White rook
+  addPiece(board, 'c1', 'b', 'w'); // White bishop
+  addPiece(board, 'f1', 'b', 'w'); // White bishop
+  addPiece(board, 'b1', 'n', 'w'); // White knight
+  addPiece(board, 'g1', 'n', 'w'); // White knight
+  
+  // Add white pawns
+  for (let col = 0; col &lt; 8; col++) {
+    const file = String.fromCharCode(97 + col); // a-h
+    addPiece(board, file + '2', 'p', 'w');
+  }
+  
+  // Add black pieces
+  addPiece(board, 'e8', 'k', 'b'); // Black king
+  addPiece(board, 'd8', 'q', 'b'); // Black queen
+  addPiece(board, 'a8', 'r', 'b'); // Black rook
+  addPiece(board, 'h8', 'r', 'b'); // Black rook
+  addPiece(board, 'c8', 'b', 'b'); // Black bishop
+  addPiece(board, 'f8', 'b', 'b'); // Black bishop
+  addPiece(board, 'b8', 'n', 'b'); // Black knight
+  addPiece(board, 'g8', 'n', 'b'); // Black knight
+  
+  // Add black pawns
+  for (let col = 0; col &lt; 8; col++) {
+    const file = String.fromCharCode(97 + col); // a-h
+    addPiece(board, file + '7', 'p', 'b');
+  }
+});
+
+function addPiece(boardElement, square, piece, color) {
+  const squareElement = boardElement.shadowRoot.querySelector(`[data-coordinate="${square}"]`);
+  if (squareElement) {
+    const pieceElement = document.createElement('chess-piece');
+    pieceElement.setAttribute('piece', piece);
+    pieceElement.setAttribute('color', color);
+    squareElement.appendChild(pieceElement);
+  }
+}
+
+  </code></pre>
+    </div>
+
+    <h2>Data Coordinates</h2>
+    <p>Each square has a <code>data-coordinate</code> attribute with standard chess notation (e.g., "e4", "a1"). You can select specific squares using CSS selectors or JavaScript:</p>
+    <div class="code-example">
+      <pre><code>// Select the e4 square
+const e4Square = document.querySelector('chess-board').shadowRoot.querySelector('[data-coordinate="e4"]');
+
+// Select all squares in the 4th rank
+const fourthRank = document.querySelector('chess-board').shadowRoot.querySelectorAll('[data-coordinate$="4"]');
+
+// Select all squares in the e-file
+const eFile = document.querySelector('chess-board').shadowRoot.querySelectorAll('[data-coordinate^="e"]');
+        </code></pre>
+    </div>
+    </div>
+
+    <p><strong>Note:</strong> This is an empty chess board with no pieces. The board provides a clean foundation for implementing chess games or displaying positions programmatically.</p>
+  </div>
+
+  <script type="module" src="./src/index.ts"></script>
+  <script>
+    // Example: Add pieces to create a starting position
+    document.addEventListener('DOMContentLoaded', () => {
+      const board = document.getElementById('board-with-pieces');
+
+      // Add white pieces
+      addPiece(board, 'e1', 'k', 'w'); // White king
+      addPiece(board, 'd1', 'q', 'w'); // White queen
+      addPiece(board, 'a1', 'r', 'w'); // White rook
+      addPiece(board, 'h1', 'r', 'w'); // White rook
+      addPiece(board, 'c1', 'b', 'w'); // White bishop
+      addPiece(board, 'f1', 'b', 'w'); // White bishop
+      addPiece(board, 'b1', 'n', 'w'); // White knight
+      addPiece(board, 'g1', 'n', 'w'); // White knight
+
+      // Add white pawns
+      for (let col = 0; col < 8; col++) {
+        const file = String.fromCharCode(97 + col); // a-h
+        addPiece(board, file + '2', 'p', 'w');
+      }
+
+      // Add black pieces
+      addPiece(board, 'e8', 'k', 'b'); // Black king
+      addPiece(board, 'd8', 'q', 'b'); // Black queen
+      addPiece(board, 'a8', 'r', 'b'); // Black rook
+      addPiece(board, 'h8', 'r', 'b'); // Black rook
+      addPiece(board, 'c8', 'b', 'b'); // Black bishop
+      addPiece(board, 'f8', 'b', 'b'); // Black bishop
+      addPiece(board, 'b8', 'n', 'b'); // Black knight
+      addPiece(board, 'g8', 'n', 'b'); // Black knight
+
+      // Add black pawns
+      for (let col = 0; col < 8; col++) {
+        const file = String.fromCharCode(97 + col); // a-h
+        addPiece(board, file + '7', 'p', 'b');
+      }
+    });
+
+    function addPiece(boardElement, square, piece, color) {
+      const squareElement = boardElement.shadowRoot.querySelector(`[data-coordinate="${square}"]`);
+      if (squareElement) {
+        const pieceElement = document.createElement('chess-piece');
+        pieceElement.setAttribute('piece', piece);
+        pieceElement.setAttribute('color', color);
+        squareElement.appendChild(pieceElement);
+      }
+    }
+
+    // Cell click event example
+    document.addEventListener('DOMContentLoaded', () => {
+      const board = document.getElementById('clickable-board');
+      const output = document.getElementById('click-output');
+
+      board.addEventListener('cellClick', (event) => {
+        const { cell, piece } = event.detail;
+
+        if (piece) {
+          let info = `Clicked ${cell} - ${piece.color} ${piece.type}`;
+          if (piece.rotation) info += `, rotation: ${piece.rotation}°`;
+          if (piece.fairyName) info += `, fairy-name: ${piece.fairyName}`;
+          if (piece.fairyCondition) info += `, fairy-condition: ${piece.fairyCondition}`;
+          output.textContent = info;
+        } else {
+          output.textContent = `Clicked ${cell} - Empty square`;
+        }
+      });
+
+      // Keyboard navigation example
+      const keyboardBoard = document.getElementById('keyboard-board');
+      const selectionOutput = document.getElementById('selection-output');
+
+      // Update display when selection changes
+      setInterval(() => {
+        const current = keyboardBoard.getCurrentSquare();
+        selectionOutput.textContent = current ? `Selected: ${current}` : 'No selection';
+      }, 100);
+    });
+  </script>
+</body>
+</html>

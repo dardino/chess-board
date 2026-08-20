@@ -1,0 +1,299 @@
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { ChessPiece, type ChessPieceType, type ChessPieceColor, type ChessPieceRotation } from '../src/ChessPiece';
+
+describe('ChessPiece Web Component', () => {
+  let element: ChessPiece;
+
+  beforeEach(() => {
+    // Create a new instance for each test
+    element = new ChessPiece();
+    // Append to document to trigger connectedCallback
+    document.body.appendChild(element);
+  });
+
+  afterEach(() => {
+    // Clean up after each test
+    if (element && element.parentNode) {
+      element.parentNode.removeChild(element);
+    }
+  });
+
+  it('should be an instance of HTMLElement', () => {
+    expect(element).toBeInstanceOf(HTMLElement);
+  });
+
+  it('should have shadow root', () => {
+    expect(element.shadowRoot).toBeDefined();
+  });
+
+  it('should render a piece element', () => {
+    const piece = element.shadowRoot?.querySelector('.piece');
+    expect(piece).toBeTruthy();
+  });
+
+  it('should have default piece as white pawn', () => {
+    const bgElement = element.shadowRoot?.querySelector('.piece-bg');
+    const fgElement = element.shadowRoot?.querySelector('.piece-fg');
+
+    expect(bgElement?.textContent).toBe('__p');
+    expect(fgElement?.textContent).toBe('w_p');
+  });
+
+  it('should accept piece attribute', () => {
+    element.setAttribute('piece', 'q');
+    element.setAttribute('color', 'b');
+
+    const bgElement = element.shadowRoot?.querySelector('.piece-bg');
+    const fgElement = element.shadowRoot?.querySelector('.piece-fg');
+
+    expect(bgElement?.textContent).toBe('__q');
+    expect(fgElement?.textContent).toBe('b_q');
+  });
+
+  it('should accept color attribute', () => {
+    element.setAttribute('color', 'b');
+
+    const fgElement = element.shadowRoot?.querySelector('.piece-fg');
+    expect(fgElement?.textContent).toBe('b_p');
+  });
+
+  it('should handle all piece types', () => {
+    const pieces: ChessPieceType[] = ['k', 'q', 'r', 'b', 'n', 'p', 'e', 't', 'a'];
+
+    pieces.forEach(piece => {
+      element.setAttribute('piece', piece);
+      const bgElement = element.shadowRoot?.querySelector('.piece-bg');
+      expect(bgElement?.textContent).toBe(`__${piece}`);
+    });
+  });
+
+  it('should handle both colors', () => {
+    const colors: ChessPieceColor[] = ['w', 'b', 'n'];
+
+    colors.forEach(color => {
+      element.setAttribute('color', color);
+      const fgElement = element.shadowRoot?.querySelector('.piece-fg');
+      expect(fgElement?.textContent).toBe(`${color}_p`);
+    });
+  });
+
+  it('should update when attributes change', () => {
+    // Initial state
+    let fgElement = element.shadowRoot?.querySelector('.piece-fg');
+    expect(fgElement?.textContent).toBe('w_p');
+
+    // Change piece
+    element.setAttribute('piece', 'k');
+    fgElement = element.shadowRoot?.querySelector('.piece-fg');
+    expect(fgElement?.textContent).toBe('w_k');
+
+    // Change color
+    element.setAttribute('color', 'b');
+    fgElement = element.shadowRoot?.querySelector('.piece-fg');
+    expect(fgElement?.textContent).toBe('b_k');
+  });
+
+  it('should have setPiece method', () => {
+    expect(typeof element.setPiece).toBe('function');
+
+    element.setPiece('r', 'b');
+
+    const bgElement = element.shadowRoot?.querySelector('.piece-bg');
+    const fgElement = element.shadowRoot?.querySelector('.piece-fg');
+
+    expect(bgElement?.textContent).toBe('__r');
+    expect(fgElement?.textContent).toBe('b_r');
+  });
+
+  it('should have getPiece method', () => {
+    expect(typeof element.getPiece).toBe('function');
+
+    element.setAttribute('piece', 'q');
+    expect(element.getPiece()).toBe('q');
+  });
+
+  it('should have getColor method', () => {
+    expect(typeof element.getColor).toBe('function');
+
+    element.setAttribute('color', 'b');
+    expect(element.getColor()).toBe('b');
+  });
+
+  it('should ignore invalid piece types', () => {
+    element.setAttribute('piece', 'invalid');
+    expect(element.getPiece()).toBe('p'); // Should remain default
+  });
+
+  it('should ignore invalid colors', () => {
+    element.setAttribute('color', 'invalid');
+    expect(element.getColor()).toBe('w'); // Should remain default
+  });
+
+  it('should be registered as custom element', () => {
+    expect(customElements.get('chess-piece')).toBeDefined();
+  });
+
+  it('should render all chess pieces correctly', () => {
+    const testCases = [
+      { piece: 'k' as ChessPieceType, color: 'w' as ChessPieceColor, expected: 'w_k' },
+      { piece: 'q' as ChessPieceType, color: 'w' as ChessPieceColor, expected: 'w_q' },
+      { piece: 'r' as ChessPieceType, color: 'w' as ChessPieceColor, expected: 'w_r' },
+      { piece: 'b' as ChessPieceType, color: 'w' as ChessPieceColor, expected: 'w_b' },
+      { piece: 'n' as ChessPieceType, color: 'w' as ChessPieceColor, expected: 'w_n' },
+      { piece: 'p' as ChessPieceType, color: 'w' as ChessPieceColor, expected: 'w_p' },
+      { piece: 'k' as ChessPieceType, color: 'b' as ChessPieceColor, expected: 'b_k' },
+      { piece: 'q' as ChessPieceType, color: 'b' as ChessPieceColor, expected: 'b_q' },
+      { piece: 'r' as ChessPieceType, color: 'b' as ChessPieceColor, expected: 'b_r' },
+      { piece: 'b' as ChessPieceType, color: 'b' as ChessPieceColor, expected: 'b_b' },
+      { piece: 'n' as ChessPieceType, color: 'b' as ChessPieceColor, expected: 'b_n' },
+      { piece: 'p' as ChessPieceType, color: 'b' as ChessPieceColor, expected: 'b_p' },
+    ];
+
+    testCases.forEach(({ piece, color, expected }) => {
+      element.setPiece(piece, color);
+      const fgElement = element.shadowRoot?.querySelector('.piece-fg');
+      expect(fgElement?.textContent).toBe(expected);
+    });
+  });
+
+  // Test rotation functionality
+  describe('Rotation', () => {
+    it('should have default rotation of 0 degrees', () => {
+      expect(element.getRotation()).toBe('0');
+    });
+
+    it('should accept rotation attribute', () => {
+      element.setAttribute('rotation', '90');
+      expect(element.getRotation()).toBe('90');
+      
+      const pieceElement = element.shadowRoot?.querySelector('.piece') as HTMLElement;
+      expect(pieceElement?.style.transform).toBe('rotate(90deg)');
+    });
+
+    it('should handle all valid rotation values', () => {
+      const rotations: ChessPieceRotation[] = ['0', '45', '90', '135', '180', '225', '270', '315'];
+      
+      rotations.forEach(rotation => {
+        element.setAttribute('rotation', rotation);
+        expect(element.getRotation()).toBe(rotation);
+        
+        const pieceElement = element.shadowRoot?.querySelector('.piece') as HTMLElement;
+        if (rotation === '0') {
+          expect(pieceElement?.style.transform).toBe('');
+        } else {
+          expect(pieceElement?.style.transform).toBe(`rotate(${rotation}deg)`);
+        }
+      });
+    });
+
+    it('should have setRotation method', () => {
+      expect(typeof element.setRotation).toBe('function');
+      
+      element.setRotation('180');
+      expect(element.getRotation()).toBe('180');
+      
+      const pieceElement = element.shadowRoot?.querySelector('.piece') as HTMLElement;
+      expect(pieceElement?.style.transform).toBe('rotate(180deg)');
+    });
+
+    it('should default to 0 for invalid rotation values', () => {
+      element.setAttribute('rotation', 'invalid');
+      expect(element.getRotation()).toBe('0');
+    });
+  });
+
+  // Test fairy notation functionality
+  describe('Fairy Notation', () => {
+    it('should have empty fairy-name by default', () => {
+      expect(element.getFairyName()).toBe('');
+      
+      const fairyNameElement = element.shadowRoot?.querySelector('.fairy-name') as HTMLElement;
+      expect(fairyNameElement?.style.display).toBe('none');
+    });
+
+    it('should accept fairy-name attribute', () => {
+      element.setAttribute('fairy-name', 'GRA');
+      expect(element.getFairyName()).toBe('GRA');
+      
+      const fairyNameElement = element.shadowRoot?.querySelector('.fairy-name') as HTMLElement;
+      expect(fairyNameElement?.textContent).toBe('GRA');
+      expect(fairyNameElement?.style.display).toBe('block');
+    });
+
+    it('should truncate fairy-name to 3 characters', () => {
+      element.setAttribute('fairy-name', 'TOOLONG');
+      expect(element.getFairyName()).toBe('TOO');
+      
+      const fairyNameElement = element.shadowRoot?.querySelector('.fairy-name') as HTMLElement;
+      expect(fairyNameElement?.textContent).toBe('TOO');
+    });
+
+    it('should have setFairyName method', () => {
+      expect(typeof element.setFairyName).toBe('function');
+      
+      element.setFairyName('ABC');
+      expect(element.getFairyName()).toBe('ABC');
+    });
+
+    it('should have empty fairy-condition by default', () => {
+      expect(element.getFairyCondition()).toBe('');
+      
+      const fairyConditionElement = element.shadowRoot?.querySelector('.fairy-condition') as HTMLElement;
+      expect(fairyConditionElement?.style.display).toBe('none');
+    });
+
+    it('should accept fairy-condition attribute', () => {
+      element.setAttribute('fairy-condition', '=');
+      expect(element.getFairyCondition()).toBe('=');
+      
+      const fairyConditionElement = element.shadowRoot?.querySelector('.fairy-condition') as HTMLElement;
+      expect(fairyConditionElement?.textContent).toBe('=');
+      expect(fairyConditionElement?.style.display).toBe('block');
+    });
+
+    it('should have setFairyCondition method', () => {
+      expect(typeof element.setFairyCondition).toBe('function');
+      
+      element.setFairyCondition('&');
+      expect(element.getFairyCondition()).toBe('&');
+    });
+
+    it('should display both fairy-name and fairy-condition simultaneously', () => {
+      element.setAttribute('fairy-name', 'GRA');
+      element.setAttribute('fairy-condition', '=');
+      
+      const fairyNameElement = element.shadowRoot?.querySelector('.fairy-name') as HTMLElement;
+      const fairyConditionElement = element.shadowRoot?.querySelector('.fairy-condition') as HTMLElement;
+      
+      expect(fairyNameElement?.textContent).toBe('GRA');
+      expect(fairyNameElement?.style.display).toBe('block');
+      expect(fairyConditionElement?.textContent).toBe('=');
+      expect(fairyConditionElement?.style.display).toBe('block');
+    });
+  });
+
+  // Test combining rotation and fairy notation
+  describe('Combined Features', () => {
+    it('should support rotation with fairy notation', () => {
+      element.setPiece('e', 'n'); // Neutral empress
+      element.setRotation('90');
+      element.setFairyName('GRA');
+      element.setFairyCondition('=');
+      
+      expect(element.getPiece()).toBe('e');
+      expect(element.getColor()).toBe('n');
+      expect(element.getRotation()).toBe('90');
+      expect(element.getFairyName()).toBe('GRA');
+      expect(element.getFairyCondition()).toBe('=');
+      
+      const pieceElement = element.shadowRoot?.querySelector('.piece') as HTMLElement;
+      expect(pieceElement?.style.transform).toBe('rotate(90deg)');
+      
+      const fairyNameElement = element.shadowRoot?.querySelector('.fairy-name') as HTMLElement;
+      const fairyConditionElement = element.shadowRoot?.querySelector('.fairy-condition') as HTMLElement;
+      
+      expect(fairyNameElement?.style.display).toBe('block');
+      expect(fairyConditionElement?.style.display).toBe('block');
+    });
+  });
+});

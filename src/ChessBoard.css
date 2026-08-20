@@ -1,0 +1,208 @@
+/* ChessBoard Component Styles */
+
+:host {
+  --internal-chess-border-color: var(--cb-chess-border-color, #000);
+  --internal-chess-light-square: var(--cb-chess-light-square, #f0d9b5);
+  --internal-chess-dark-square: var(--cb-chess-dark-square, #b58863);
+  --internal-chess-piece-color: var(--cb-chess-piece-color, black);
+  --internal-chess-piece-bg: var(--cb-chess-piece-bg, white);
+  --internal-chess-outline-focus: var(--cb-chess-outline-focus, blue);
+  --internal-chess-label-color: var(--cb-chess-label-color, #666);
+}
+
+@font-face {
+  font-family: "ScacchiPainter";
+  src: url("./dist/ScacchiPainter.eot");
+  src: url("./dist/ScacchiPainter.eot?#iefix") format("embedded-opentype"),
+       url("./dist/ScacchiPainter.woff2") format("woff2"),
+       url("./dist/ScacchiPainter.woff") format("woff"),
+       url("./dist/ScacchiPainter.ttf") format("truetype"),
+       url("./dist/ScacchiPainter.svg#ScacchiPainter") format("svg");
+  font-weight: bold;
+  font-style: normal;
+}
+
+.board-container {
+  container-type: inline-size;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas: 
+            "empty1 topbar empty2"
+            "leftbar board rightbar"
+            "empty3 bottombar empty4";
+  width: 100%;
+  height: 100%;
+  min-width: 200px;
+  min-height: 200px;
+  box-sizing: border-box;
+}
+
+/* Hide labels when hide-labels attribute is present */
+:host([hide-labels]) .top-labels,
+:host([hide-labels]) .left-labels,
+:host([hide-labels]) .right-labels,
+:host([hide-labels]) .bottom-labels {
+  display: none;
+}
+
+/* Adjust grid layout when labels are hidden */
+:host([hide-labels]) .board-container {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  grid-template-areas: "board";
+}
+
+:host([hide-labels]) .board {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+/* Rotate board when black is to move */
+:host([black-to-move]) .board-container {
+  transform: rotate(180deg);
+}
+
+/* Compensate piece rotation when board is rotated */
+:host([black-to-move]) .piece {
+  transform: rotate(180deg);
+}
+
+/* Compensate label rotation when board is rotated */
+:host([black-to-move]) .label {
+  transform: rotate(180deg);
+}
+
+.top-labels {
+  grid-area: topbar;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+}
+.left-labels {
+  grid-area: leftbar;
+  display: grid;
+  grid-template-rows: repeat(8, 1fr);
+}
+.right-labels {
+  grid-area: rightbar;
+  display: grid;
+  grid-template-rows: repeat(8, 1fr);
+}
+.bottom-labels {
+  grid-area: bottombar;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+}
+
+.board {
+  container-type: inline-size;
+  border: 1px solid var(--internal-chess-border-color);
+  display: grid;
+  grid-column: 2 / -2;
+  grid-row: 2 / -2;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  box-sizing: border-box;
+  font-family: ScacchiPainter, monospace;
+  aspect-ratio: 1;
+}
+
+.square {
+  position: relative;
+  cursor: pointer;
+  font-size: 10.5cqw;
+  overflow: hidden;
+}
+
+.square.light {
+  background-color: var(--internal-chess-light-square);
+}
+
+.cell-decorator {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.square > chess-piece,
+.square > .piece,
+.square > .label,
+.square > .piece-fg,
+.square > .piece-bg {
+  position: relative;
+  z-index: 1;
+}
+
+.square.dark {
+  background-color: var(--internal-chess-dark-square);
+}
+
+.board:focus {
+  outline: 2px var(--internal-chess-outline-focus) solid;
+}
+.board:focus > .square.current {
+  outline: 2px green solid;
+  z-index: 1;
+}
+
+.square.selected-piece {
+  outline: 2px solid rgba(37, 99, 235, 0.95);
+  box-shadow: inset 0 0 0 2px rgba(96, 165, 250, 0.45), 0 0 12px rgba(59, 130, 246, 0.75);
+  z-index: 2;
+}
+
+.square.selected-piece > chess-piece {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.95));
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4cqw;
+  font-weight: bold;
+  color: var(--internal-chess-label-color);
+  font-family: Arial, sans-serif;
+  padding: 0.2em 0.5em;
+  text-transform: uppercase;
+}
+
+/* Column labels (a-h) - top row */
+/* .column-label { } */
+
+/* Row labels (1-8) - left column */
+/* .row-label { } */
+
+/* Top-left corner - empty */
+/* .corner-label { } */
+
+.piece {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  color: var(--internal-chess-piece-color);
+  width: 100%;
+  height: 100%;
+  font-size: 0.8em;
+
+  font-family: 'ScacchiPainter', monospace;
+  line-height: 1;
+  letter-spacing: 0px; /* to keep legatures working properly */
+
+}
+.piece-fg, .piece-bg {
+    grid-column: 1 / -1;
+    inset: 0;
+    display: flex;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: space-around;
+    grid-row: 1/ -1;
+}
+.piece-bg {
+  color: var(--internal-chess-piece-bg);
+}

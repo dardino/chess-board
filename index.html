@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chess Board Web Components - Documentation</title>
+  
+  <!-- Load chess piece font -->
+  <link rel="stylesheet" href="./assets/ScacchiPainter.css" />
+  <link rel="icon" type="image/png" sizes="96x96" href="./assets/favicon-96x96.png">
+  <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" sizes="any">
+  <link rel="icon" href="./assets/favicon.ico">
+  <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
+  <link rel="manifest" href="./assets/site.webmanifest">
+  
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background: #f8f9fa;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 3rem 2rem;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      font-weight: 700;
+    }
+    
+    .header p {
+      font-size: 1.2rem;
+      opacity: 0.95;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .demo-links {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 2rem;
+      flex-wrap: wrap;
+    }
+    
+    .demo-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: all 0.3s;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .demo-link:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    
+    .demo-link::before {
+      content: "🎮";
+      font-size: 1.5rem;
+    }
+    
+    .demo-link.api::before {
+      content: "⚙️";
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    .content {
+      background: white;
+      border-radius: 12px;
+      padding: 3rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      margin-bottom: 2rem;
+    }
+    
+    .content h2 {
+      color: #667eea;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #e9ecef;
+      font-size: 1.8rem;
+    }
+    
+    .content h2:first-child {
+      margin-top: 0;
+    }
+    
+    .content h3 {
+      color: #495057;
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+      font-size: 1.4rem;
+    }
+    
+    .content h4 {
+      color: #6c757d;
+      margin-top: 1.25rem;
+      margin-bottom: 0.5rem;
+      font-size: 1.1rem;
+    }
+    
+    .content ul, .content ol {
+      margin-left: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .content li {
+      margin-bottom: 0.5rem;
+    }
+    
+    .content p {
+      margin-bottom: 1rem;
+    }
+    
+    .content code {
+      background: #f8f9fa;
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.9em;
+      color: #e83e8c;
+    }
+    
+    .content pre {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 1.5rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin-bottom: 1.5rem;
+      border-left: 4px solid #667eea;
+    }
+    
+    .content pre code {
+      background: none;
+      color: inherit;
+      padding: 0;
+    }
+    
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin: 2rem 0;
+    }
+    
+    .feature-card {
+      background: #f8f9fa;
+      padding: 1.5rem;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+    }
+    
+    .feature-card h3 {
+      margin-top: 0;
+      color: #667eea;
+      font-size: 1.1rem;
+    }
+    
+    .feature-card p {
+      margin-bottom: 0;
+      font-size: 0.95rem;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      background: white;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    th, td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid #dee2e6;
+    }
+    
+    th {
+      background: #667eea;
+      color: white;
+      font-weight: 600;
+    }
+    
+    tr:hover {
+      background: #f8f9fa;
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      background: #667eea;
+      color: white;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-left: 0.5rem;
+    }
+    
+    .badge.success {
+      background: #28a745;
+    }
+    
+    .badge.info {
+      background: #17a2b8;
+    }
+    
+    .badge.warning {
+      background: #ffc107;
+      color: #333;
+    }
+    
+    .toc {
+      background: #f8f9fa;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+      border-left: 4px solid #667eea;
+    }
+    
+    .toc h3 {
+      margin-top: 0;
+      color: #667eea;
+    }
+    
+    .toc ul {
+      list-style: none;
+      margin-left: 0;
+    }
+    
+    .toc a {
+      color: #495057;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    
+    .toc a:hover {
+      color: #667eea;
+    }
+    
+    .footer {
+      background: #2d3748;
+      color: #cbd5e0;
+      padding: 2rem;
+      text-align: center;
+      margin-top: 3rem;
+    }
+    
+    .demo-board {
+      width: 400px;
+      max-width: 100%;
+      margin: 2rem auto;
+      display: block;
+    }
+    
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 2rem;
+      }
+      
+      .header p {
+        font-size: 1rem;
+      }
+      
+      .content {
+        padding: 1.5rem;
+      }
+      
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>♟️ Chess Board Web Components</h1>
+    <p>A collection of web components for displaying chess boards and pieces, built with TypeScript and Vite</p>
+    
+    <div class="demo-links">
+      <a href="demo.html" class="demo-link">
+        Interactive Demo
+      </a>
+      <a href="demo-api.html" class="demo-link api">
+        Programmatic API Demo
+      </a>
+    </div>
+  </div>
+  
+  <div class="container">
+    <div class="content">
+      <div class="toc">
+        <h3>📑 Table of Contents</h3>
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#installation">Installation</a></li>
+          <li><a href="#usage">Usage</a></li>
+          <li><a href="#api">Programmatic API</a></li>
+          <li><a href="#keyboard">Keyboard Navigation</a></li>
+          <li><a href="#typescript">TypeScript Support</a></li>
+        </ul>
+      </div>
+      
+      <h2 id="features">✨ Features</h2>
+      
+      <div class="features-grid">
+        <div class="feature-card">
+          <h3>🎯 8x8 Chess Board</h3>
+          <p>Traditional chess board layout with alternating colors and coordinate labels</p>
+        </div>
+        
+        <div class="feature-card">
+          <h3>♟️ Individual Chess Pieces</h3>
+          <p>Separate component for each piece type and color, including fairy pieces</p>
+        </div>
+        
+        <div class="feature-card">
+          <h3>🔄 Piece Rotation</h3>
+          <p>Rotate pieces in 45° increments (0-315°) with keyboard shortcuts or API</p>
+        </div>
+        
+        <div class="feature-card">
+          <h3>🎨 Fairy Chess Notation</h3>
+          <p>Support for fairy-name and fairy-condition annotations for problem compositions</p>
+        </div>
+        
+        <div class="feature-card">
+          <h3>⌨️ Keyboard Navigation</h3>
+          <p>Full keyboard support for piece placement, rotation, and board manipulation</p>
+        </div>
+        
+        <div class="feature-card">
+          <h3>📐 FEN Support</h3>
+          <p>Load and display chess positions using Forsyth-Edwards Notation</p>
+        </div>
+        
+        <div class="feature-card">
+          <h3>↔️ Board Orientation</h3>
+          <p>Flip between white/black perspective with keyboard shortcuts</p>
+        </div>
+        
+        <div class="feature-card">
+          <h3>📱 Responsive Design</h3>
+          <p>Automatically adapts to container size with CSS Container Queries</p>
+        </div>
+        
+        <div class="feature-card">
+          <h3>⚙️ Programmatic API</h3>
+          <p>Complete TypeScript API for adding, removing, and rotating pieces</p>
+        </div>
+
+        <div class="feature-card">
+          <h3>🧩 Cell Decorators</h3>
+          <p>Add a visual overlay layer inside each square above the background and below pieces or notation</p>
+        </div>
+        
+        <div class="feature-card">
+          <h3>🧪 Fully Tested</h3>
+          <p>Comprehensive test suite with Vitest (168 tests passing)</p>
+        </div>
+        
+        <div class="feature-card">
+          <h3>🔧 TypeScript</h3>
+          <p>Full type safety and modern development experience</p>
+        </div>
+        
+        <div class="feature-card">
+          <h3>🌐 Web Components</h3>
+          <p>Native custom elements with Shadow DOM for safe integration</p>
+        </div>
+      </div>
+      
+      <h2 id="demo">🎮 Live Demo</h2>
+      <p>Try the interactive chess board below. Click to select a square, then use keyboard shortcuts to add and manipulate pieces:</p>
+      
+      <chess-board class="demo-board" fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"></chess-board>
+      
+      <p style="text-align: center; color: #6c757d; font-style: italic;">
+        💡 Click on the board and try: Arrow keys (navigate), P/p (add pieces), Alt/Option+Arrow (rotate), Delete (remove)
+      </p>
+      
+      <h2 id="installation">📦 Installation</h2>
+      
+      <pre><code>pnpm add @accademiadelproblema/chess-board</code></pre>
+      
+      <h2 id="usage">🚀 Basic Usage</h2>
+      
+      <h3>HTML</h3>
+      <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+  &lt;title&gt;Chess Board Demo&lt;/title&gt;
+  
+  &lt;!-- Load chess piece font (required) --&gt;
+  &lt;link rel="stylesheet" href="./assets/ScacchiPainter.css" /&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;!-- Empty chess board --&gt;
+  &lt;chess-board&gt;&lt;/chess-board&gt;
+
+  &lt;!-- Board with FEN position --&gt;
+  &lt;chess-board fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"&gt;&lt;/chess-board&gt;
+
+  &lt;script type="module"&gt;
+    import '@accademiadelproblema/chess-board';
+  &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+      
+      <h2 id="api">⚙️ Programmatic API</h2>
+      <p>The chess board provides a complete TypeScript API for programmatic manipulation:</p>
+      
+      <h3>Adding and Removing Pieces</h3>
+      <pre><code>const board = document.querySelector('chess-board');
+
+// Add a piece
+board.addPiece('e4', 'q', 'w');              // White queen on e4
+board.addPiece('d4', 'k', 'b', '45');        // Black king on d4, rotated 45°
+
+// Remove a piece
+board.removePiece('e4');
+
+// Check if square has piece
+if (board.hasPiece('d4')) {
+  console.log('Square d4 is occupied');
+}
+
+// Get piece information
+const piece = board.getPieceAt('d4');
+console.log(piece); // { type: 'k', color: 'b', rotation: '45' }</code></pre>
+      
+      <h3>Bulk Operations</h3>
+      <pre><code>// Get all pieces on board
+const pieces = board.getAllPieces();
+console.log(pieces);
+// [{ square: 'd4', type: 'k', color: 'b', rotation: '45' }, ...]
+
+// Set multiple pieces at once (clears board first)
+board.setPieces([
+  { square: 'e1', type: 'k', color: 'w', rotation: '0' },
+  { square: 'e8', type: 'k', color: 'b', rotation: '0' },
+  { square: 'd1', type: 'q', color: 'w', rotation: '45' }
+]);</code></pre>
+      
+      <h3>Piece Rotation</h3>
+      <pre><code>// Rotate piece by relative amount
+board.rotatePiece('e4', 45);                 // Rotate clockwise by 45°
+board.rotatePiece('e4', -45);                // Rotate counter-clockwise
+
+// Set absolute rotation
+board.setPieceRotation('e4', '180');         // Set to 180°
+
+// Get rotation
+const rotation = board.getPieceRotation('e4');
+console.log(rotation); // '180'</code></pre>
+
+      <h3>Cell Decorators</h3>
+      <pre><code>// Add a visual decorator layer under pieces but above the square background
+board.setCellDecorators({
+  e4: { backgroundColor: '#ffeb3b', innerBorder: 'solid 2px #d97706' },
+  d4: { backgroundColor: 'rgba(59, 130, 246, 0.25)', innerBorder: 'solid 1px rgba(37, 99, 235, 0.8)' }
+});
+
+// Clear all decorators
+board.setCellDecorators({});</code></pre>
+
+      <h3>Piece Selection & Movement</h3>
+      <pre><code>// Get the currently selected piece square
+const selectedSquare = board.getSelectedPieceSquare();
+if (selectedSquare) {
+  console.log(`Piece selected at: ${selectedSquare}`);
+  console.log(`Piece info:`, board.getPieceAt(selectedSquare));
+}
+
+// Select the piece on e4 and make e4 the current square
+const wasSelected = board.selectPiece('e4');
+console.log(wasSelected); // true when e4 contains a piece
+
+// Keyboard workflow (Space or Enter):
+// 1. Press Space or Enter on a square with a piece → selects it
+//    (selected pieces show with scale 1.1 and blue glow)
+// 2. Navigate with arrow keys to an empty square
+// 3. Press Space or Enter again → moves the piece there and clears selection
+// 4. Press Escape → cancels selection without moving
+// 5. Any other key or blur event → clears selection</code></pre>
+
+      <h3>Complete API Usage Example</h3>
+      <pre><code>&lt;chess-board id="sample-board" fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"&gt;&lt;/chess-board&gt;
+
+&lt;script type="module"&gt;
+  const board = document.getElementById('sample-board');
+
+  board.addPiece('e4', 'q', 'w');
+  board.addPiece('d4', 'k', 'b');
+
+  board.setCellDecorators({
+    e4: {
+      backgroundColor: '#ffeb3b',
+      innerBorder: 'solid 2px #d97706'
+    },
+    d4: {
+      backgroundColor: 'rgba(59, 130, 246, 0.25)',
+      innerBorder: 'solid 1px rgba(37, 99, 235, 0.8)'
+    }
+  });
+
+  board.addEventListener('cellClick', ({ detail }) =&gt; {
+    if (detail.cell === 'e4') {
+      board.setCellDecorators({
+        e4: { backgroundColor: '#fca5a5', innerBorder: 'solid 2px #dc2626' }
+      });
+    }
+  });
+&lt;/script&gt;</code></pre>
+      
+      <h3>Board Orientation</h3>
+      <pre><code>// Set orientation
+board.setOrientation('white');               // White at bottom
+board.setOrientation('black');               // Black at bottom
+
+// Get orientation
+const orientation = board.getOrientation();  // 'white' | 'black'
+
+// Toggle orientation
+board.toggleOrientation();</code></pre>
+      
+      <h3>FEN Support</h3>
+      <pre><code>// Set position from FEN
+board.setFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+
+// Get current FEN
+const fen = board.getFen();
+
+// Preset positions
+board.setStartingPosition();                 // Standard starting position
+board.clearBoard();                          // Empty board</code></pre>
+      
+      <h2 id="keyboard">⌨️ Keyboard Navigation</h2>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>Keys</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>Arrow Keys</code></td>
+            <td>Navigate between squares</td>
+          </tr>
+          <tr>
+            <td><code>Space / Enter</code></td>
+            <td>Select, deselect, or move the piece on the current square</td>
+          </tr>
+          <tr>
+            <td><code>P/R/N/B/Q/K</code></td>
+            <td>Add white piece (uppercase)</td>
+          </tr>
+          <tr>
+            <td><code>p/r/n/b/q/k</code></td>
+            <td>Add black piece (lowercase)</td>
+          </tr>
+          <tr>
+            <td><code>E/e, T/t, A/a</code></td>
+            <td>Add fairy pieces (Empress, Dragon, Angel)</td>
+          </tr>
+          <tr>
+            <td><code>Alt/Option + ←/→</code></td>
+            <td>Rotate piece ±45°</td>
+          </tr>
+          <tr>
+            <td><code>Alt/Option + ↑/↓</code></td>
+            <td>Reset rotation to 0° / Set to 180°</td>
+          </tr>
+          <tr>
+            <td><code>Shift + ↑/↓</code></td>
+            <td>Flip board to white/black perspective</td>
+          </tr>
+          <tr>
+            <td><code>Delete</code></td>
+            <td>Remove piece from current square</td>
+          </tr>
+          <tr>
+            <td><code>Escape</code></td>
+            <td>Clear all pieces</td>
+          </tr>
+          <tr>
+            <td><code>Shift + Escape</code></td>
+            <td>Reset to starting position</td>
+          </tr>
+        </tbody>
+      </table>
+      
+      <h2 id="typescript">🔧 TypeScript Support</h2>
+      <p>Full TypeScript support with comprehensive type definitions:</p>
+      
+      <pre><code>import {
+  ChessBoard,
+  type PieceInfo,
+  type ChessPieceType,
+  type ChessPieceColor,
+  type ChessPieceRotation
+} from '@accademiadelproblema/chess-board';
+
+// Type-safe piece manipulation
+const board = document.querySelector('chess-board') as ChessBoard;
+
+function addPiece(
+  square: string,
+  type: ChessPieceType,
+  color: ChessPieceColor,
+  rotation?: ChessPieceRotation
+): void {
+  try {
+    board.addPiece(square, type, color, rotation);
+  } catch (error) {
+    console.error(`Failed to add piece: ${error.message}`);
+  }
+}
+
+// Type-safe piece information
+const pieces: PieceInfo[] = board.getAllPieces();
+pieces.forEach(piece => {
+  console.log(`${piece.color} ${piece.type} on ${piece.square}`);
+});</code></pre>
+      
+      <h3>Available Types</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>ChessPieceType</code></td>
+            <td>'k' | 'q' | 'r' | 'b' | 'n' | 'p' | 'e' | 't' | 'a'</td>
+          </tr>
+          <tr>
+            <td><code>ChessPieceColor</code></td>
+            <td>'w' | 'b' | 'n'</td>
+          </tr>
+          <tr>
+            <td><code>ChessPieceRotation</code></td>
+            <td>'0' | '45' | '90' | '135' | '180' | '225' | '270' | '315'</td>
+          </tr>
+          <tr>
+            <td><code>PieceInfo</code></td>
+            <td>{ square, type, color, rotation }</td>
+          </tr>
+        </tbody>
+      </table>
+      
+      <h2>🎯 Chess Pieces</h2>
+      
+      <h3>Standard Pieces</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Piece</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>King</td>
+            <td><code>k</code></td>
+            <td>King piece</td>
+          </tr>
+          <tr>
+            <td>Queen</td>
+            <td><code>q</code></td>
+            <td>Queen piece</td>
+          </tr>
+          <tr>
+            <td>Rook</td>
+            <td><code>r</code></td>
+            <td>Rook (castle)</td>
+          </tr>
+          <tr>
+            <td>Bishop</td>
+            <td><code>b</code></td>
+            <td>Bishop</td>
+          </tr>
+          <tr>
+            <td>Knight</td>
+            <td><code>n</code></td>
+            <td>Knight (horse)</td>
+          </tr>
+          <tr>
+            <td>Pawn</td>
+            <td><code>p</code></td>
+            <td>Pawn</td>
+          </tr>
+        </tbody>
+      </table>
+      
+      <h3>Fairy Pieces</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Piece</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Empress</td>
+            <td><code>e</code></td>
+            <td>Rook + Knight</td>
+          </tr>
+          <tr>
+            <td>Dragon</td>
+            <td><code>t</code></td>
+            <td>Amazon</td>
+          </tr>
+          <tr>
+            <td>Angel/Archbishop</td>
+            <td><code>a</code></td>
+            <td>Bishop + Knight</td>
+          </tr>
+        </tbody>
+      </table>
+      
+      <h2>🧪 Testing</h2>
+      <p>Comprehensive test suite with <span class="badge success">168 tests passing</span></p>
+      <pre><code>pnpm test</code></pre>
+      
+      <h2>📄 License</h2>
+      <p>MIT License - See LICENSE file for details</p>
+      
+      <h2>🔗 Links</h2>
+      <ul>
+        <li><a href="demo.html" style="color: #667eea;">Interactive Demo</a> - Try all features interactively</li>
+        <li><a href="demo-api.html" style="color: #667eea;">Programmatic API Demo</a> - Test the TypeScript API</li>
+        <li><a href="https://github.com/accademiadelproblema/chess-board" style="color: #667eea;">GitHub Repository</a></li>
+      </ul>
+    </div>
+  </div>
+  
+  <div class="footer">
+    <p>&copy; 2025 Accademia del Problema - Chess Board Web Components</p>
+    <p style="margin-top: 0.5rem; opacity: 0.8;">Built with TypeScript, Vite, and Web Components</p>
+  </div>
+  
+  <script type="module" src="./src/index.ts"></script>
+</body>
+</html>
