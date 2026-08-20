@@ -1,6 +1,10 @@
 {
   "name": "@dardino/chess-board",
   "version": "0.1.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dardino/chess-board"
+  },
   "description": "Web component for displaying a chess board",
   "main": "./dist/chess-board.umd.js",
   "module": "./dist/chess-board.es.js",
