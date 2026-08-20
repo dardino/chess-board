@@ -44,6 +44,7 @@ export interface CellDecorator {
 export class ChessBoard extends HTMLElement {
   private shadow: ShadowRoot;
   private currentFen: string = '';
+  private currentFfen: string = ''; // Fairy FEN (FFEN) notation
   private squares: NodeListOf<HTMLElement> | null = null;
   private clickHandlers: WeakMap<Element, EventListener> = new WeakMap();
   private currentSquare: string | null = null;
@@ -272,7 +273,7 @@ export class ChessBoard extends HTMLElement {
   }
 
   static get observedAttributes(): string[] {
-    return ['fen', 'hide-labels'];
+    return ['fen', 'ffen', 'hide-labels'];
   }
 
   connectedCallback(): void {
@@ -290,6 +291,13 @@ export class ChessBoard extends HTMLElement {
     if (oldValue !== newValue) {
       if (name === 'fen') {
         this.currentFen = newValue || '';
+        // Only update pieces if FFEN is not present (FFEN takes priority)
+        if (!this.currentFfen) {
+          this.updatePiecesFromFen();
+        }
+      } else if (name === 'ffen') {
+        this.currentFfen = newValue || '';
+        // FFEN takes priority over FEN, always update
         this.updatePiecesFromFen();
       } else if (name === 'hide-labels') {
         this.updateLabelsVisibility();
@@ -723,14 +731,17 @@ export class ChessBoard extends HTMLElement {
     // Clear existing pieces
     this.clearPieces();
 
-    if (!this.currentFen) {
+    // FFEN takes priority over FEN
+    const fenString = this.currentFfen || this.currentFen;
+    
+    if (!fenString) {
       return;
     }
 
-    // Parse FEN and place pieces
-    const position = parseFen(this.currentFen);
+    // Parse FEN/FFEN and place pieces
+    const position = parseFen(fenString);
     if (!position) {
-      console.warn('Invalid FEN string:', this.currentFen);
+      console.warn('Invalid FEN/FFEN string:', fenString);
       return;
     }
 
@@ -739,6 +750,13 @@ export class ChessBoard extends HTMLElement {
 
     // Place each piece on the board
     for (const piece of position.pieces) {
+      // Apply fairy metadata if available (from FFEN 7th block)
+      if (position.fairyMetadata && position.fairyMetadata[piece.square]) {
+        const metadata = position.fairyMetadata[piece.square];
+        piece.fairyName = metadata.fairyName;
+        piece.fairyCondition = metadata.fairyCondition;
+      }
+      
       this.placePiece(piece);
     }
   }
@@ -802,6 +820,23 @@ export class ChessBoard extends HTMLElement {
    */
   getFen(): string {
     return this.currentFen;
+  }
+
+  /**
+   * Sets the board position using FFEN notation (Fairy FEN)
+   * FFEN takes priority over FEN when both are set
+   * @param ffen - Fairy Forsyth-Edwards Notation string (6 or 7 blocks)
+   */
+  setFfen(ffen: string): void {
+    this.setAttribute('ffen', ffen);
+  }
+
+  /**
+   * Gets the current FFEN string
+   * @returns Current FFEN string or empty string if not set
+   */
+  getFfen(): string {
+    return this.currentFfen;
   }
 
   /**
