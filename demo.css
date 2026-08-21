@@ -73,6 +73,15 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+}
+
+.piece-square > p {
+  position: absolute;
+  bottom: -17px;
+  right: 2px;
+  font-size: 7px;
+  color: rgb(0, 0, 255); 
 }
 
 /* Gray themed chess board */

@@ -115,7 +115,9 @@ export class ChessPiece extends HTMLElement {
 
       // Apply rotation
       if (pieceContainer && this.#rotation !== '0') {
-        pieceContainer.style.transform = `rotate(${this.#rotation}deg)`;
+        pieceContainer.querySelectorAll('.piece-bg, .piece-fg').forEach(el => {
+          (el as HTMLElement).style.transform = `rotate(${this.#rotation}deg)`;
+        });
       }
 
       // Update fairy-name

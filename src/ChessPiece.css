@@ -59,7 +59,7 @@
   position: absolute;
   top: 0;
   left: 0;
-  font-size: 0.2em;
+  font-size: 0.25em;
   font-family: Arial, sans-serif;
   font-weight: bold;
   color: var(--cb-fairy-text-color, #333);
@@ -75,7 +75,7 @@
   position: absolute;
   bottom: 0;
   right: 0;
-  font-size: 0.15em;
+  font-size: 0.2em;
   font-family: Arial, sans-serif;
   font-weight: normal;
   color: var(--cb-fairy-text-color, #333);
