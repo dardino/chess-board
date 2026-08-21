@@ -5,7 +5,7 @@
 import style from './ChessPiece.css?raw';
 import template from './ChessPiece.html?raw';
 
-export type ChessPieceType = 'k' | 'q' | 'r' | 'b' | 'n' | 'p' | 'e' | 't' | 'a';
+export type ChessPieceType = 'k' | 'q' | 'r' | 'b' | 'n' | 'p' | 'e' | 't' | 'a' | 'c' | 'x' | 's';
 export type ChessPieceColor = 'w' | 'b' | 'n';
 export type ChessPieceRotation = '0' | '45' | '90' | '135' | '180' | '225' | '270' | '315';
 
@@ -45,7 +45,7 @@ export class ChessPiece extends HTMLElement {
     const fairyName = this.getAttribute('fairy-name');
     const fairyCondition = this.getAttribute('fairy-condition');
 
-    if (piece && ['k', 'q', 'r', 'b', 'n', 'p', 'e', 't', 'a'].includes(piece)) {
+    if (piece && ['k', 'q', 'r', 'b', 'n', 'p', 'e', 't', 'a', 'c', 'x', 's'].includes(piece)) {
       this.pieceType = piece;
     }
 

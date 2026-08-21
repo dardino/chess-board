@@ -25,6 +25,24 @@ export interface ChessPiece {
   color: ChessPieceColor;
   /** Square coordinate in algebraic notation (e.g., 'e4', 'a1') */
   square: string;
+  /** Optional: Fairy piece name (FFEN only) */
+  fairyName?: string;
+  /** Optional: Fairy piece condition (FFEN only) */
+  fairyCondition?: string;
+  /** Optional: Rotation in increments of 45° (0.5=45°, 1=90°, 1.5=135°, 2=180°, 2.5=225°, 3=270°, 3.5=315°) (FFEN only) */
+  rotation?: number;
+  /** Optional: Is this a neutral piece? (FFEN only) */
+  isNeutral?: boolean;
+}
+
+/**
+ * Represents fairy piece metadata in FFEN
+ */
+export interface FairyPieceMetadata {
+  /** Fairy piece name */
+  fairyName: string;
+  /** Fairy piece condition */
+  fairyCondition: string;
 }
 
 /**
@@ -43,10 +61,13 @@ export interface FenPosition {
   halfmoveClock: number;
   /** Fullmove number (increments after black's move) */
   fullmoveNumber: number;
+  /** Optional: Fairy piece metadata (FFEN only, 7th block) */
+  fairyMetadata?: Record<string, FairyPieceMetadata>;
 }
 
 /**
  * Converts a FEN string to a structured position object
+ * Supports both standard FEN (6 blocks) and FFEN (up to 7 blocks with fairy metadata)
  * @param fen - The FEN string to parse
  * @returns Parsed FEN position or null if invalid
  */
@@ -56,14 +77,20 @@ export function parseFen(fen: string): FenPosition | null {
   }
 
   const parts = fen.trim().split(/\s+/);
-  if (parts.length !== 6) {
+  
+  // Support both standard FEN (6 blocks) and FFEN (6+ blocks)
+  if (parts.length < 6 || parts.length > 7) {
     return null;
   }
 
-  const [piecePlacement, activeColor, castlingRights, enPassantTarget, halfmoveClockStr, fullmoveNumberStr] = parts;
+  // FFEN if there is a 7th block OR if the piece placement contains extended FFEN notation
+  const isFfen = parts.length === 7 || /[-*']/.test(parts[0]);
 
-  // Parse piece placement
-  const pieces = parsePiecePlacement(piecePlacement);
+  const [piecePlacement, activeColor, castlingRights, enPassantTarget, halfmoveClockStr, fullmoveNumberStr] = parts;
+  const fairyMetadataBlock = parts[6]; // Optional 7th block for FFEN
+
+  // Parse piece placement (pass isFfen flag)
+  const pieces = parsePiecePlacement(piecePlacement, isFfen);
   if (!pieces) {
     return null;
   }
@@ -95,79 +122,215 @@ export function parseFen(fen: string): FenPosition | null {
     return null;
   }
 
+  // Parse fairy metadata if present (7th block in FFEN)
+  let fairyMetadata: Record<string, FairyPieceMetadata> | undefined;
+  if (fairyMetadataBlock) {
+    fairyMetadata = parseFairyMetadata(fairyMetadataBlock);
+    if (!fairyMetadata) {
+      return null;
+    }
+  }
+
   return {
     pieces,
     activeColor: activeColor as 'w' | 'b',
     castlingRights,
     enPassantTarget,
     halfmoveClock,
-    fullmoveNumber
+    fullmoveNumber,
+    fairyMetadata
   };
 }
 
 /**
  * Converts a structured position object to a FEN string
+ * Generates FFEN format (with 7th block) if fairyMetadata is present
  * @param position - The position to convert
- * @returns FEN string representation
+ * @returns FEN or FFEN string representation
  */
 export function positionToFen(position: FenPosition): string {
-  const piecePlacement = piecesToFenString(position.pieces);
-  return [
+  const isFfen =
+    (position.fairyMetadata && Object.keys(position.fairyMetadata).length > 0) ||
+    position.pieces.some(
+      p => p.color === 'n' || p.isNeutral || p.rotation !== undefined || p.fairyName !== undefined || p.fairyCondition !== undefined
+    );
+  const piecePlacement = piecesToFenString(position.pieces, isFfen);
+  const fenParts = [
     piecePlacement,
     position.activeColor,
     position.castlingRights,
     position.enPassantTarget,
     position.halfmoveClock.toString(),
     position.fullmoveNumber.toString()
-  ].join(' ');
+  ];
+
+  // Add fairy metadata block if present
+  if (position.fairyMetadata && Object.keys(position.fairyMetadata).length > 0) {
+    const fairyBlockParts: string[] = [];
+    for (const [cell, metadata] of Object.entries(position.fairyMetadata)) {
+      fairyBlockParts.push(`${cell}:${metadata.fairyName}:${metadata.fairyCondition}`);
+    }
+    fenParts.push(fairyBlockParts.join(','));
+  }
+
+  return fenParts.join(' ');
 }
 
 /**
- * Parses the piece placement part of FEN and returns array of pieces
+ * Parses the piece placement part of FEN/FFEN and returns array of pieces
  * @param piecePlacement - The piece placement string (e.g., "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
+ * @param isFfen - If true, parse FFEN format with extensions (default: false for standard FEN)
  * @returns Array of pieces or null if invalid
  */
-export function parsePiecePlacement(piecePlacement: string): ChessPiece[] | null {
+export function parsePiecePlacement(piecePlacement: string, isFfen: boolean = false): ChessPiece[] | null {
   const ranks = piecePlacement.split('/');
-  if (ranks.length !== 8) {
+  
+  // Support variable board size for FFEN, but require 8 for standard FEN
+  if (!isFfen && ranks.length !== 8) {
+    return null;
+  }
+  
+  if (isFfen && (ranks.length < 4 || ranks.length > 11)) {
+    // Support 4x4 to 11x11 boards for FFEN
     return null;
   }
 
   const pieces: ChessPiece[] = [];
+  const boardHeight = ranks.length;
+  const boardWidth = 8; // Standard chess board width
   const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 
-  for (let rank = 0; rank < 8; rank++) {
+  for (let rank = 0; rank < boardHeight; rank++) {
     const rankStr = ranks[rank];
     let fileIndex = 0;
+    let i = 0;
 
-    for (let i = 0; i < rankStr.length; i++) {
+    while (i < rankStr.length) {
       const char = rankStr[i];
 
       if (char >= '1' && char <= '8') {
-        // Empty squares
+        // Empty squares (standard notation)
         const emptyCount = parseInt(char, 10);
         fileIndex += emptyCount;
+        i++;
       } else {
-        // Piece
-        const piece = parsePieceChar(char);
-        if (!piece) {
-          return null; // Invalid piece character
-        }
+        // Piece - may be multi-character in FFEN (e.g., "*1K", "-B", etc.)
+        let pieceStr = '';
+        
+        if (isFfen) {
+          // For FFEN, parse extended piece notation
+          // A piece can start with '-', '*', or '
+          // Or be a single character for standard pieces
+          
+          if (char === '-' || char === '*' || char === "'") {
+            // Extended piece notation
+            pieceStr = char;
+            i++;
+            
+            // Parse rotation if present (*N)
+            if (pieceStr === '*') {
+              // Collect digits and decimal point for rotation
+              let rotStr = '';
+              while (i < rankStr.length && (rankStr[i] >= '0' && rankStr[i] <= '9' || rankStr[i] === '.')) {
+                rotStr += rankStr[i];
+                i++;
+              }
+              pieceStr += rotStr;
+              
+              // Next character should be the piece
+              if (i < rankStr.length) {
+                pieceStr += rankStr[i];
+                i++;
+              }
+            } else if (pieceStr === '-') {
+              // After '-', we can have '*' for rotation, or a piece directly
+              if (i < rankStr.length && rankStr[i] === '*') {
+                pieceStr += rankStr[i];
+                i++;
+                
+                // Collect rotation value
+                let rotStr = '';
+                while (i < rankStr.length && (rankStr[i] >= '0' && rankStr[i] <= '9' || rankStr[i] === '.')) {
+                  rotStr += rankStr[i];
+                  i++;
+                }
+                pieceStr += rotStr;
+              }
+              
+              // Next character is the piece
+              if (i < rankStr.length) {
+                pieceStr += rankStr[i];
+                i++;
+              }
+            } else if (pieceStr === "'") {
+              // Letter or number
+              if (i < rankStr.length && rankStr[i] === "'") {
+                // Double apostrophe for 2-digit number
+                pieceStr += rankStr[i];
+                i++;
+                
+                // Collect digits
+                while (i < rankStr.length && rankStr[i] >= '0' && rankStr[i] <= '9') {
+                  pieceStr += rankStr[i];
+                  i++;
+                }
+              } else {
+                // Single apostrophe for 1-digit number or letter
+                if (i < rankStr.length) {
+                  pieceStr += rankStr[i];
+                  i++;
+                }
+              }
+            }
+          } else {
+            // Standard single-character piece
+            pieceStr = char;
+            i++;
+          }
 
-        const square = files[fileIndex] + (8 - rank).toString();
-        pieces.push({
-          ...piece,
-          square
-        });
-        fileIndex++;
+          if (!pieceStr) {
+            return null;
+          }
+
+          const parsedPiece = parseFfenPieceChar(pieceStr);
+          if (!parsedPiece) {
+            return null; // Invalid piece character
+          }
+
+          const square = files[fileIndex] + (boardHeight - rank).toString();
+          pieces.push({
+            type: parsedPiece.type,
+            color: parsedPiece.color as ChessPieceColor | 'n',
+            square,
+            isNeutral: parsedPiece.isNeutral,
+            rotation: parsedPiece.rotation,
+            ...(parsedPiece.fairyName ? { fairyName: parsedPiece.fairyName } : {})
+          });
+          fileIndex++;
+        } else {
+          // Standard FEN - single character pieces
+          pieceStr = char;
+          const piece = parsePieceChar(pieceStr);
+          if (!piece) {
+            return null; // Invalid piece character
+          }
+
+          const square = files[fileIndex] + (8 - rank).toString();
+          pieces.push({
+            ...piece,
+            square
+          });
+          fileIndex++;
+          i++;
+        }
       }
 
-      if (fileIndex > 8) {
+      if (fileIndex > boardWidth) {
         return null; // Too many squares in rank
       }
     }
 
-    if (fileIndex !== 8) {
+    if (fileIndex !== boardWidth) {
       return null; // Not enough squares in rank
     }
   }
@@ -178,9 +341,10 @@ export function parsePiecePlacement(piecePlacement: string): ChessPiece[] | null
 /**
  * Converts an array of pieces back to FEN piece placement string
  * @param pieces - Array of pieces on the board
+ * @param isFfen - If true, use FFEN extended serialization (neutral pieces, rotations, fairy types)
  * @returns FEN piece placement string
  */
-export function piecesToFenString(pieces: ChessPiece[]): string {
+export function piecesToFenString(pieces: ChessPiece[], isFfen: boolean = false): string {
   const board: (ChessPiece | null)[][] = Array(8).fill(null).map(() => Array(8).fill(null));
   const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 
@@ -206,7 +370,7 @@ export function piecesToFenString(pieces: ChessPiece[]): string {
           rankStr += emptyCount.toString();
           emptyCount = 0;
         }
-        rankStr += pieceToChar(piece);
+        rankStr += isFfen ? pieceToFfenChar(piece) : pieceToChar(piece);
       } else {
         emptyCount++;
       }
@@ -223,7 +387,7 @@ export function piecesToFenString(pieces: ChessPiece[]): string {
 }
 
 /**
- * Parses a single piece character and returns piece type and color
+ * Parses a single piece character (standard FEN only)
  * @param char - Piece character (e.g., 'K', 'q', 'P')
  * @returns Piece object or null if invalid
  */
@@ -243,6 +407,247 @@ export function parsePieceChar(char: string): { type: ChessPieceType; color: Che
     type: lowerChar as ChessPieceType,
     color: char === lowerChar ? 'b' : 'w'
   };
+}
+
+/**
+ * Parses a FFEN piece character which may include extensions:
+ * - Neutral pieces: -K, -q
+ * - Rotations: *N (0.5, 1, 1.5, 2, 2.5, 3, 3.5)
+ * - Letters: 'a, 'A (black only)
+ * - Numbers: '7, ''23 (black only)
+ * - Markers: C, X, S, T (circle, cross, square, triangle)
+ * 
+ * @param pieceStr - Piece string from FFEN (e.g., 'K', '*1K', '-B', '*2q', 'C', etc.)
+ * @returns Extended piece object or null if invalid
+ */
+export function parseFfenPieceChar(pieceStr: string): { 
+  type: ChessPieceType; 
+  color: ChessPieceColor | 'n'; 
+  isNeutral: boolean;
+  rotation?: number;
+  fairyName?: string;
+} | null {
+  if (!pieceStr || pieceStr.length === 0) {
+    return null;
+  }
+
+  let currentStr = pieceStr;
+  let isNeutral = false;
+  let rotation: number | undefined;
+
+  // Parse neutral prefix: -
+  if (currentStr.startsWith('-')) {
+    isNeutral = true;
+    currentStr = currentStr.substring(1);
+  }
+
+  // Parse rotation prefix: *N
+  if (currentStr.startsWith('*')) {
+    const rotationMatch = currentStr.match(/^\*(\d+(?:\.\d+)?)/);
+    if (rotationMatch) {
+      const rotValue = parseFloat(rotationMatch[1]);
+      // Valid rotations: 0.5, 1, 1.5, 2, 2.5, 3, 3.5
+      if (![0.5, 1, 1.5, 2, 2.5, 3, 3.5].includes(rotValue)) {
+        return null;
+      }
+      rotation = rotValue;
+      currentStr = currentStr.substring(rotationMatch[0].length);
+    } else {
+      return null;
+    }
+  }
+
+  if (currentStr.length === 0) {
+    return null;
+  }
+
+  const firstChar = currentStr[0];
+
+  // Parse letters and numbers: ' or '' prefix (black only)
+  if (firstChar === "'") {
+    // Handle double apostrophe for 2+ digit numbers
+    if (currentStr.startsWith("''")) {
+      if (currentStr.length < 3) {
+        return null;
+      }
+      const numberPart = currentStr.substring(2);
+      if (!/^\d+$/.test(numberPart)) {
+        return null;
+      }
+      return {
+        type: 'a',
+        color: 'b',
+        isNeutral,
+        rotation,
+        fairyName: numberPart
+      };
+    } else {
+      // Single apostrophe for 1-digit number or letter
+      if (currentStr.length < 2) {
+        return null;
+      }
+      const afterApostrophe = currentStr.substring(1);
+      // Could be a letter (single char) or a number (1 digit)
+      return {
+        type: 'a',
+        color: 'b',
+        isNeutral,
+        rotation,
+        fairyName: afterApostrophe
+      };
+    }
+  }
+
+  // Standard pieces: K, Q, R, B, N, P, or markers: C, X, S, T
+  if (currentStr.length !== 1) {
+    return null;
+  }
+
+  const lowerChar = currentStr.toLowerCase();
+  const validPieces: string[] = ['k', 'q', 'r', 'b', 'n', 'p', 'c', 'x', 's', 't'];
+
+  if (!validPieces.includes(lowerChar)) {
+    return null;
+  }
+
+  const color: ChessPieceColor | 'n' = isNeutral ? 'n' : (currentStr === lowerChar ? 'b' : 'w');
+
+  return {
+    type: lowerChar as ChessPieceType,
+    color,
+    isNeutral,
+    rotation
+  };
+}
+
+/**
+ * Parses fairy metadata from the 7th FFEN block
+ * Format: cell:fairypiece:fairycondition followed by cell:fairypiece:fairycondition...
+ * Entries are identified by the cell pattern [a-z]\d+: at the start
+ * Note: fairypiece and fairycondition cannot contain spaces or colons
+ * @param fairyBlock - The fairy metadata block string
+ * @returns Record mapping cell coordinates to fairy metadata, or undefined if invalid or empty
+ */
+export function parseFairyMetadata(fairyBlock: string): Record<string, FairyPieceMetadata> | undefined {
+  if (!fairyBlock || fairyBlock.trim() === '') {
+    return undefined;
+  }
+
+  const fairyMetadata: Record<string, FairyPieceMetadata> = {};
+  
+  // Split by cell pattern: match positions where we have [a-z]\d+:
+  // Use a regex to find all cell positions
+  const cellPattern = /[a-z]\d+:/g;
+  const matches: Array<{ index: number; text: string }> = [];
+  let match;
+  while ((match = cellPattern.exec(fairyBlock)) !== null) {
+    matches.push({ index: match.index, text: match[0] });
+  }
+
+  if (matches.length === 0) {
+    return undefined;
+  }
+
+  for (let i = 0; i < matches.length; i++) {
+    const currentMatch = matches[i];
+    const nextMatch = i + 1 < matches.length ? matches[i + 1] : null;
+    
+    // Extract the cell and the rest of the entry
+    const cellWithColon = currentMatch.text; // e.g., "e5:"
+    const cell = cellWithColon.substring(0, cellWithColon.length - 1); // remove trailing ':'
+    
+    // Extract from after cell: to before the next cell (or end of string)
+    const entryStart = currentMatch.index + cellWithColon.length;
+    const entryEnd = nextMatch ? nextMatch.index : fairyBlock.length;
+    const entryContent = fairyBlock.substring(entryStart, entryEnd);
+    
+    // Parse entryContent as "fairyName:fairyCondition"
+    // Split on first colon only
+    const colonIndex = entryContent.indexOf(':');
+    if (colonIndex === -1) {
+      return undefined;
+    }
+    
+    const fairyName = entryContent.substring(0, colonIndex);
+    let fairyCondition = entryContent.substring(colonIndex + 1);
+    
+    // Clean up trailing comma or whitespace from fairyCondition
+    fairyCondition = fairyCondition.replace(/,\s*$/, '').trim();
+    
+    // Validate cell format (should already be validated by regex)
+    if (!cell || !fairyName || !fairyCondition) {
+      return undefined;
+    }
+
+    // Fairy names and conditions must not contain spaces or colons
+    if (fairyName.includes(' ') || fairyName.includes(':')) {
+      return undefined;
+    }
+    if (fairyCondition.includes(' ') || fairyCondition.includes(':')) {
+      return undefined;
+    }
+
+    fairyMetadata[cell] = {
+      fairyName,
+      fairyCondition
+    };
+  }
+
+  return Object.keys(fairyMetadata).length > 0 ? fairyMetadata : undefined;
+}
+
+/**
+ * Converts a FFEN piece object to a FFEN character string
+ * Handles neutral pieces, rotations, letters, numbers, and markers
+ * @param piece - Piece object with optional FFEN extensions
+ * @returns FFEN character string (e.g., 'K', '*1B', '-q', '*2.5r')
+ */
+export function pieceToFfenChar(piece: ChessPiece): string {
+  let result = '';
+
+  // Add neutral prefix if neutral
+  if (piece.isNeutral) {
+    result += '-';
+  }
+
+  // Add rotation prefix if present
+  if (piece.rotation !== undefined) {
+    result += `*${piece.rotation}`;
+  }
+
+  // Standard piece types
+  const standardPieces = ['k', 'q', 'r', 'b', 'n', 'p', 'c', 'x', 's', 't'];
+  const isStandardPiece = standardPieces.includes((piece.type as string).toLowerCase());
+
+  // Handle different piece types
+  if (piece.color === 'b') {
+    // Black pieces and letters/numbers
+    if (isStandardPiece) {
+      // Regular black piece or marker
+      result += (piece.type as string).toLowerCase();
+    } else {
+      // Fairy letter or number
+      if (/^\d+$/.test(piece.type as string)) {
+        // Number: use '' for multi-digit, ' for single digit
+        if ((piece.type as string).length === 1) {
+          result += `'${piece.type}`;
+        } else {
+          result += `''${piece.type}`;
+        }
+      } else {
+        // Letter
+        result += `'${piece.type}`;
+      }
+    }
+  } else if (piece.color === 'w') {
+    // White piece or marker
+    result += (piece.type as string).toUpperCase();
+  } else {
+    // Neutral piece (should have been prefixed with -)
+    result += (piece.type as string).toUpperCase();
+  }
+
+  return result;
 }
 
 /**
