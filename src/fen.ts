@@ -149,7 +149,12 @@ export function parseFen(fen: string): FenPosition | null {
  * @returns FEN or FFEN string representation
  */
 export function positionToFen(position: FenPosition): string {
-  const piecePlacement = piecesToFenString(position.pieces);
+  const isFfen =
+    (position.fairyMetadata && Object.keys(position.fairyMetadata).length > 0) ||
+    position.pieces.some(
+      p => p.color === 'n' || p.isNeutral || p.rotation !== undefined || p.fairyName !== undefined || p.fairyCondition !== undefined
+    );
+  const piecePlacement = piecesToFenString(position.pieces, isFfen);
   const fenParts = [
     piecePlacement,
     position.activeColor,
@@ -336,9 +341,10 @@ export function parsePiecePlacement(piecePlacement: string, isFfen: boolean = fa
 /**
  * Converts an array of pieces back to FEN piece placement string
  * @param pieces - Array of pieces on the board
+ * @param isFfen - If true, use FFEN extended serialization (neutral pieces, rotations, fairy types)
  * @returns FEN piece placement string
  */
-export function piecesToFenString(pieces: ChessPiece[]): string {
+export function piecesToFenString(pieces: ChessPiece[], isFfen: boolean = false): string {
   const board: (ChessPiece | null)[][] = Array(8).fill(null).map(() => Array(8).fill(null));
   const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 
@@ -364,7 +370,7 @@ export function piecesToFenString(pieces: ChessPiece[]): string {
           rankStr += emptyCount.toString();
           emptyCount = 0;
         }
-        rankStr += pieceToChar(piece);
+        rankStr += isFfen ? pieceToFfenChar(piece) : pieceToChar(piece);
       } else {
         emptyCount++;
       }

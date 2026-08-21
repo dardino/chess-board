@@ -717,11 +717,12 @@ export class ChessBoard extends HTMLElement {
   }
 
   private updateBoardOrientationFromCurrentFen(): void {
-    if (!this.currentFen) {
+    const fenString = this.currentFfen || this.currentFen;
+    if (!fenString) {
       return;
     }
 
-    const position = parseFen(this.currentFen);
+    const position = parseFen(fenString);
     if (position) {
       this.updateBoardOrientation(position.activeColor);
     }
