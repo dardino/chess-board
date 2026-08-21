@@ -83,7 +83,8 @@ export function parseFen(fen: string): FenPosition | null {
     return null;
   }
 
-  const isFfen = parts.length === 7; // FFEN has 7 blocks, standard FEN has 6
+  // FFEN if there is a 7th block OR if the piece placement contains extended FFEN notation
+  const isFfen = parts.length === 7 || /[-*']/.test(parts[0]);
 
   const [piecePlacement, activeColor, castlingRights, enPassantTarget, halfmoveClockStr, fullmoveNumberStr] = parts;
   const fairyMetadataBlock = parts[6]; // Optional 7th block for FFEN
