@@ -163,8 +163,10 @@ describe('ChessPiece Web Component', () => {
       element.setAttribute('rotation', '90');
       expect(element.getRotation()).toBe('90');
       
-      const pieceElement = element.shadowRoot?.querySelector('.piece') as HTMLElement;
-      expect(pieceElement?.style.transform).toBe('rotate(90deg)');
+      const pieceBgElement = element.shadowRoot?.querySelector('.piece .piece-bg') as HTMLElement;
+      const pieceFgElement = element.shadowRoot?.querySelector('.piece .piece-fg') as HTMLElement;
+      expect(pieceBgElement?.style.transform).toBe('rotate(90deg)');
+      expect(pieceFgElement?.style.transform).toBe('rotate(90deg)');
     });
 
     it('should handle all valid rotation values', () => {
@@ -174,11 +176,14 @@ describe('ChessPiece Web Component', () => {
         element.setAttribute('rotation', rotation);
         expect(element.getRotation()).toBe(rotation);
         
-        const pieceElement = element.shadowRoot?.querySelector('.piece') as HTMLElement;
+        const pieceBgElement = element.shadowRoot?.querySelector('.piece .piece-bg') as HTMLElement;
+        const pieceFgElement = element.shadowRoot?.querySelector('.piece .piece-fg') as HTMLElement;
         if (rotation === '0') {
-          expect(pieceElement?.style.transform).toBe('');
+          expect(pieceBgElement?.style.transform).toBe('');
+          expect(pieceFgElement?.style.transform).toBe('');
         } else {
-          expect(pieceElement?.style.transform).toBe(`rotate(${rotation}deg)`);
+          expect(pieceBgElement?.style.transform).toBe(`rotate(${rotation}deg)`);
+          expect(pieceFgElement?.style.transform).toBe(`rotate(${rotation}deg)`);
         }
       });
     });
@@ -189,8 +194,10 @@ describe('ChessPiece Web Component', () => {
       element.setRotation('180');
       expect(element.getRotation()).toBe('180');
       
-      const pieceElement = element.shadowRoot?.querySelector('.piece') as HTMLElement;
-      expect(pieceElement?.style.transform).toBe('rotate(180deg)');
+      const pieceBgElement = element.shadowRoot?.querySelector('.piece .piece-bg') as HTMLElement;
+      const pieceFgElement = element.shadowRoot?.querySelector('.piece .piece-fg') as HTMLElement;
+      expect(pieceBgElement?.style.transform).toBe('rotate(180deg)');
+      expect(pieceFgElement?.style.transform).toBe('rotate(180deg)');
     });
 
     it('should default to 0 for invalid rotation values', () => {
@@ -283,9 +290,11 @@ describe('ChessPiece Web Component', () => {
       expect(element.getFairyName()).toBe('GRA');
       expect(element.getFairyCondition()).toBe('=');
       
-      const pieceElement = element.shadowRoot?.querySelector('.piece') as HTMLElement;
-      expect(pieceElement?.style.transform).toBe('rotate(90deg)');
-      
+      const pieceBgElement = element.shadowRoot?.querySelector('.piece .piece-bg') as HTMLElement;
+      const pieceFgElement = element.shadowRoot?.querySelector('.piece .piece-fg') as HTMLElement;
+      expect(pieceBgElement?.style.transform).toBe('rotate(90deg)');
+      expect(pieceFgElement?.style.transform).toBe('rotate(90deg)');
+
       const fairyNameElement = element.shadowRoot?.querySelector('.fairy-name') as HTMLElement;
       const fairyConditionElement = element.shadowRoot?.querySelector('.fairy-condition') as HTMLElement;
       
@@ -311,8 +320,10 @@ describe('ChessPiece Web Component', () => {
       expect(element.getFairyName()).toBe('AMA');
       expect(element.getFairyCondition()).toBe('=');
 
-      const pieceElement = element.shadowRoot?.querySelector('.piece') as HTMLElement;
-      expect(pieceElement?.style.transform).toBe('rotate(180deg)');
+      const pieceBgElement = element.shadowRoot?.querySelector('.piece .piece-bg') as HTMLElement;
+      const pieceFgElement = element.shadowRoot?.querySelector('.piece .piece-fg') as HTMLElement;
+      expect(pieceBgElement?.style.transform).toBe('rotate(180deg)');
+      expect(pieceFgElement?.style.transform).toBe('rotate(180deg)');
 
       const fairyNameElement = element.shadowRoot?.querySelector('.fairy-name') as HTMLElement;
       const fairyConditionElement = element.shadowRoot?.querySelector('.fairy-condition') as HTMLElement;
