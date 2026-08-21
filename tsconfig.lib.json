@@ -16,7 +16,7 @@
   },
   "include": [
     "src/**/*"
-, "test/fen.test.ts"  ],
+  ],
   "exclude": [
     "node_modules",
     "dist"

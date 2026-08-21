@@ -325,6 +325,7 @@
           <li><a href="#features">Features</a></li>
           <li><a href="#installation">Installation</a></li>
           <li><a href="#usage">Usage</a></li>
+          <li><a href="#ffen">FFEN Support</a></li>
           <li><a href="#api">Programmatic API</a></li>
           <li><a href="#keyboard">Keyboard Navigation</a></li>
           <li><a href="#typescript">TypeScript Support</a></li>
@@ -566,6 +567,37 @@ const fen = board.getFen();
 // Preset positions
 board.setStartingPosition();                 // Standard starting position
 board.clearBoard();                          // Empty board</code></pre>
+
+      <h2 id="ffen">🧩 FFEN support</h2>
+      <p>The board accepts a single <code>fen</code> attribute or <code>setFen()</code> call for either standard FEN or FFEN. The component automatically detects the format and preserves fairy metadata when it is present.</p>
+
+      <h3>Supported FFEN features</h3>
+      <ul>
+        <li>Standard FEN parsing and serialization</li>
+        <li>FFEN values with optional fairy metadata suffixes</li>
+        <li>Neutral pieces with the <code>-</code> prefix, for example <code>-K</code> or <code>-b</code></li>
+        <li>Rotated pieces with the <code>*</code> prefix, for example <code>*1B</code> or <code>*3q</code></li>
+        <li>Fairy letters and numbers with the <code>'</code> prefix, for example <code>'a</code> or <code>''23</code></li>
+        <li>Non-standard board sizes like 4x4 or 11x11 layouts</li>
+      </ul>
+
+      <h3>FFEN examples</h3>
+      <pre><code>// Standard FEN
+board.setFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+
+// Neutral piece example
+board.setFen('8/8/8/8/8/8/8/-K3 w - - 0 1');
+
+// 90° rotation example
+board.setFen('8/8/8/8/4*1B3/8/8/8 w - - 0 1');
+
+// Fairy metadata example
+board.setFen('8/8/8/8/8/8/8/4K3 w - - 0 1 e4:gn:Chameleon');
+
+const currentState = board.getFen();
+console.log(currentState);</code></pre>
+
+      <p>In short, FFEN is handled as the same notation family as FEN: the same <code>fen</code> attribute and the same <code>setFen()</code> API are used, and the component automatically applies the correct parsing logic based on the value passed in.</p>
       
       <h2 id="keyboard">⌨️ Keyboard Navigation</h2>
       
