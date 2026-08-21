@@ -418,6 +418,41 @@ describe('FEN Utilities', () => {
         // 8 blocks
         expect(parseFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 d5:gn:Test extra')).toBeNull();
       });
+
+      it('should parse 6-block FFEN with neutral piece notation', () => {
+        // 6 blocks but with FFEN extended notation (-K = neutral king)
+        const ffen = '-Krnbqbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+        const position = parseFen(ffen);
+        expect(position).not.toBeNull();
+        const neutralKing = position?.pieces.find(p => p.square === 'a8');
+        expect(neutralKing).toBeDefined();
+        expect(neutralKing?.isNeutral).toBe(true);
+        expect(neutralKing?.type).toBe('k');
+        expect(position?.fairyMetadata).toBeUndefined();
+      });
+
+      it('should parse 6-block FFEN with rotated piece notation', () => {
+        // 6 blocks but with *1R = white rook rotated 90 degrees (replaces the R on a1)
+        const ffen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/*1RNBQKBNR w KQkq - 0 1';
+        const position = parseFen(ffen);
+        expect(position).not.toBeNull();
+        const rotatedRook = position?.pieces.find(p => p.square === 'a1');
+        expect(rotatedRook).toBeDefined();
+        expect(rotatedRook?.rotation).toBe(1);
+        expect(rotatedRook?.type).toBe('r');
+        expect(rotatedRook?.color).toBe('w');
+      });
+
+      it('should parse 6-block FFEN with fairy letter notation', () => {
+        // 6 blocks but with 'a = fairy letter a (black), replaces R on a1
+        const ffen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/'aNBQKBNR w KQkq - 0 1";
+        const position = parseFen(ffen);
+        expect(position).not.toBeNull();
+        const fairyLetter = position?.pieces.find(p => p.square === 'a1');
+        expect(fairyLetter).toBeDefined();
+        expect(fairyLetter?.type).toBe('a');
+        expect(fairyLetter?.color).toBe('b');
+      });
     });
 
     describe('positionToFen with FFEN support', () => {
@@ -456,6 +491,67 @@ describe('FEN Utilities', () => {
 
         const ffen = positionToFen(position);
         expect(ffen).toBe('4k3/8/8/8/8/8/8/4K3 w KQkq - 0 1 d5:gn:Chamaleon');
+      });
+
+      it('should generate FFEN piece placement for neutral pieces', () => {
+        const position: FenPosition = {
+          pieces: [
+            { type: 'k', color: 'n', square: 'e1', isNeutral: true },
+            { type: 'k', color: 'b', square: 'e8' }
+          ],
+          activeColor: 'w',
+          castlingRights: '-',
+          enPassantTarget: '-',
+          halfmoveClock: 0,
+          fullmoveNumber: 1
+        };
+
+        const ffen = positionToFen(position);
+        // Neutral king: per FFEN spec case does not matter for neutral pieces, '-K' or '-k' both valid
+        expect(ffen).toMatch(/-[Kk]/);
+        // Should be parseable back as FFEN
+        const reparsed = parseFen(ffen);
+        expect(reparsed).not.toBeNull();
+        const neutralKing = reparsed?.pieces.find(p => p.square === 'e1');
+        expect(neutralKing?.isNeutral).toBe(true);
+      });
+
+      it('should generate FFEN piece placement for rotated pieces', () => {
+        const position: FenPosition = {
+          pieces: [
+            { type: 'q', color: 'w', square: 'e1', rotation: 1 },
+            { type: 'k', color: 'b', square: 'e8' }
+          ],
+          activeColor: 'w',
+          castlingRights: '-',
+          enPassantTarget: '-',
+          halfmoveClock: 0,
+          fullmoveNumber: 1
+        };
+
+        const ffen = positionToFen(position);
+        // Rotated queen should be serialized with '*1' prefix
+        expect(ffen).toContain('*1Q');
+        // Should be parseable back as FFEN
+        const reparsed = parseFen(ffen);
+        expect(reparsed).not.toBeNull();
+        const rotatedQueen = reparsed?.pieces.find(p => p.square === 'e1');
+        expect(rotatedQueen?.rotation).toBe(1);
+      });
+
+      it('should round-trip FFEN with neutral pieces and fairy metadata', () => {
+        const original = '-Krnbqbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 e5:(1,5)-leaper:None';
+        const position = parseFen(original);
+        expect(position).not.toBeNull();
+        const serialized = positionToFen(position!);
+        // Re-parse the serialized form
+        const reparsed = parseFen(serialized);
+        expect(reparsed).not.toBeNull();
+        // Neutral king on a8 should survive round-trip
+        const neutralKing = reparsed?.pieces.find(p => p.square === 'a8');
+        expect(neutralKing?.isNeutral).toBe(true);
+        // Fairy metadata should survive round-trip
+        expect(reparsed?.fairyMetadata?.['e5']).toEqual({ fairyName: '(1,5)-leaper', fairyCondition: 'None' });
       });
     });
   });
