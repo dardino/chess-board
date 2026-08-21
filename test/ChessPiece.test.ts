@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { ChessPiece, type ChessPieceType, type ChessPieceColor, type ChessPieceRotation } from '../src/ChessPiece';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { ChessPiece, type ChessPieceColor, type ChessPieceRotation, type ChessPieceType } from '../src/ChessPiece';
 
 describe('ChessPiece Web Component', () => {
   let element: ChessPiece;
@@ -133,27 +133,24 @@ describe('ChessPiece Web Component', () => {
     expect(customElements.get('chess-piece')).toBeDefined();
   });
 
-  it('should render all chess pieces correctly', () => {
-    const testCases = [
-      { piece: 'k' as ChessPieceType, color: 'w' as ChessPieceColor, expected: 'w_k' },
-      { piece: 'q' as ChessPieceType, color: 'w' as ChessPieceColor, expected: 'w_q' },
-      { piece: 'r' as ChessPieceType, color: 'w' as ChessPieceColor, expected: 'w_r' },
-      { piece: 'b' as ChessPieceType, color: 'w' as ChessPieceColor, expected: 'w_b' },
-      { piece: 'n' as ChessPieceType, color: 'w' as ChessPieceColor, expected: 'w_n' },
-      { piece: 'p' as ChessPieceType, color: 'w' as ChessPieceColor, expected: 'w_p' },
-      { piece: 'k' as ChessPieceType, color: 'b' as ChessPieceColor, expected: 'b_k' },
-      { piece: 'q' as ChessPieceType, color: 'b' as ChessPieceColor, expected: 'b_q' },
-      { piece: 'r' as ChessPieceType, color: 'b' as ChessPieceColor, expected: 'b_r' },
-      { piece: 'b' as ChessPieceType, color: 'b' as ChessPieceColor, expected: 'b_b' },
-      { piece: 'n' as ChessPieceType, color: 'b' as ChessPieceColor, expected: 'b_n' },
-      { piece: 'p' as ChessPieceType, color: 'b' as ChessPieceColor, expected: 'b_p' },
-    ];
 
-    testCases.forEach(({ piece, color, expected }) => {
-      element.setPiece(piece, color);
-      const fgElement = element.shadowRoot?.querySelector('.piece-fg');
-      expect(fgElement?.textContent).toBe(expected);
-    });
+  it.each([
+    { piece: 'k' as ChessPieceType, color: 'w' as ChessPieceColor, expected: 'w_k' },
+    { piece: 'q' as ChessPieceType, color: 'w' as ChessPieceColor, expected: 'w_q' },
+    { piece: 'r' as ChessPieceType, color: 'w' as ChessPieceColor, expected: 'w_r' },
+    { piece: 'b' as ChessPieceType, color: 'w' as ChessPieceColor, expected: 'w_b' },
+    { piece: 'n' as ChessPieceType, color: 'w' as ChessPieceColor, expected: 'w_n' },
+    { piece: 'p' as ChessPieceType, color: 'w' as ChessPieceColor, expected: 'w_p' },
+    { piece: 'k' as ChessPieceType, color: 'b' as ChessPieceColor, expected: 'b_k' },
+    { piece: 'q' as ChessPieceType, color: 'b' as ChessPieceColor, expected: 'b_q' },
+    { piece: 'r' as ChessPieceType, color: 'b' as ChessPieceColor, expected: 'b_r' },
+    { piece: 'b' as ChessPieceType, color: 'b' as ChessPieceColor, expected: 'b_b' },
+    { piece: 'n' as ChessPieceType, color: 'b' as ChessPieceColor, expected: 'b_n' },
+    { piece: 'p' as ChessPieceType, color: 'b' as ChessPieceColor, expected: 'b_p' },
+  ])('should render piece %s with color %s correctly', ({ piece, color, expected }) => {
+    element.setPiece(piece, color);
+    const fgElement = element.shadowRoot?.querySelector('.piece-fg');
+    expect(fgElement?.textContent).toBe(expected);
   });
 
   // Test rotation functionality
@@ -294,6 +291,88 @@ describe('ChessPiece Web Component', () => {
       
       expect(fairyNameElement?.style.display).toBe('block');
       expect(fairyConditionElement?.style.display).toBe('block');
+    });
+
+    it('should update rendering when multiple attributes change', () => {
+      element.setPiece('t', 'w'); // White tiger
+      element.setRotation('45');
+      element.setFairyName('TIG');
+      element.setFairyCondition('&');
+
+      // Change multiple attributes
+      element.setPiece('a', 'b'); // Black amazon
+      element.setRotation('180');
+      element.setFairyName('AMA');
+      element.setFairyCondition('=');
+
+      expect(element.getPiece()).toBe('a');
+      expect(element.getColor()).toBe('b');
+      expect(element.getRotation()).toBe('180');
+      expect(element.getFairyName()).toBe('AMA');
+      expect(element.getFairyCondition()).toBe('=');
+
+      const pieceElement = element.shadowRoot?.querySelector('.piece') as HTMLElement;
+      expect(pieceElement?.style.transform).toBe('rotate(180deg)');
+
+      const fairyNameElement = element.shadowRoot?.querySelector('.fairy-name') as HTMLElement;
+      const fairyConditionElement = element.shadowRoot?.querySelector('.fairy-condition') as HTMLElement;
+
+      expect(fairyNameElement?.textContent).toBe('AMA');
+      expect(fairyNameElement?.style.display).toBe('block');
+      expect(fairyConditionElement?.textContent).toBe('=');
+      expect(fairyConditionElement?.style.display).toBe('block');
+    });
+  });
+
+  describe("custom event dispatching", () => {
+    it("should dispatch 'metadata-change' event when fairy-name is set", () => {
+      const spy = vi.fn();
+      element.addEventListener('fairy-metadata-changed', spy);
+
+      element.setFairyName('GRA');
+
+      expect(spy).toHaveBeenCalledTimes(1);
+      const event = spy.mock.calls[0][0] as CustomEvent;
+      expect(event.detail).toEqual({ fairyName: 'GRA' });
+    });
+
+    it("should dispatch 'metadata-change' event when fairy-condition is set", () => {
+      const spy = vi.fn();
+      element.addEventListener('fairy-metadata-changed', spy);
+
+      element.setFairyCondition('=');
+
+      expect(spy).toHaveBeenCalledTimes(1);
+      const event = spy.mock.calls[0][0] as CustomEvent;
+      expect(event.detail).toEqual({ fairyCondition: '=' });
+    });
+
+    it("should dispatch 'metadata-change' event when both fairy-name and fairy-condition are set", () => {
+      const spy = vi.fn();
+      element.addEventListener('fairy-metadata-changed', spy);
+
+      element.setFairyName('GRA');
+      element.setFairyCondition('=');
+
+      expect(spy).toHaveBeenCalledTimes(2);
+      const event1 = spy.mock.calls[0][0] as CustomEvent;
+      expect(event1.detail).toEqual({ fairyName: 'GRA' });
+
+      const event2 = spy.mock.calls[1][0] as CustomEvent;
+      expect(event2.detail).toEqual({ fairyCondition: '=', fairyName: 'GRA' });
+    });
+
+    it ("metadata-change event should include both fairyName and fairyCondition when both are set", () => {
+      const spy = vi.fn();
+      element.addEventListener('fairy-metadata-changed', spy);
+      // set Attributes directly to simulate attribute changes without triggering the custom event
+      element.setAttribute('fairy-name', 'GN');
+      element.setAttribute('fairy-condition', '=');
+      // now set the fairy name using the method to trigger the event
+      element.setFairyName('GRA');
+
+      const event2 = spy.mock.calls[0][0] as CustomEvent;
+      expect(event2.detail).toEqual({ fairyCondition: '=', fairyName: 'GRA' });
     });
   });
 });

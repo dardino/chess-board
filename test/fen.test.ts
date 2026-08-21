@@ -1,17 +1,18 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
+  getEmptyBoardFen,
+  getStartingPositionFen,
+  parseFairyMetadata,
   parseFen,
-  positionToFen,
+  parseFfenPieceChar,
+  parsePieceChar,
   parsePiecePlacement,
   piecesToFenString,
-  parsePieceChar,
   pieceToChar,
-  getStartingPositionFen,
-  getEmptyBoardFen,
-  parseFfenPieceChar,
-  parseFairyMetadata,
   pieceToFfenChar,
-  type ChessPiece,
+  positionToFen,
+  positionToFFen,
+  type FENChessPiece,
   type FenPosition
 } from '../src/fen';
 
@@ -46,17 +47,17 @@ describe('FEN Utilities', () => {
 
   describe('pieceToChar', () => {
     it('should convert white king to K', () => {
-      const piece: ChessPiece = { type: 'k', color: 'w', square: 'e1' };
+      const piece: FENChessPiece = { type: 'k', color: 'w', square: 'e1' };
       expect(pieceToChar(piece)).toBe('K');
     });
 
     it('should convert black queen to q', () => {
-      const piece: ChessPiece = { type: 'q', color: 'b', square: 'd8' };
+      const piece: FENChessPiece = { type: 'q', color: 'b', square: 'd8' };
       expect(pieceToChar(piece)).toBe('q');
     });
 
     it('should convert white pawn to P', () => {
-      const piece: ChessPiece = { type: 'p', color: 'w', square: 'e4' };
+      const piece: FENChessPiece = { type: 'p', color: 'w', square: 'e4' };
       expect(pieceToChar(piece)).toBe('P');
     });
   });
@@ -107,7 +108,7 @@ describe('FEN Utilities', () => {
 
   describe('piecesToFenString', () => {
     it('should convert pieces back to FEN string', () => {
-      const pieces: ChessPiece[] = [
+      const pieces: FENChessPiece[] = [
         { type: 'r', color: 'b', square: 'a8' },
         { type: 'n', color: 'b', square: 'b8' },
         { type: 'b', color: 'b', square: 'c8' },
@@ -149,13 +150,13 @@ describe('FEN Utilities', () => {
     });
 
     it('should handle empty board', () => {
-      const pieces: ChessPiece[] = [];
+      const pieces: FENChessPiece[] = [];
       const fenString = piecesToFenString(pieces);
       expect(fenString).toBe('8/8/8/8/8/8/8/8');
     });
 
     it('should handle sparse pieces', () => {
-      const pieces: ChessPiece[] = [
+      const pieces: FENChessPiece[] = [
         { type: 'k', color: 'w', square: 'e1' },
         { type: 'k', color: 'b', square: 'e8' }
       ];
@@ -165,8 +166,15 @@ describe('FEN Utilities', () => {
   });
 
   describe('parseFen', () => {
-    it('should parse complete starting position FEN', () => {
-      const fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+
+    it.each([
+      { fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR', description: 'FEN with first part only' },
+      { fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w', description: 'FEN with active color' },
+      { fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq', description: 'FEN with castling rights' },
+      { fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -', description: 'FEN with en passant target' },
+      { fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0', description: 'FEN with halfmove clock' },
+      { fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', description: 'full FEN' },
+    ])('should parse complete starting position $description', ({ fen }) => {
       const position = parseFen(fen);
 
       expect(position).not.toBeNull();
@@ -262,7 +270,7 @@ describe('FEN Utilities', () => {
     });
 
     it('should maintain piece placement through round-trip', () => {
-      const originalPieces: ChessPiece[] = [
+      const originalPieces: FENChessPiece[] = [
         { type: 'k', color: 'w', square: 'e1' },
         { type: 'q', color: 'w', square: 'd1' },
         { type: 'k', color: 'b', square: 'e8' }
@@ -354,28 +362,31 @@ describe('FEN Utilities', () => {
 
     describe('pieceToFfenChar', () => {
       it('should convert neutral pieces to FFEN format', () => {
-        const piece: ChessPiece = { type: 'k', color: 'n', square: 'e4', isNeutral: true };
+        const piece: FENChessPiece = { type: 'k', color: 'n', square: 'e4', isNeutral: true };
         expect(pieceToFfenChar(piece)).toBe('-K');
       });
 
       it('should convert rotated pieces to FFEN format', () => {
-        let piece: ChessPiece = { type: 'q', color: 'w', square: 'd1', rotation: 1 };
+        let piece: FENChessPiece = { type: 'q', color: 'w', square: 'd1', rotation: "90" };
         expect(pieceToFfenChar(piece)).toBe('*1Q');
         
-        piece = { type: 'r', color: 'b', square: 'a8', rotation: 2.5 };
+        piece = { type: 'r', color: 'b', square: 'a8', rotation: "225" };
         expect(pieceToFfenChar(piece)).toBe('*2.5r');
       });
 
       it('should convert fairy letters to FFEN format', () => {
-        const piece: ChessPiece = { type: 'a', color: 'b', square: 'e4' };
+        const piece: FENChessPiece = { type: '\'a', color: 'b', square: 'e4' };
         expect(pieceToFfenChar(piece)).toBe("'a");
       });
 
       it('should convert fairy numbers to FFEN format', () => {
-        let piece: ChessPiece = { type: '7', color: 'b', square: 'e4' };
+        let piece: FENChessPiece = { type: "'7", color: 'b', square: 'e4' };
+        expect(pieceToFfenChar(piece)).toBe("'7");
+
+        piece = { type: '7', color: 'b', square: 'e4' };
         expect(pieceToFfenChar(piece)).toBe("'7");
         
-        piece = { type: '23', color: 'b', square: 'e4' };
+        piece = { type: "''23", color: 'b', square: 'e4' };
         expect(pieceToFfenChar(piece)).toBe("''23");
       });
     });
@@ -412,9 +423,7 @@ describe('FEN Utilities', () => {
         expect(parseFen(ffen)).toBeNull();
       });
 
-      it('should return null for wrong number of blocks', () => {
-        // 5 blocks
-        expect(parseFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0')).toBeNull();
+      it('should return deafult  for wrong number of blocks', () => {
         // 8 blocks
         expect(parseFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 d5:gn:Test extra')).toBeNull();
       });
@@ -438,7 +447,7 @@ describe('FEN Utilities', () => {
         expect(position).not.toBeNull();
         const rotatedRook = position?.pieces.find(p => p.square === 'a1');
         expect(rotatedRook).toBeDefined();
-        expect(rotatedRook?.rotation).toBe(1);
+        expect(rotatedRook?.rotation).toBe('90');
         expect(rotatedRook?.type).toBe('r');
         expect(rotatedRook?.color).toBe('w');
       });
@@ -450,8 +459,44 @@ describe('FEN Utilities', () => {
         expect(position).not.toBeNull();
         const fairyLetter = position?.pieces.find(p => p.square === 'a1');
         expect(fairyLetter).toBeDefined();
-        expect(fairyLetter?.type).toBe('a');
+        expect(fairyLetter?.type).toBe('\'a');
         expect(fairyLetter?.color).toBe('b');
+      });
+
+      it('should parse 6-block FFEN with double fairy letter notation', () => {
+        // 6 blocks but with 'a = fairy letter a (black), replaces R on a1
+        const ffen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/''gnNBQKBNR w KQkq - 0 1";
+        const position = parseFen(ffen);
+        expect(position).not.toBeNull();
+        const fairyLetter = position?.pieces.find(p => p.square === 'a1');
+        expect(fairyLetter).toBeDefined();
+        expect(fairyLetter?.type).toBe('\'\'gn');
+        expect(fairyLetter?.color).toBe('b');
+      });
+    });
+
+    describe('positionToFFen', () => {
+      it('should generate a proper FFEN string and not JSON', () => {
+        const position: FenPosition = {
+          pieces: [
+            { type: 'q', color: 'w', square: 'e4' },
+            { type: 'k', color: 'b', square: 'e8' }
+          ],
+          activeColor: 'w',
+          castlingRights: '-',
+          enPassantTarget: '-',
+          halfmoveClock: 0,
+          fullmoveNumber: 1,
+          fairyMetadata: {
+            e4: { fairyName: 'gn', fairyCondition: 'Chameleon' }
+          }
+        };
+
+        const ffen = positionToFFen(position);
+        expect(ffen).toContain('4k3/8/8/8/4Q3/8/8/8');
+        expect(ffen).toContain(' e4:gn:Chameleon');
+        expect(ffen).not.toContain('{');
+        expect(ffen).not.toContain('"square"');
       });
     });
 
@@ -519,7 +564,7 @@ describe('FEN Utilities', () => {
       it('should generate FFEN piece placement for rotated pieces', () => {
         const position: FenPosition = {
           pieces: [
-            { type: 'q', color: 'w', square: 'e1', rotation: 1 },
+            { type: 'q', color: 'w', square: 'e1', rotation: "90" },
             { type: 'k', color: 'b', square: 'e8' }
           ],
           activeColor: 'w',
@@ -536,7 +581,7 @@ describe('FEN Utilities', () => {
         const reparsed = parseFen(ffen);
         expect(reparsed).not.toBeNull();
         const rotatedQueen = reparsed?.pieces.find(p => p.square === 'e1');
-        expect(rotatedQueen?.rotation).toBe(1);
+        expect(rotatedQueen?.rotation).toBe("90");
       });
 
       it('should round-trip FFEN with neutral pieces and fairy metadata', () => {
@@ -552,6 +597,23 @@ describe('FEN Utilities', () => {
         expect(neutralKing?.isNeutral).toBe(true);
         // Fairy metadata should survive round-trip
         expect(reparsed?.fairyMetadata?.['e5']).toEqual({ fairyName: '(1,5)-leaper', fairyCondition: 'None' });
+      });
+
+      it('should round-trip FFEN with neutral pieces and fairy metadata', () => {
+        const original = '-Krnbqbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 e5:(1,5)-leaper:,a1::Chamaleon,d4:gn:Imitator';
+        const position = parseFen(original);
+        expect(position).not.toBeNull();
+        const serialized = positionToFen(position!);
+        // Re-parse the serialized form
+        const reparsed = parseFen(serialized);
+        expect(reparsed).not.toBeNull();
+        // Neutral king on a8 should survive round-trip
+        const neutralKing = reparsed?.pieces.find(p => p.square === 'a8');
+        expect(neutralKing?.isNeutral).toBe(true);
+        // Fairy metadata should survive round-trip
+        expect(reparsed?.fairyMetadata?.['e5']).toEqual({ fairyName: '(1,5)-leaper' });
+        expect(reparsed?.fairyMetadata?.['a1']).toEqual({ fairyCondition: 'Chamaleon' });
+        expect(reparsed?.fairyMetadata?.['d4']).toEqual({ fairyName: 'gn', fairyCondition: 'Imitator' });
       });
     });
   });

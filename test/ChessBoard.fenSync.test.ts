@@ -2,13 +2,14 @@
  * Regression tests for the FEN/FFEN auto-sync mechanism.
  *
  * Invariant: whenever the board position changes (via API, mouse, or keyboard),
- * getFen() and getFFen() must immediately reflect the new state.
+ * getFen() must immediately reflect the new state.
  *
  * FEN is lossy (standard chess only — fairy info is dropped).
  * FFEN is lossless (JSON format preserving all fairy metadata).
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { ChessBoard } from '../src/ChessBoard.js';
+import { FENChessPiece, parsePiecePlacement } from '../src/fen.js';
 
 let element: ChessBoard;
 
@@ -19,11 +20,11 @@ beforeEach(() => {
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
-function ffenPieces(board: ChessBoard): Array<{ square: string; type: string; color: string }> {
-  const raw = board.getFFen();
+function ffenPieces(board: ChessBoard): Array<FENChessPiece> {
+  const raw = board.getFen();
   if (!raw) return [];
-  const parsed = JSON.parse(raw) as { pieces: Array<{ square: string; type: string; color: string }> };
-  return parsed.pieces;
+  const parsed = parsePiecePlacement(raw.split(' ')[0]);
+  return parsed ?? [];
 }
 
 // ─── addPiece ──────────────────────────────────────────────────────────────────
@@ -34,7 +35,7 @@ describe('FEN/FFEN sync — addPiece', () => {
     expect(element.getFen()).toBe('8/8/8/8/4Q3/8/8/8 w - - 0 1');
   });
 
-  it('updates getFFen() after adding a piece', () => {
+  it('updates getFen() after adding a piece', () => {
     element.addPiece('e4', 'q', 'w');
     const pieces = ffenPieces(element);
     expect(pieces).toHaveLength(1);
@@ -73,7 +74,7 @@ describe('FEN/FFEN sync — removePiece', () => {
     expect(element.getFen()).toBe('8/8/8/8/8/8/8/8 w - - 0 1');
   });
 
-  it('updates getFFen() to empty pieces after removing the only piece', () => {
+  it('updates getFen() to empty pieces after removing the only piece', () => {
     element.addPiece('e4', 'q', 'w');
     element.removePiece('e4');
     expect(ffenPieces(element)).toHaveLength(0);
@@ -99,7 +100,7 @@ describe('FEN/FFEN sync — setPieces', () => {
     expect(element.getFen()).toBe('4k3/8/8/8/8/8/8/4K3 w - - 0 1');
   });
 
-  it('updates getFFen() after setPieces', () => {
+  it('updates getFen() after setPieces', () => {
     element.setPieces([{ square: 'e1', type: 'k', color: 'w' }]);
     const pieces = ffenPieces(element);
     expect(pieces).toHaveLength(1);
@@ -126,7 +127,7 @@ describe('FEN/FFEN sync — setPieces', () => {
 // ─── setAttribute / setFen ────────────────────────────────────────────────────
 
 describe('FEN/FFEN sync — setFen / setAttribute', () => {
-  it('getFFen() is populated after setFen()', () => {
+  it('getFen() is populated after setFen()', () => {
     element.setFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
     // 32 pieces on starting position
     expect(ffenPieces(element)).toHaveLength(32);
@@ -145,9 +146,9 @@ describe('FEN/FFEN sync — setFen / setAttribute', () => {
     expect(element.getAllPieces()).toHaveLength(1);
   });
 
-  it('getFFen() is populated after setAttribute fen', () => {
+  it('getFen() is populated after setAttribute fen', () => {
     element.setAttribute('fen', '8/8/8/8/8/8/8/8 w - - 0 1');
-    expect(element.getFFen()).toContain('"pieces":[]');
+    expect(element.getFen()).toContain('8/8/8/8/8/8/8/8');
   });
 
   it('subsequent addPiece after setFen updates FEN correctly', () => {
@@ -169,9 +170,9 @@ describe('FEN/FFEN sync — no attribute re-render loop', () => {
     expect(element.hasPiece('e4')).toBe(true);
   });
 
-  it('board is NOT cleared when getFFen() is called after addPiece', () => {
+  it('board is NOT cleared when getFen() is called after addPiece', () => {
     element.addPiece('e4', 'q', 'w');
-    element.getFFen();
+    element.getFen();
     expect(element.hasPiece('e4')).toBe(true);
   });
 
