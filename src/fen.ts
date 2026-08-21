@@ -65,6 +65,10 @@ export interface FenPosition {
   fairyMetadata?: Record<string, FairyPieceMetadata>;
 }
 
+export interface FFenPosition extends FenPosition {
+  fairyBySquare?: Record<string, { fairyName?: string; fairyCondition?: string }>;
+}
+
 /**
  * Converts a FEN string to a structured position object
  * Supports both standard FEN (6 blocks) and FFEN (up to 7 blocks with fairy metadata)
@@ -174,6 +178,19 @@ export function positionToFen(position: FenPosition): string {
   }
 
   return fenParts.join(' ');
+}
+
+export function positionToFFen(position: FFenPosition): string {
+  const payload = {
+    ...position,
+    pieces: position.pieces.map(piece => ({
+      ...piece,
+      fairyName: position.fairyBySquare?.[piece.square]?.fairyName,
+      fairyCondition: position.fairyBySquare?.[piece.square]?.fairyCondition
+    }))
+  };
+
+  return JSON.stringify(payload);
 }
 
 /**

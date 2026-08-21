@@ -5,7 +5,7 @@
 import style from './ChessBoard.css?raw';
 import template from './ChessBoard.html?raw';
 import { ChessPiece, type ChessPieceColor, type ChessPieceRotation, type ChessPieceType } from './ChessPiece';
-import { parseFen, type ChessPiece as FenChessPiece } from './fen';
+import { parseFen, positionToFen, positionToFFen, type ChessPiece as FenChessPiece, type FenPosition, type FFenPosition } from './fen';
 
 export interface CellClickPiece {
   color: 'white' | 'black' | 'neutral';
@@ -50,6 +50,7 @@ export class ChessBoard extends HTMLElement {
   private currentSquare: string | null = null;
   private selectedPieceSquare: string | null = null;
   private cellDecorators: Partial<Record<Square, CellDecorator>> = {};
+  private currentFFen: string = '';
 
   // Private keyboard handler properties (arrow functions for auto-binding)
   #handleArrowUp = (event: KeyboardEvent): void => {
@@ -194,6 +195,7 @@ export class ChessBoard extends HTMLElement {
     destinationSquare.appendChild(pieceToMove);
     this.clearSelectedPiece();
     this.setCurrentSquare(this.currentSquare);
+    this.serializeBoardState();
     event.preventDefault();
   };
 
@@ -546,6 +548,7 @@ export class ChessBoard extends HTMLElement {
   private removePieceFromCurrentSquare(): void {
     if (!this.currentSquare) return;
     this.#removePieceFromSquare(this.currentSquare);
+    this.serializeBoardState();
   }
 
   /**
@@ -555,7 +558,7 @@ export class ChessBoard extends HTMLElement {
    * @param color - Color of piece
    * @param rotation - Optional rotation angle
    */
-  #addPieceToSquare(coordinate: string, pieceType: string, color: string, rotation?: ChessPieceRotation): void {
+  #addPieceToSquare(coordinate: string, pieceType: string, color: string, rotation?: ChessPieceRotation, skipSerialize?: boolean): void {
     const square = this.shadow.querySelector(`[data-coordinate="${coordinate}"]`) as HTMLElement;
     if (!square) return;
 
@@ -574,6 +577,9 @@ export class ChessBoard extends HTMLElement {
     }
     newPiece.classList.add('piece');
     square.appendChild(newPiece);
+    if (!skipSerialize) {
+      this.serializeBoardState();
+    }
   }
 
   private addOrReplacePiece(pieceType: string, color: string): void {
@@ -760,6 +766,9 @@ export class ChessBoard extends HTMLElement {
       
       this.placePiece(piece);
     }
+
+    // Sync computed FEN/FFEN fields after loading from attribute
+    this.serializeBoardState();
   }
 
   private clearPieces(): void {
@@ -805,6 +814,41 @@ export class ChessBoard extends HTMLElement {
     square.appendChild(pieceElement);
   }
 
+  private serializeBoardState(): void {
+    const fairyBySquare: NonNullable<FFenPosition['fairyBySquare']> = {};
+    this.squares?.forEach(square => {
+      const coordinate = square.getAttribute('data-coordinate');
+      const pieceElement = square.querySelector('chess-piece');
+      if (!coordinate || !pieceElement) return;
+      const fairyName = pieceElement.getAttribute('fairy-name');
+      const fairyCondition = pieceElement.getAttribute('fairy-condition');
+      if (fairyName || fairyCondition) {
+        fairyBySquare[coordinate] = {
+          fairyName: fairyName || undefined,
+          fairyCondition: fairyCondition || undefined
+        };
+      }
+    });
+
+    const position: FFenPosition = {
+      pieces: this.getAllPieces().map(piece => ({
+        type: piece.type,
+        color: piece.color,
+        square: piece.square
+      })),
+      activeColor: this.hasAttribute('black-to-move') ? 'b' : 'w',
+      castlingRights: '-',
+      enPassantTarget: '-',
+      halfmoveClock: 0,
+      fullmoveNumber: 1,
+      fairyBySquare
+    };
+    // Update only internal state; do NOT set attributes to avoid triggering
+    // attributeChangedCallback → updatePiecesFromFen() which would clear the board.
+    this.currentFen = positionToFen(position);
+    this.currentFFen = positionToFFen(position);
+  }
+
   // Public methods
 
   /**
@@ -821,6 +865,10 @@ export class ChessBoard extends HTMLElement {
    */
   getFen(): string {
     return this.currentFen;
+  }
+
+  getFFen(): string {
+    return this.currentFFen;
   }
 
   /**
@@ -934,6 +982,7 @@ export class ChessBoard extends HTMLElement {
       throw new Error(`Invalid square coordinate: ${square}. Must be a valid square from a1 to h8.`);
     }
     this.#removePieceFromSquare(square);
+    this.serializeBoardState();
   }
 
   /**
@@ -1002,10 +1051,11 @@ export class ChessBoard extends HTMLElement {
     // Clear board
     this.clearPieces();
     
-    // Add all pieces
+    // Add all pieces (skip per-piece serialization; serialize once at the end)
     for (const piece of pieces) {
-      this.#addPieceToSquare(piece.square, piece.type, piece.color, piece.rotation);
+      this.#addPieceToSquare(piece.square, piece.type, piece.color, piece.rotation, true);
     }
+    this.serializeBoardState();
   }
 
   /**

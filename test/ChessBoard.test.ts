@@ -204,6 +204,7 @@ describe('ChessBoard FEN support', () => {
   it('should accept fen attribute', () => {
     element.setAttribute('fen', '8/8/8/8/8/8/8/8 w - - 0 1');
     expect(element.getFen()).toBe('8/8/8/8/8/8/8/8 w - - 0 1');
+    expect(element.getFFen()).toContain('"pieces":[]');
   });
 
   it('should place pieces from FEN string', () => {
@@ -275,6 +276,7 @@ describe('ChessBoard FEN support', () => {
     expect(piece).not.toBeNull();
     expect(piece?.getAttribute('piece')).toBe('k');
     expect(piece?.getAttribute('color')).toBe('w');
+    expect(element.getFFen()).toContain('"square":"e1"');
   });
 
   it('should support setStartingPosition method', () => {

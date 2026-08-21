@@ -24,6 +24,8 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
       expect(piece?.type).toBe('q');
       expect(piece?.color).toBe('w');
       expect(piece?.rotation).toBe('0');
+      expect(element.getFen()).toBe('8/8/8/8/4Q3/8/8/8 w - - 0 1');
+      expect(element.getFFen()).toContain('"square":"e4"');
     });
 
     it('should add a piece with rotation', () => {
@@ -32,6 +34,7 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
       const piece = element.getPieceAt('e4');
       expect(piece).not.toBeNull();
       expect(piece?.rotation).toBe('45');
+      expect(element.getFFen()).toContain('"square":"e4"');
     });
 
     it('should replace existing piece on square', () => {
@@ -41,6 +44,7 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
       const piece = element.getPieceAt('e4');
       expect(piece?.type).toBe('k');
       expect(piece?.color).toBe('b');
+      expect(element.getFen()).toBe('8/8/8/8/4k3/8/8/8 w - - 0 1');
     });
 
     it('should throw error for invalid square coordinate', () => {
@@ -83,6 +87,7 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
       
       const piece = element.getPieceAt('e4');
       expect(piece?.color).toBe('n');
+      expect(element.getFFen()).toContain('"color":"n"');
     });
   });
 
@@ -94,6 +99,7 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
       element.removePiece('e4');
       expect(element.hasPiece('e4')).toBe(false);
       expect(element.getPieceAt('e4')).toBeNull();
+      expect(element.getFen()).toBe('8/8/8/8/8/8/8/8 w - - 0 1');
     });
 
     it('should not throw error when removing from empty square', () => {
@@ -215,6 +221,7 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
       expect(element.hasPiece('e4')).toBe(true);
       expect(element.hasPiece('d4')).toBe(true);
       expect(element.hasPiece('c3')).toBe(true);
+      expect(element.getFen()).toBe('8/8/8/8/3kQ3/2R5/8/8 w - - 0 1');
     });
 
     it('should clear board before setting pieces', () => {
@@ -250,6 +257,7 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
       element.setPieces([]);
       
       expect(element.getAllPieces()).toHaveLength(0);
+      expect(element.getFen()).toBe('8/8/8/8/8/8/8/8 w - - 0 1');
     });
   });
 

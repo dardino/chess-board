@@ -242,9 +242,9 @@ e4Square.appendChild(king);
 <chess-board hide-labels></chess-board>
 ```
 
-### FEN Support
+### FEN / FFEN Support
 
-The chess board supports Forsyth-Edwards Notation (FEN) for loading and displaying specific chess positions.
+The chess board supports standard Forsyth-Edwards Notation (FEN) and the fairy-aware FFEN format used for composed chess problems and custom piece metadata.
 
 #### Setting Position with FEN
 
@@ -258,6 +258,18 @@ The chess board supports Forsyth-Edwards Notation (FEN) for loading and displayi
 <!-- Custom position -->
 <chess-board fen="r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 4 4"></chess-board>
 ```
+
+#### Setting Position with FFEN
+
+```html
+<!-- FFEN sets fairy metadata and takes priority over FEN when both are present -->
+<chess-board
+  fen="8/8/8/8/8/8/8/8 w - - 0 1"
+  ffen='{"pieces":[{"square":"e4","type":"q","color":"w"}],"activeColor":"w","castlingRights":"-","enPassantTarget":"-","halfmoveClock":0,"fullmoveNumber":1,"fairyBySquare":{"e4":{"fairyName":"N","fairyCondition":"@"}}}'
+></chess-board>
+```
+
+The board keeps the internal state synchronized automatically: every mutation recomputes both the standard FEN and the lossless FFEN JSON. When both values are available, FFEN is treated as the authoritative representation for the current board state.
 
 #### Board Rotation Based on Active Color
 
@@ -273,16 +285,21 @@ The board automatically rotates 180 degrees when it's black's turn to move:
 
 This provides a better user experience by orienting the board from the perspective of the player whose turn it is.
 
-#### Programmatic FEN Control
+#### Programmatic FEN / FFEN Control
 
 ```javascript
 const board = document.querySelector('chess-board');
 
-// Set position using FEN
+// Standard FEN
 board.setFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
-
-// Get current FEN (returns the last valid FEN set)
 const currentFen = board.getFen();
+
+// Fairy-aware FFEN (lossless, includes fairy metadata)
+board.setFfen('{"pieces":[{"square":"e4","type":"q","color":"w"}],"activeColor":"w","castlingRights":"-","enPassantTarget":"-","halfmoveClock":0,"fullmoveNumber":1,"fairyBySquare":{"e4":{"fairyName":"N","fairyCondition":"@"}}}');
+const currentFfen = board.getFFen();
+
+// Sync is automatic after board edits; getFen()/getFFen() always reflect the latest state
+// FFEN takes precedence when both FEN and FFEN are present
 
 // Set starting position
 board.setStartingPosition();
@@ -453,12 +470,17 @@ The `chess-board` element renders a complete 8x8 chess board with:
 
 #### Methods
 
-##### FEN Management
+##### FEN / FFEN Management
 
-- `setFen(fen: string)`: Set board position using FEN notation
-- `getFen(): string`: Get current FEN string
+- `setFen(fen: string)`: Set board position using standard FEN notation
+- `getFen(): string`: Get the current standard FEN string
+- `setFfen(ffen: string)`: Set board position using FFEN (fairy-aware notation)
+- `getFFen(): string`: Get the current FFEN JSON payload for the board state
+- `getFfen(): string`: Alias for the current FFEN value, kept for compatibility with the FFEN attribute API
 - `setStartingPosition()`: Set board to standard starting position
 - `clearBoard()`: Remove all pieces from the board
+
+> When both attributes are present, FFEN takes priority over FEN. The board keeps both values synchronized after each change, while standard FEN remains the lossy, engine-friendly view.
 
 ##### Square Selection
 
