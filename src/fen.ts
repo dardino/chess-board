@@ -294,11 +294,12 @@ export function parsePiecePlacement(piecePlacement: string, isFfen: boolean = fa
 
           const square = files[fileIndex] + (boardHeight - rank).toString();
           pieces.push({
-            type: parsedPiece.type as ChessPieceType,
+            type: parsedPiece.type,
             color: parsedPiece.color as ChessPieceColor | 'n',
             square,
             isNeutral: parsedPiece.isNeutral,
-            rotation: parsedPiece.rotation
+            rotation: parsedPiece.rotation,
+            ...(parsedPiece.fairyName ? { fairyName: parsedPiece.fairyName } : {})
           });
           fileIndex++;
         } else {
@@ -414,10 +415,11 @@ export function parsePieceChar(char: string): { type: ChessPieceType; color: Che
  * @returns Extended piece object or null if invalid
  */
 export function parseFfenPieceChar(pieceStr: string): { 
-  type: ChessPieceType | string; 
+  type: ChessPieceType; 
   color: ChessPieceColor | 'n'; 
   isNeutral: boolean;
   rotation?: number;
+  fairyName?: string;
 } | null {
   if (!pieceStr || pieceStr.length === 0) {
     return null;
@@ -467,10 +469,11 @@ export function parseFfenPieceChar(pieceStr: string): {
         return null;
       }
       return {
-        type: numberPart,
+        type: 'a',
         color: 'b',
         isNeutral,
-        rotation
+        rotation,
+        fairyName: numberPart
       };
     } else {
       // Single apostrophe for 1-digit number or letter
@@ -480,10 +483,11 @@ export function parseFfenPieceChar(pieceStr: string): {
       const afterApostrophe = currentStr.substring(1);
       // Could be a letter (single char) or a number (1 digit)
       return {
-        type: afterApostrophe,
+        type: 'a',
         color: 'b',
         isNeutral,
-        rotation
+        rotation,
+        fairyName: afterApostrophe
       };
     }
   }
@@ -503,7 +507,7 @@ export function parseFfenPieceChar(pieceStr: string): {
   const color: ChessPieceColor | 'n' = isNeutral ? 'n' : (currentStr === lowerChar ? 'b' : 'w');
 
   return {
-    type: lowerChar as ChessPieceType | string,
+    type: lowerChar as ChessPieceType,
     color,
     isNeutral,
     rotation

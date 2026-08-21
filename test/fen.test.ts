@@ -302,13 +302,13 @@ describe('FEN Utilities', () => {
       });
 
       it('should parse fairy letters (black only)', () => {
-        expect(parseFfenPieceChar("'a")).toEqual({ type: 'a', color: 'b', isNeutral: false, rotation: undefined });
-        expect(parseFfenPieceChar("'A")).toEqual({ type: 'A', color: 'b', isNeutral: false, rotation: undefined });
+        expect(parseFfenPieceChar("'a")).toEqual({ type: 'a', color: 'b', isNeutral: false, rotation: undefined, fairyName: 'a' });
+        expect(parseFfenPieceChar("'A")).toEqual({ type: 'a', color: 'b', isNeutral: false, rotation: undefined, fairyName: 'A' });
       });
 
       it('should parse fairy numbers (black only)', () => {
-        expect(parseFfenPieceChar("'7")).toEqual({ type: '7', color: 'b', isNeutral: false, rotation: undefined });
-        expect(parseFfenPieceChar("''23")).toEqual({ type: '23', color: 'b', isNeutral: false, rotation: undefined });
+        expect(parseFfenPieceChar("'7")).toEqual({ type: 'a', color: 'b', isNeutral: false, rotation: undefined, fairyName: '7' });
+        expect(parseFfenPieceChar("''23")).toEqual({ type: 'a', color: 'b', isNeutral: false, rotation: undefined, fairyName: '23' });
       });
 
       it('should parse markers (C, X, S, T)', () => {
