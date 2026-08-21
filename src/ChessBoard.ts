@@ -52,10 +52,6 @@ export class ChessBoard extends HTMLElement {
   private cellDecorators: Partial<Record<Square, CellDecorator>> = {};
   private currentFFen: string = '';
 
-  private syncFenFromBoard(): void {
-    // No-op: kept for backward compat references; logic merged into serializeBoardState()
-  }
-
   // Private keyboard handler properties (arrow functions for auto-binding)
   #handleArrowUp = (event: KeyboardEvent): void => {
     // Handle Shift+Up (flip to white)
