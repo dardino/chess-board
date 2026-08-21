@@ -159,14 +159,14 @@ board.addEventListener('cellClick', (event) => {
     </p>
     <p>Interact with the board below (add/delete/move pieces) and watch the strings update in real time.</p>
     <div class="board-container board-medium">
-      <chess-board id="fen-sync-board" fen="r1bqkb1r/pp3ppp/2np1n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 6"></chess-board>
+      <chess-board id="fen-sync-board" ffen="r1bqkb1r/pp3ppp/2np1n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 6"></chess-board>
     </div>
     <div class="click-info" style="margin-top: 1rem;">
       <h3>FEN (standard, lossy)</h3>
       <div id="fen-output" style="font-family: monospace; word-break: break-all;">—</div>
     </div>
     <div class="click-info" style="margin-top: 0.5rem;">
-      <h3>FFEN (fairy-aware JSON, lossless)</h3>
+      <h3>FFEN (fairy-aware, lossless)</h3>
       <div id="ffen-output" style="font-family: monospace; white-space: pre-wrap; font-size: 0.85rem; max-height: 200px; overflow-y: auto;">—</div>
     </div>
     <div class="code-example">

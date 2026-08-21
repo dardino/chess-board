@@ -207,6 +207,10 @@
     <div class="board-container">
       <h2>Chess Board</h2>
       <chess-board id="board"></chess-board>
+      <div>
+        <h3>📋 FFEN:</h3>
+        <div class="info-box" id="current-fen-sync-info"></div>
+      </div>
     </div>
     
     <!-- Controls -->
@@ -215,19 +219,6 @@
         <h3>📋 Information</h3>
         <div class="info-box" id="info">No pieces on the board</div>
       </div>
-      
-      <div class="control-group">
-        <h3>📋 FEN / FFEN state</h3>
-        <div class="info-box" id="fen-sync-info">Standard FEN + FFEN stay synchronized after every mutation.
-
-board.setFen('8/8/8/8/4Q3/8/8/8 w - - 0 1');
-board.getFen();
-board.getFFen();
-board.setFfen('{"pieces":[{"square":"e4","type":"q","color":"w"}],"activeColor":"w","castlingRights":"-","enPassantTarget":"-","halfmoveClock":0,"fullmoveNumber":1}');
-
-FFEN takes priority when both are present.</div>
-      </div>
-
       <div class="control-group">
         <h3>➕ Add Piece</h3>
         <div class="input-group">
@@ -597,6 +588,12 @@ setInterval(() => {
           }
         });
       }
+    });
+
+    const fenInfo = document.getElementById('current-fen-sync-info');
+    fenInfo.textContent = board.getFen();
+    board.addEventListener('fenChange', (e) => {
+      fenInfo.textContent = e.detail.fen;
     });
     
     // Initial update
