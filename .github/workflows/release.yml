@@ -52,6 +52,7 @@ jobs:
     needs: build-and-test
     permissions:
       pages: write
+      contents: read
       id-token: write
 
     environment:
@@ -66,7 +67,7 @@ jobs:
   publish-npm:
     if: github.event_name == 'release'
     runs-on: ubuntu-latest
-    needs: publish-github-pages
+    needs: build-and-test
     permissions:
       id-token: write
       contents: read
