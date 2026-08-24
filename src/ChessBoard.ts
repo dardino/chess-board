@@ -154,28 +154,33 @@ export class ChessBoard extends HTMLElement {
     }
     event.preventDefault();
   };
+
   #handleSelectPieceByKey = (event: KeyboardEvent): void => {
+    event.preventDefault();
+
     if (!this.#checkModifiers(event)) return;
     if (!this.#currentSquare) {
       return;
     }
 
     const currentSquareHasPiece = this.hasPiece(this.#currentSquare);
-    const currentSelection = !!this.#selectedPieceSquare;
+    const currentSelection = this.#selectedPieceSquare;
 
     // If the current square has a piece and no piece is selected, select the piece
     if (currentSquareHasPiece && !currentSelection) {
       this.#setSelectedPiece(this.#currentSquare);
+      return;
     }
     // If the current square has a piece and a piece is already selected, toggle selection
-    else if (currentSquareHasPiece && this.#selectedPieceSquare === this.#currentSquare) {
+    else if (currentSquareHasPiece && currentSelection === this.#currentSquare) {
       this.#clearSelectedPiece();
+      return;
     }
     // If the current square does not have a piece and no piece is selected, do nothing
     if (!currentSelection) {
-      event.preventDefault();
       return;
     }
+    // else move the selected piece to the current square
     const piece = this.#getPieceAtSquare(this.#selectedPieceSquare!);
     this.#removePieceFromSquare(this.#currentSquare!);
     this.#removePieceFromSquare(this.#selectedPieceSquare!);
@@ -184,7 +189,6 @@ export class ChessBoard extends HTMLElement {
     }
     this.#clearSelectedPiece();
     this.#setCurrentSquare(this.#currentSquare);
-    event.preventDefault();
   };
   #handleAddPiece = (pieceType: ChessPieceType, color: ChessPieceColor): (event: KeyboardEvent) => void => {
     return (event: KeyboardEvent) => {
@@ -886,15 +890,19 @@ export class ChessBoard extends HTMLElement {
     }
 
     this.#setCurrentSquare(coordinate);
+    let returnValue: boolean = false;
 
     if (!this.hasPiece(coordinate)) {
       this.#clearSelectedPiece();
-      return false;
+    } else  if (this.#selectedPieceSquare === coordinate) {
+      this.#clearSelectedPiece();
+    } else {
+      this.#selectedPieceSquare = coordinate;
+      returnValue = true;
     }
 
-    this.#selectedPieceSquare = coordinate;
     this.#updateSelectedPieceState();
-    return true;
+    return returnValue;
   }
 
   //#endregion

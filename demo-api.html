@@ -531,10 +531,11 @@ setInterval(() => {
     function simulateSpace() {
       const selected = board.getSelectedPieceSquare();
       if (selected) {
-        updateSelectionInfo(null);
-        alert(`Piece at ${selected} would be moved. Try navigating and pressing Space to move it.`);
+        board.selectPiece('e4');
+        updateSelectionInfo('e4');
       } else {
-        alert('No piece selected. Focus board, navigate to e4, and press Space on a piece.');
+        board.selectPiece('e4');
+        updateSelectionInfo('e4');
       }
     }
     
