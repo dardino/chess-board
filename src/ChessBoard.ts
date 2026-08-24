@@ -550,7 +550,7 @@ export class ChessBoard extends HTMLElement {
    * @param color - Color of piece
    * @param rotation - Optional rotation angle
    */
-  #addPieceToSquare(coordinate: string, piece: PieceInfo): void {
+  #addPieceToSquare(coordinate: string, piece: PieceInfo, skipSerialization = false): void {
     const square = this.#shadow.querySelector(`[data-coordinate="${coordinate}"]`) as HTMLElement;
     if (!square) return;
 
@@ -571,7 +571,9 @@ export class ChessBoard extends HTMLElement {
     }
     newPiece.classList.add('piece');
     square.appendChild(newPiece);
-    this.#serializeBoardState();
+    if (!skipSerialization) {
+      this.#serializeBoardState();
+    }
   }
 
   /**
@@ -1060,7 +1062,7 @@ export class ChessBoard extends HTMLElement {
     
     // Add all pieces (skip per-piece serialization; serialize once at the end)
     for (const piece of pieces) {
-      this.#addPieceToSquare(piece.square, piece);
+      this.#addPieceToSquare(piece.square, piece, true);
     }
     this.#serializeBoardState();
   }

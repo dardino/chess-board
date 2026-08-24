@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChessBoard, PieceInfoWithSquare } from '../src/ChessBoard';
 
 describe('ChessBoard Public API - Piece Manipulation', () => {
@@ -258,6 +258,25 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
       
       expect(element.getAllPieces()).toHaveLength(0);
       expect(element.getFen()).toBe('8/8/8/8/8/8/8/8 w - - 0 1');
+    });
+
+    it('should serialize board state only once for multiple pieces', () => {
+      const fenChangeSpy = vi.fn();
+      element.addEventListener('fenChange', fenChangeSpy);
+
+      const piecesToSet: Array<PieceInfoWithSquare> = [
+        { square: 'e4', type: 'q', color: 'w' },
+        { square: 'd4', type: 'k', color: 'b' },
+        { square: 'c3', type: 'r', color: 'w' },
+      ];
+
+      element.setPieces(piecesToSet);
+
+      // Flush microtask queue so the debounced fenChange fires
+      return Promise.resolve().then(() => {
+        expect(fenChangeSpy).toHaveBeenCalledTimes(1);
+        element.removeEventListener('fenChange', fenChangeSpy);
+      });
     });
   });
 
