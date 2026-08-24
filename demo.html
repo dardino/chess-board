@@ -31,7 +31,7 @@
       <li><strong>Keyboard Navigation</strong>: Full keyboard support for piece placement and manipulation</li>
       <li><strong>Board Orientation</strong>: Flip between white/black perspective with Meta+Arrow</li>
       <li><strong>Responsive Design</strong>: Adapts to container size with CSS Container Queries</li>
-      <li><strong>FEN / FFEN Sync</strong>: Read and write standard FEN plus a lossless FFEN payload that preserves fairy metadata</li>
+      <li><strong>FEN / FFEN Auto-Detect</strong>: Use the single <code>fen</code> attribute for either standard FEN or FFEN input, with automatic format detection</li>
     </ul>
 
     <h2>Interactive Demo - Try It Yourself!</h2>
@@ -146,27 +146,26 @@ board.addEventListener('cellClick', (event) => {
     <h2>FEN / FFEN Live View</h2>
     <p>
       Every time the board position changes — via keyboard, mouse click, or programmatic API — the
-      <strong>FEN</strong> and <strong>FFEN</strong> values are automatically recomputed and exposed
-      through <code>getFen()</code> and <code>getFFen()</code>. The values stay synchronized with the
-      board state, so the user can read the current position at any moment without manual refresh logic.
+      current position is recomputed and exposed through <code>getFen()</code>. The component accepts
+      either a standard FEN string or a fairy-aware FFEN string through the same <code>fen</code>
+      attribute, and it auto-detects the format so you do not need separate state or duplicate APIs.
     </p>
     <p>
       <strong>FEN</strong> follows the standard Forsyth-Edwards Notation and is <em>lossy</em>: it keeps the
-      board structure but drops specialized fairy metadata. <strong>FFEN</strong> (Fairy FEN) is stored as
-      JSON and is <em>lossless</em>: it preserves all fairy metadata (fairy name, condition, rotation and
-      neutral piece information) alongside piece type, color, and square. When both values are present,
-      FFEN takes priority for rendering and state sync.
+      board structure but drops specialized fairy metadata. <strong>FFEN</strong> extends the same format
+      with fairy-aware metadata when needed, and the board preserves that information automatically when the
+      input contains it.
     </p>
-    <p>Interact with the board below (add/delete/move pieces) and watch the strings update in real time.</p>
+    <p>Interact with the board below (add/delete/move pieces) and watch the string update in real time.</p>
     <div class="board-container board-medium">
-      <chess-board id="fen-sync-board" fen="r1bqkb1r/pp3ppp/2np1n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 6"></chess-board>
+      <chess-board id="fen-sync-board" fen="r1bqkb1r/pp3ppp/2np1n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 6 e4:gn:Chameleon"></chess-board>
     </div>
     <div class="click-info" style="margin-top: 1rem;">
-      <h3>FEN (standard, lossy)</h3>
+      <h3>Current Position</h3>
       <div id="fen-output" style="font-family: monospace; word-break: break-all;">—</div>
     </div>
     <div class="click-info" style="margin-top: 0.5rem;">
-      <h3>FFEN (fairy-aware JSON, lossless)</h3>
+      <h3>FFEN Metadata</h3>
       <div id="ffen-output" style="font-family: monospace; white-space: pre-wrap; font-size: 0.85rem; max-height: 200px; overflow-y: auto;">—</div>
     </div>
     <div class="code-example">
@@ -174,10 +173,8 @@ board.addEventListener('cellClick', (event) => {
 
 // Called automatically after every board change
 console.log(board.getFen());
-// → "r1bqkb1r/pp3ppp/2np1n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w - - 0 1"
-
-console.log(board.getFFen());
-// → '{"pieces":[{"square":"a8","type":"r","color":"b"},…],"activeColor":"w",…}'</code></pre>
+// → "r1bqkb1r/pp3ppp/2np1n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w - - 0 1 e4:gn:Chameleon"
+</code></pre>
     </div>
 
     <div class="code-example">
@@ -460,6 +457,16 @@ function addPiece(boardElement, square, piece, color) {
   </code></pre>
     </div>
 
+    <h2>Board with Fairy Pieces Example</h2>
+    <p>This example shows how to use extended FFEN.</p>
+    <div class="board-container board-medium">
+      <chess-board id="board-with-f-pieces" fen="*2q'1'2'3'4'5'6'7/'G'A'B'R'i'e'l'e/cxs''12''ABSCX/-c-x-s5/ETA5/KQRBNP2/eta'g'a'b2/kqrbnp2 w KQkq - 0 1 a8:GN:Imitator"></chess-board>
+    </div>
+    <h4>FFEN String:</h4>
+    <div class="code-example">
+    <code>*2q'1'2'3'4'5'6'7/'G'A'B'R'i'e'l'e/cxs''12''ABSCX/-c-x-s5/ETA5/KQRBNP2/eta'g'a'b2/kqrbnp2 w KQkq - 0 1 a8:GN:Imitator</code>
+    </div>
+
     <h2>Data Coordinates</h2>
     <p>Each square has a <code>data-coordinate</code> attribute with standard chess notation (e.g., "e4", "a1"). You can select specific squares using CSS selectors or JavaScript:</p>
     <div class="code-example">
@@ -562,13 +569,9 @@ const eFile = document.querySelector('chess-board').shadowRoot.querySelectorAll(
       const ffenOutput = document.getElementById('ffen-output');
 
       function updateFenDisplay() {
-        fenOutput.textContent = fenSyncBoard.getFen() || '—';
-        try {
-          const raw = fenSyncBoard.getFFen();
-          ffenOutput.textContent = raw ? JSON.stringify(JSON.parse(raw), null, 2) : '—';
-        } catch {
-          ffenOutput.textContent = fenSyncBoard.getFFen() || '—';
-        }
+        const currentValue = fenSyncBoard.getFen() || '—';
+        fenOutput.textContent = currentValue;
+        ffenOutput.textContent = currentValue.includes(':') ? currentValue : '—';
       }
 
       // Initial update (after component renders)

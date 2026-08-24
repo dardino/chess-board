@@ -47,7 +47,7 @@ describe('ChessBoard - Piece Rotation', () => {
     
     // Should rotate to 45° (clockwise)
     expect(piece.getRotation()).toBe('45');
-    expect(board.getFen()).toBe('8/8/8/8/4N3/8/8/8 w - - 0 1');
+    expect(board.getFen()).toBe('8/8/8/8/4*0.5N3/8/8/8 w - - 0 1');
   });
 
   it('should reset rotation to 0° with Alt+Up', () => {

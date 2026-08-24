@@ -4,37 +4,37 @@
  */
 import style from './ChessBoard.css?raw';
 import template from './ChessBoard.html?raw';
-import { ChessPiece, type ChessPieceColor, type ChessPieceRotation, type ChessPieceType } from './ChessPiece';
-import { parseFen, positionToFen, positionToFFen, type ChessPiece as FenChessPiece, type FenPosition, type FFenPosition } from './fen';
+import { ChessPiece } from './ChessPiece';
+import { FairyPieceMetadata, FenPosition, parseFen, positionToFen, type ChessPieceColor, type ChessPieceRotation, type ChessPieceType, type FENChessPiece as FenChessPiece } from './fen';
 
-export interface CellClickPiece {
-  color: 'white' | 'black' | 'neutral';
-  type: string;
-  rotation?: string;
+export interface PieceInfo {
+  type: ChessPieceType;
+  color: ChessPieceColor;
   fairyName?: string;
   fairyCondition?: string;
+  rotation?: ChessPieceRotation;
 }
-
+export interface PieceInfoWithSquare extends PieceInfo {
+  square: string;
+}
 export interface CellClickEventDetail {
-  cell: string;
-  piece?: CellClickPiece;
+  square: string;
+  piece?: PieceInfo;
+}
+export interface FenChangeEventDetail {
+  fen: string;
 }
 
 // Augment DOM typings so addEventListener/removeEventListener recognize the custom 'cellClick' event
 declare global {
   interface HTMLElementEventMap {
     cellClick: CustomEvent<CellClickEventDetail>;
+    fenChange: CustomEvent<FenChangeEventDetail>;
   }
 }
 
 export type Square = string;
 
-export interface PieceInfo {
-  square: string;
-  type: ChessPieceType;
-  color: ChessPieceColor;
-  rotation: ChessPieceRotation;
-}
 
 export interface CellDecorator {
   backgroundColor: string;
@@ -42,15 +42,36 @@ export interface CellDecorator {
 }
 
 export class ChessBoard extends HTMLElement {
-  private shadow: ShadowRoot;
-  private currentFen: string = '';
-  private currentFfen: string = ''; // Fairy FEN (FFEN) notation
-  private squares: NodeListOf<HTMLElement> | null = null;
-  private clickHandlers: WeakMap<Element, EventListener> = new WeakMap();
-  private currentSquare: string | null = null;
-  private selectedPieceSquare: string | null = null;
-  private cellDecorators: Partial<Record<Square, CellDecorator>> = {};
-  private currentFFen: string = '';
+  static get observedAttributes(): string[] {
+    return ['fen', 'hide-labels'];
+  }
+
+  #shadow: ShadowRoot;
+  #currentFen: string = '';
+  #squares: NodeListOf<HTMLElement> | null = null;
+  #clickHandlers: WeakMap<Element, EventListener> = new WeakMap();
+  #currentSquare: string | null = null;
+  #selectedPieceSquare: string | null = null;
+  #cellDecorators: Partial<Record<Square, CellDecorator>> = {};
+
+  //#region Private Helper Methods
+  #checkModifiers = (event: KeyboardEvent): boolean => {
+    return !event.altKey && !event.ctrlKey && !event.metaKey;
+  };
+  /**
+   * Validates if a coordinate is valid (a1-h8)
+   * @param coordinate - Square coordinate to validate
+   * @returns True if valid, false otherwise
+   */
+  #isValidCoordinate(coordinate: string): boolean {
+    if (!coordinate || coordinate.length !== 2) return false;
+    const file = coordinate[0];
+    const rank = coordinate[1];
+    return file >= 'a' && file <= 'h' && rank >= '1' && rank <= '8';
+  }
+  //#endregion
+
+  //#region Keyboard Navigation Handlers
 
   // Private keyboard handler properties (arrow functions for auto-binding)
   #handleArrowUp = (event: KeyboardEvent): void => {
@@ -65,13 +86,12 @@ export class ChessBoard extends HTMLElement {
       return;
     }
     // Handle plain Up (navigate)
-    const newSquare = this.moveUp(this.currentSquare!, this.hasAttribute('black-to-move'));
+    const newSquare = this.#moveUp(this.#currentSquare!, this.hasAttribute('black-to-move'));
     if (newSquare) {
       event.preventDefault();
-      this.setCurrentSquare(newSquare);
+      this.#setCurrentSquare(newSquare);
     }
   };
-
   #handleArrowDown = (event: KeyboardEvent): void => {
     // Handle Shift+Down (flip to black)
     if (event.shiftKey) {
@@ -84,13 +104,12 @@ export class ChessBoard extends HTMLElement {
       return;
     }
     // Handle plain Down (navigate)
-    const newSquare = this.moveDown(this.currentSquare!, this.hasAttribute('black-to-move'));
+    const newSquare = this.#moveDown(this.#currentSquare!, this.hasAttribute('black-to-move'));
     if (newSquare) {
       event.preventDefault();
-      this.setCurrentSquare(newSquare);
+      this.#setCurrentSquare(newSquare);
     }
   };
-
   #handleArrowLeft = (event: KeyboardEvent): void => {
     // Handle Alt/Option+Left (rotate counter-clockwise)
     if (event.altKey && !event.shiftKey) {
@@ -98,13 +117,12 @@ export class ChessBoard extends HTMLElement {
       return;
     }
     // Handle plain Left (navigate)
-    const newSquare = this.moveLeft(this.currentSquare!);
+    const newSquare = this.#moveLeft(this.#currentSquare!);
     if (newSquare) {
       event.preventDefault();
-      this.setCurrentSquare(newSquare);
+      this.#setCurrentSquare(newSquare);
     }
   };
-
   #handleArrowRight = (event: KeyboardEvent): void => {
     // Handle Alt/Option+Right (rotate clockwise)
     if (event.altKey && !event.shiftKey) {
@@ -112,29 +130,23 @@ export class ChessBoard extends HTMLElement {
       return;
     }
     // Handle plain Right (navigate)
-    const newSquare = this.moveRight(this.currentSquare!);
+    const newSquare = this.#moveRight(this.#currentSquare!);
     if (newSquare) {
       event.preventDefault();
-      this.setCurrentSquare(newSquare);
+      this.#setCurrentSquare(newSquare);
     }
   };
-
-  #checkModifiers = (event: KeyboardEvent): boolean => {
-    return !event.altKey && !event.ctrlKey && !event.metaKey;
-  };
-
   #handleDelete = (event: KeyboardEvent): void => {
     if (!this.#checkModifiers(event)) return;
-    this.removePieceFromCurrentSquare();
-    this.clearSelectedPiece();
+    this.#removePieceFromCurrentSquare();
+    this.#clearSelectedPiece();
     event.preventDefault();
   };
-
   #handleEscape = (event: KeyboardEvent): void => {
     if (!this.#checkModifiers(event)) return;
     // If a piece is selected, clear the selection
-    if (this.selectedPieceSquare !== null) {
-      this.clearSelectedPiece();
+    if (this.#selectedPieceSquare !== null) {
+      this.#clearSelectedPiece();
     } else if (event.shiftKey) {
       this.setStartingPosition();
     } else {
@@ -142,110 +154,83 @@ export class ChessBoard extends HTMLElement {
     }
     event.preventDefault();
   };
-
-  #handleSpace = (event: KeyboardEvent): void => {
+  #handleSelectPieceByKey = (event: KeyboardEvent): void => {
     if (!this.#checkModifiers(event)) return;
-    if (!this.currentSquare) {
+    if (!this.#currentSquare) {
       return;
     }
 
-    const currentSquareHasPiece = this.hasPiece(this.currentSquare);
+    const currentSquareHasPiece = this.hasPiece(this.#currentSquare);
+    const currentSelection = !!this.#selectedPieceSquare;
 
-    if (currentSquareHasPiece) {
-      if (this.selectedPieceSquare === this.currentSquare) {
-        this.clearSelectedPiece();
-      } else {
-        this.selectedPieceSquare = this.currentSquare;
-        this.updateSelectedPieceState();
-      }
+    // If the current square has a piece and no piece is selected, select the piece
+    if (currentSquareHasPiece && !currentSelection) {
+      this.#setSelectedPiece(this.#currentSquare);
+    }
+    // If the current square has a piece and a piece is already selected, toggle selection
+    else if (currentSquareHasPiece && this.#selectedPieceSquare === this.#currentSquare) {
+      this.#clearSelectedPiece();
+    }
+    // If the current square does not have a piece and no piece is selected, do nothing
+    if (!currentSelection) {
       event.preventDefault();
       return;
     }
-
-    if (!this.selectedPieceSquare) {
-      event.preventDefault();
-      return;
+    const piece = this.#getPieceAtSquare(this.#selectedPieceSquare!);
+    this.#removePieceFromSquare(this.#currentSquare!);
+    this.#removePieceFromSquare(this.#selectedPieceSquare!);
+    if (piece) {
+      this.#addPieceToSquare(this.#currentSquare!, piece);
     }
-
-    const selectedSquare = this.selectedPieceSquare;
-    const selectedPiece = this.shadow.querySelector(`[data-coordinate="${selectedSquare}"] chess-piece`) as ChessPiece | null;
-    const destinationSquare = this.shadow.querySelector(`[data-coordinate="${this.currentSquare}"]`) as HTMLElement | null;
-
-    if (!selectedPiece || !destinationSquare) {
-      this.clearSelectedPiece();
-      event.preventDefault();
-      return;
-    }
-
-    const sourceSquare = this.shadow.querySelector(`[data-coordinate="${selectedSquare}"]`) as HTMLElement | null;
-    if (!sourceSquare) {
-      this.clearSelectedPiece();
-      event.preventDefault();
-      return;
-    }
-
-    const pieceToMove = sourceSquare.querySelector('chess-piece');
-    if (!pieceToMove) {
-      this.clearSelectedPiece();
-      event.preventDefault();
-      return;
-    }
-
-    sourceSquare.removeChild(pieceToMove);
-    destinationSquare.appendChild(pieceToMove);
-    this.clearSelectedPiece();
-    this.setCurrentSquare(this.currentSquare);
-    this.serializeBoardState();
+    this.#clearSelectedPiece();
+    this.#setCurrentSquare(this.#currentSquare);
     event.preventDefault();
   };
-
-  #handleAddPiece = (pieceType: string, color: string): (event: KeyboardEvent) => void => {
+  #handleAddPiece = (pieceType: ChessPieceType, color: ChessPieceColor): (event: KeyboardEvent) => void => {
     return (event: KeyboardEvent) => {
       if (!this.#checkModifiers(event)) return;
-      this.addOrReplacePiece(pieceType, color);
+      this.#addPieceToSquare(this.#currentSquare!, {
+        type: pieceType,
+        color
+      });
       event.preventDefault();
     };
   };
-
   #handleRotateCounterClockwise = (event: KeyboardEvent): void => {
-    this.rotatePieceOnCurrentSquare(-45);
+    this.#rotatePieceOnCurrentSquare(-45);
     event.preventDefault();
   };
-
   #handleRotateClockwise = (event: KeyboardEvent): void => {
-    this.rotatePieceOnCurrentSquare(45);
+    this.#rotatePieceOnCurrentSquare(45);
     event.preventDefault();
   };
-
   #handleRotateReset = (event: KeyboardEvent): void => {
-    this.setPieceRotationOnCurrentSquare(0);
+    this.#setPieceRotationOnCurrentSquare(0);
     event.preventDefault();
   };
-
   #handleRotate180 = (event: KeyboardEvent): void => {
-    this.setPieceRotationOnCurrentSquare(180);
+    this.#setPieceRotationOnCurrentSquare(180);
     event.preventDefault();
   };
-
   #handleFlipToWhite = (event: KeyboardEvent): void => {
-    this.setBoardOrientation('white');
+    this.#setBoardOrientation('white');
     event.preventDefault();
   };
-
   #handleFlipToBlack = (event: KeyboardEvent): void => {
-    this.setBoardOrientation('black');
+    this.#setBoardOrientation('black');
     event.preventDefault();
   };
 
-  private keyboardHandlers: Record<string, (event: KeyboardEvent) => void> = {
+  #keyboardHandlers: Record<string, (event: KeyboardEvent) => void> = {
     'ArrowUp': this.#handleArrowUp,
     'ArrowDown': this.#handleArrowDown,
     'ArrowLeft': this.#handleArrowLeft,
     'ArrowRight': this.#handleArrowRight,
-    ' ': this.#handleSpace,
-    'Spacebar': this.#handleSpace,
-    'Enter': this.#handleSpace,
+    ' ': this.#handleSelectPieceByKey,
+    'Spacebar': this.#handleSelectPieceByKey,
+    'Enter': this.#handleSelectPieceByKey,
     'Delete': this.#handleDelete,
+    'Backspace': this.#handleDelete,
     'Escape': this.#handleEscape,
     // Piece key handlers
     'p': this.#handleAddPiece('p', 'b'),
@@ -266,187 +251,21 @@ export class ChessBoard extends HTMLElement {
     't': this.#handleAddPiece('t', 'b'),
     'T': this.#handleAddPiece('t', 'w'),
     'a': this.#handleAddPiece('a', 'b'),
-    'A': this.#handleAddPiece('a', 'w')
+    'A': this.#handleAddPiece('a', 'w'),
+    // Symbolic pieces
+    'c': this.#handleAddPiece('c', 'b'),
+    'C': this.#handleAddPiece('c', 'w'),
+    's': this.#handleAddPiece('s', 'b'),
+    'S': this.#handleAddPiece('s', 'w'),
+    'x': this.#handleAddPiece('x', 'b'),
+    'X': this.#handleAddPiece('x', 'w')
   };
 
-  constructor() {
-    super();
-    this.shadow = this.attachShadow({ mode: 'open' });
-  }
-
-  static get observedAttributes(): string[] {
-    return ['fen', 'ffen', 'hide-labels'];
-  }
-
-  connectedCallback(): void {
-    this.render();
-    this.updatePiecesFromFen();
-    this.updateBoardOrientationFromCurrentFen();
-    this.setupEventListeners();
-  }
-
-  disconnectedCallback(): void {
-    this.removeEventListeners();
-  }
-
-  attributeChangedCallback(name: string, oldValue: string, newValue: string): void {
-    if (oldValue !== newValue) {
-      if (name === 'fen') {
-        this.currentFen = newValue || '';
-        // Only update pieces if FFEN is not present (FFEN takes priority)
-        if (!this.currentFfen) {
-          this.updatePiecesFromFen();
-        }
-      } else if (name === 'ffen') {
-        this.currentFfen = newValue || '';
-        // FFEN takes priority over FEN, always update
-        this.updatePiecesFromFen();
-      } else if (name === 'hide-labels') {
-        this.updateLabelsVisibility();
-      }
-    }
-  }
-
-  private render(): void {
-    // Create container from imported HTML template
-    const templateContainer = document.createElement('div');
-    templateContainer.innerHTML = template;
-
-    // Add styles
-    const styleElement = document.createElement('style');
-    styleElement.textContent = style;
-    this.shadow.appendChild(styleElement);
-
-    const tmpl = templateContainer.querySelector("template");
-    if (!tmpl) {
-      throw new Error("Template not found in the provided HTML.");
-    }
-    this.shadow.appendChild(tmpl.content.cloneNode(true));
-
-    // Update labels visibility based on attribute
-    this.updateLabelsVisibility();
-
-    // Restore current square selection if it exists
-    if (this.currentSquare) {
-      this.setCurrentSquare(this.currentSquare);
-    }
-  }
-
-  private setupEventListeners(): void {
-    this.squares = this.shadow.querySelectorAll('.square');
-    this.squares.forEach(square => {
-      if (!(square instanceof HTMLElement)) return;
-      const boundHandler = this.handleSquareClick.bind(this, square);
-      this.clickHandlers.set(square, boundHandler);
-      square.addEventListener('click', boundHandler);
-    });
-
-    // Add keyboard navigation
-    const board = this.shadow.querySelector('.board') as HTMLElement;
-    if (board) {
-      board.addEventListener('keydown', this.handleKeyDown.bind(this));
-      board.addEventListener('focus', this.handleFocus.bind(this));
-      board.addEventListener('blur', this.handleBlur.bind(this));
-    }
-  }
-
-  private removeEventListeners(): void {
-    if (this.squares) {
-      this.squares.forEach(square => {
-        const boundHandler = this.clickHandlers.get(square);
-        if (boundHandler) {
-          square.removeEventListener('click', boundHandler);
-          this.clickHandlers.delete(square);
-        }
-      });
-      this.squares = null;
-    }
-
-    // Remove keyboard and focus event listeners
-    const board = this.shadow.querySelector('.board') as HTMLElement;
-    if (board) {
-      board.removeEventListener('keydown', this.handleKeyDown.bind(this));
-      board.removeEventListener('focus', this.handleFocus.bind(this));
-      board.removeEventListener('blur', this.handleBlur.bind(this));
-    }
-  }
-
-  private handleSquareClick(square: HTMLElement): void {
-    const cell = square.getAttribute('data-coordinate');
-    
-    if (!cell) {
-      return;
-    }
-
-    // Set this square as current
-    this.setCurrentSquare(cell);
-
-    // Check if there's a piece on this square
-    const pieceElement = square.querySelector('chess-piece') as ChessPiece;
-    let piece: CellClickPiece | undefined;
-
-    if (pieceElement) {
-      const pieceType = pieceElement.getAttribute('piece');
-      const pieceColor = pieceElement.getAttribute('color');
-      const rotation = pieceElement.getAttribute('rotation');
-      const fairyName = pieceElement.getAttribute('fairy-name');
-      const fairyCondition = pieceElement.getAttribute('fairy-condition');
-      
-      if (pieceType && pieceColor) {
-        const colorMap: { [key: string]: 'white' | 'black' | 'neutral' } = {
-          'w': 'white',
-          'b': 'black',
-          'n': 'neutral'
-        };
-
-        piece = {
-          type: pieceType,
-          color: colorMap[pieceColor] || 'white'
-        };
-
-        // Add optional properties if present
-        if (rotation) {
-          piece.rotation = rotation;
-        }
-        if (fairyName) {
-          piece.fairyName = fairyName;
-        }
-        if (fairyCondition) {
-          piece.fairyCondition = fairyCondition;
-        }
-      }
-    }
-
-    // Dispatch custom event
-    const detail: CellClickEventDetail = {
-      cell,
-      piece
-    };
-
-    this.dispatchEvent(new CustomEvent('cellClick', {
-      detail,
-      bubbles: true,
-      composed: true
-    }));
-  }
-
-  private handleFocus(): void {
-    // If no current square is set, select a1
-    if (!this.currentSquare) {
-      this.setCurrentSquare('a1');
-    }
-  }
-
-  private handleBlur(): void {
-    this.clearSelectedPiece();
-  }
-
-
-  private handleKeyDown(event: KeyboardEvent): void {
-    if (!this.currentSquare) return;
+  #handleKeyDown = (event: KeyboardEvent): void => {
+    if (!this.#currentSquare) return;
 
     // Handle regular keys (each handler checks its own modifiers)
-    const handleToCall = this.keyboardHandlers[event.key];
+    const handleToCall = this.#keyboardHandlers[event.key];
     if (typeof handleToCall === 'function') {
       handleToCall(event);
     }
@@ -459,37 +278,210 @@ export class ChessBoard extends HTMLElement {
         && event.key !== 'Spacebar' 
         && event.key !== 'Enter'
         && event.key !== 'Escape'
-      ) this.clearSelectedPiece();
+      ) this.#clearSelectedPiece();
+    
+    this.#serializeBoardState();
+  }
+  //#endregion
+
+  //#region Lifecycle Callbacks
+  constructor() {
+    super();
+    this.#shadow = this.attachShadow({ mode: 'open' });
   }
 
-  private setCurrentSquare(coordinate: string): void {
+  #isConnected = false;
+  connectedCallback(): void {
+    this.#isConnected = true;
+    this.#firstRender();
+    this.#updatePiecesFromFen();
+    this.#updateBoardOrientationFromCurrentFen();
+    this.#setupEventListeners();
+  }
+
+  disconnectedCallback(): void {
+    this.#isConnected = false;
+    this.#removeEventListeners();
+  }
+
+  attributeChangedCallback(name: string, oldValue: string, newValue: string): void {
+    if (!this.#isConnected) {
+      // Safari calls this callback before connectedCallback,
+      // so we defer processing until after the component is connected
+      queueMicrotask(() => this.attributeChangedCallback(name, oldValue, newValue));
+      return;
+    }
+    if (oldValue !== newValue) {
+      if (name === 'fen') {
+        if (this.#currentFen === newValue) return; // No change, no need to update
+        this.#currentFen = newValue || '';
+        this.#updatePiecesFromFen();
+      } else if (name === 'hide-labels') {
+        this.#updateLabelsVisibility();
+      }
+    }
+  }
+
+  //#endregion
+
+  //#region Private Methods
+
+  #firstRender(): void {
+    // Create container from imported HTML template
+    const templateContainer = document.createElement('div');
+    templateContainer.innerHTML = template;
+
+    // Add styles
+    const styleElement = document.createElement('style');
+    styleElement.textContent = style;
+    this.#shadow.appendChild(styleElement);
+
+    const tmpl = templateContainer.querySelector("template");
+    if (!tmpl) {
+      throw new Error("Template not found in the provided HTML.");
+    }
+    this.#shadow.appendChild(tmpl.content.cloneNode(true));
+
+    // Update labels visibility based on attribute
+    this.#updateLabelsVisibility();
+
+    // Restore current square selection if it exists
+    if (this.#currentSquare) {
+      this.#setCurrentSquare(this.#currentSquare);
+    }
+  }
+
+  #setupEventListeners(): void {
+    this.#squares = this.#shadow.querySelectorAll('.square');
+    this.#squares.forEach(square => {
+      if (!(square instanceof HTMLElement)) return;
+      const boundHandler = this.#handleSquareClick.bind(this, square);
+      this.#clickHandlers.set(square, boundHandler);
+      square.addEventListener('click', boundHandler);
+    });
+
+    // Add keyboard navigation
+    const board = this.#shadow.querySelector('.board') as HTMLElement;
+    if (board) {
+      board.addEventListener('keydown', this.#handleKeyDown);
+      board.addEventListener('focus', this.#handleFocus);
+      board.addEventListener('blur', this.#handleBlur);
+      board.addEventListener('fairy-metadata-changed', this.#handleFairyMetadataChange);
+    }
+  }
+
+  #removeEventListeners(): void {
+    if (this.#squares) {
+      this.#squares.forEach(square => {
+        const boundHandler = this.#clickHandlers.get(square);
+        if (boundHandler) {
+          square.removeEventListener('click', boundHandler);
+          this.#clickHandlers.delete(square);
+        }
+      });
+      this.#squares = null;
+    }
+
+    // Remove keyboard and focus event listeners
+    const board = this.#shadow.querySelector('.board') as HTMLElement;
+    if (board) {
+      board.removeEventListener('keydown', this.#handleKeyDown);
+      board.removeEventListener('focus', this.#handleFocus);
+      board.removeEventListener('blur', this.#handleBlur);
+      board.removeEventListener('fairy-metadata-changed', this.#handleFairyMetadataChange);
+    }
+  }
+
+  #handleSquareClick(square: HTMLElement): void {
+    const cell = square.getAttribute('data-coordinate');
+    
+    if (!cell) {
+      return;
+    }
+
+    // Set this square as current
+    this.#setCurrentSquare(cell);
+
+    // Check if there's a piece on this square
+    const pieceElement = square.querySelector('chess-piece') as ChessPiece;
+    let piece: PieceInfo | undefined;
+
+    if (pieceElement) {
+      const pieceType = pieceElement.getPiece();
+      const pieceColor = pieceElement.getColor();
+      const rotation = pieceElement.getRotation();
+      const fairyName = pieceElement.getFairyName();
+      const fairyCondition = pieceElement.getFairyCondition();
+      
+      if (pieceType && pieceColor) {
+
+        piece = {
+          type: pieceType,
+          color: pieceColor,
+        };
+
+        // Add optional properties if present
+        if (parseInt(rotation) > 0) piece.rotation = rotation;
+        if (fairyName) piece.fairyName = fairyName;
+        if (fairyCondition) piece.fairyCondition = fairyCondition;
+        
+      }
+    }
+
+    this.dispatchEvent(new CustomEvent('cellClick', {
+      detail: {
+        square: cell,
+        piece,
+      } satisfies CellClickEventDetail,
+      bubbles: true,
+      composed: true
+    }));
+  }
+
+  #handleFocus = (): void => {
+    // If no current square is set, select a1
+    if (!this.#currentSquare) {
+      this.#setCurrentSquare('a1');
+    }
+  }
+
+  #handleBlur = (): void => {
+    this.#clearSelectedPiece();
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  #handleFairyMetadataChange = (_ev: CustomEvent<FairyPieceMetadata>): void => {
+    this.#serializeBoardState();
+  }
+
+  #setCurrentSquare(coordinate: string): void {
     // Remove current class from all squares
-    this.squares?.forEach(square => {
+    this.#squares?.forEach(square => {
       square.classList.remove('current');
     });
 
     // Add current class to the specified square
-    const square = this.shadow.querySelector(`[data-coordinate="${coordinate}"]`) as HTMLElement;
+    const square = this.#shadow.querySelector(`[data-coordinate="${coordinate}"]`) as HTMLElement;
     if (square) {
       square.classList.add('current');
     }
     // Always set currentSquare, even if square element is not found yet
-    this.currentSquare = coordinate;
+    this.#currentSquare = coordinate;
   }
 
-  private updateSelectedPieceState(): void {
-    this.squares?.forEach(square => {
+  #updateSelectedPieceState(): void {
+    this.#squares?.forEach(square => {
       const coordinate = square.getAttribute('data-coordinate');
-      square.classList.toggle('selected-piece', coordinate === this.selectedPieceSquare);
+      square.classList.toggle('selected-piece', coordinate === this.#selectedPieceSquare);
     });
   }
 
-  private clearSelectedPiece(): void {
-    this.selectedPieceSquare = null;
-    this.updateSelectedPieceState();
+  #clearSelectedPiece(): void {
+    this.#selectedPieceSquare = null;
+    this.#updateSelectedPieceState();
   }
 
-  private moveUp(current: string, isRotated: boolean): string | null {
+  #moveUp(current: string, isRotated: boolean): string | null {
     const file = current[0];
     const rank = parseInt(current[1]);
     
@@ -502,7 +494,7 @@ export class ChessBoard extends HTMLElement {
     }
   }
 
-  private moveDown(current: string, isRotated: boolean): string | null {
+  #moveDown(current: string, isRotated: boolean): string | null {
     const file = current[0];
     const rank = parseInt(current[1]);
     
@@ -515,7 +507,7 @@ export class ChessBoard extends HTMLElement {
     }
   }
 
-  private moveLeft(current: string): string | null {
+  #moveLeft(current: string): string | null {
     const file = current[0];
     const rank = current[1];
     const fileIndex = file.charCodeAt(0) - 'a'.charCodeAt(0);
@@ -523,7 +515,7 @@ export class ChessBoard extends HTMLElement {
     return fileIndex > 0 ? `${String.fromCharCode('a'.charCodeAt(0) + fileIndex - 1)}${rank}` : null;
   }
 
-  private moveRight(current: string): string | null {
+  #moveRight(current: string): string | null {
     const file = current[0];
     const rank = current[1];
     const fileIndex = file.charCodeAt(0) - 'a'.charCodeAt(0);
@@ -536,7 +528,7 @@ export class ChessBoard extends HTMLElement {
    * @param coordinate - Square coordinate (e.g., "e4", "a1")
    */
   #removePieceFromSquare(coordinate: string): void {
-    const square = this.shadow.querySelector(`[data-coordinate="${coordinate}"]`) as HTMLElement;
+    const square = this.#shadow.querySelector(`[data-coordinate="${coordinate}"]`) as HTMLElement;
     if (!square) return;
 
     const piece = square.querySelector('chess-piece');
@@ -545,10 +537,10 @@ export class ChessBoard extends HTMLElement {
     }
   }
 
-  private removePieceFromCurrentSquare(): void {
-    if (!this.currentSquare) return;
-    this.#removePieceFromSquare(this.currentSquare);
-    this.serializeBoardState();
+  #removePieceFromCurrentSquare(): void {
+    if (!this.#currentSquare) return;
+    this.#removePieceFromSquare(this.#currentSquare);
+    this.#serializeBoardState();
   }
 
   /**
@@ -558,8 +550,8 @@ export class ChessBoard extends HTMLElement {
    * @param color - Color of piece
    * @param rotation - Optional rotation angle
    */
-  #addPieceToSquare(coordinate: string, pieceType: string, color: string, rotation?: ChessPieceRotation, skipSerialize?: boolean): void {
-    const square = this.shadow.querySelector(`[data-coordinate="${coordinate}"]`) as HTMLElement;
+  #addPieceToSquare(coordinate: string, piece: PieceInfo, skipSerialization = false): void {
+    const square = this.#shadow.querySelector(`[data-coordinate="${coordinate}"]`) as HTMLElement;
     if (!square) return;
 
     // Remove existing piece if present
@@ -570,21 +562,18 @@ export class ChessBoard extends HTMLElement {
 
     // Create and add new piece
     const newPiece = new ChessPiece();
-    newPiece.setAttribute('piece', pieceType);
-    newPiece.setAttribute('color', color);
-    if (rotation) {
-      newPiece.setAttribute('rotation', rotation);
+    newPiece.setAttribute('piece', piece.type);
+    newPiece.setAttribute('color', piece.color);
+    newPiece.setAttribute('fairy-name', piece.fairyName || '');
+    newPiece.setAttribute('fairy-condition', piece.fairyCondition || '');
+    if (piece.rotation) {
+      newPiece.setAttribute('rotation', piece.rotation);
     }
     newPiece.classList.add('piece');
     square.appendChild(newPiece);
-    if (!skipSerialize) {
-      this.serializeBoardState();
+    if (!skipSerialization) {
+      this.#serializeBoardState();
     }
-  }
-
-  private addOrReplacePiece(pieceType: string, color: string): void {
-    if (!this.currentSquare) return;
-    this.#addPieceToSquare(this.currentSquare, pieceType, color);
   }
 
   /**
@@ -593,7 +582,7 @@ export class ChessBoard extends HTMLElement {
    * @param delta - Rotation delta in degrees
    */
   #rotatePieceOnSquare(coordinate: string, delta: number): void {
-    const square = this.shadow.querySelector(`[data-coordinate="${coordinate}"]`) as HTMLElement;
+    const square = this.#shadow.querySelector(`[data-coordinate="${coordinate}"]`) as HTMLElement;
     if (!square) return;
 
     const piece = square.querySelector('chess-piece') as ChessPiece;
@@ -612,9 +601,9 @@ export class ChessBoard extends HTMLElement {
     piece.setRotation(newRotation.toString() as ChessPieceRotation);
   }
 
-  private rotatePieceOnCurrentSquare(delta: number): void {
-    if (!this.currentSquare) return;
-    this.#rotatePieceOnSquare(this.currentSquare, delta);
+  #rotatePieceOnCurrentSquare(delta: number): void {
+    if (!this.#currentSquare) return;
+    this.#rotatePieceOnSquare(this.#currentSquare, delta);
   }
 
   /**
@@ -623,7 +612,7 @@ export class ChessBoard extends HTMLElement {
    * @param rotation - Rotation angle (0, 45, 90, 135, 180, 225, 270, 315)
    */
   #setPieceRotationOnSquare(coordinate: string, rotation: number): void {
-    const square = this.shadow.querySelector(`[data-coordinate="${coordinate}"]`) as HTMLElement;
+    const square = this.#shadow.querySelector(`[data-coordinate="${coordinate}"]`) as HTMLElement;
     if (!square) return;
 
     const piece = square.querySelector('chess-piece') as ChessPiece;
@@ -632,9 +621,9 @@ export class ChessBoard extends HTMLElement {
     piece.setRotation(rotation.toString() as ChessPieceRotation);
   }
 
-  private setPieceRotationOnCurrentSquare(rotation: number): void {
-    if (!this.currentSquare) return;
-    this.#setPieceRotationOnSquare(this.currentSquare, rotation);
+  #setPieceRotationOnCurrentSquare(rotation: number): void {
+    if (!this.#currentSquare) return;
+    this.#setPieceRotationOnSquare(this.#currentSquare, rotation);
   }
 
   /**
@@ -642,21 +631,25 @@ export class ChessBoard extends HTMLElement {
    * @param coordinate - Square coordinate (e.g., "e4", "a1")
    * @returns Piece information or null if square is empty
    */
-  #getPieceAtSquare(coordinate: string): { type: ChessPieceType, color: ChessPieceColor, rotation: ChessPieceRotation } | null {
-    const square = this.shadow.querySelector(`[data-coordinate="${coordinate}"]`) as HTMLElement;
+  #getPieceAtSquare(coordinate: string): PieceInfo | null {
+    const square = this.#shadow.querySelector(`[data-coordinate="${coordinate}"]`) as HTMLElement;
     if (!square) return null;
 
     const piece = square.querySelector('chess-piece') as ChessPiece;
     if (!piece) return null;
 
-    return {
-      type: piece.getPiece() as ChessPieceType,
-      color: piece.getColor() as ChessPieceColor,
-      rotation: piece.getRotation() as ChessPieceRotation
+    const pieceatsquare: PieceInfo = {
+      type: piece.getPiece(),
+      color: piece.getColor(),
     };
+
+    if (parseInt(piece.getRotation()) > 0) pieceatsquare.rotation = piece.getRotation();
+    if (piece.getFairyName()) pieceatsquare.fairyName = piece.getFairyName();
+    if (piece.getFairyCondition()) pieceatsquare.fairyCondition = piece.getFairyCondition();
+    return pieceatsquare;
   }
 
-  private setBoardOrientation(orientation: 'white' | 'black'): void {
+  #setBoardOrientation(orientation: 'white' | 'black'): void {
     if (orientation === 'black') {
       this.setAttribute('black-to-move', '');
     } else {
@@ -664,9 +657,9 @@ export class ChessBoard extends HTMLElement {
     }
   }
 
-  private updateLabelsVisibility(): void {
+  #updateLabelsVisibility(): void {
     const hideLabels = this.hasAttribute('hide-labels');
-    const labels = this.shadow.querySelectorAll('.top-labels, .bottom-labels, .left-labels, .right-labels');
+    const labels = this.#shadow.querySelectorAll('.top-labels, .bottom-labels, .left-labels, .right-labels');
 
     labels.forEach(label => {
       if (hideLabels) {
@@ -677,12 +670,14 @@ export class ChessBoard extends HTMLElement {
     });
   }
 
-  private updateCellDecorators(): void {
-    const squares = this.squares ?? [];
-
+  /**
+   * Updates the cell decorators based on the current decorators map.
+   */
+  #updateCellDecorators(): void {
+    const squares = this.#squares ?? [];
     squares.forEach((square) => {
       const coordinate = square.getAttribute('data-coordinate');
-      const decorator = coordinate ? this.cellDecorators[coordinate] : undefined;
+      const decorator = coordinate ? this.#cellDecorators[coordinate] : undefined;
       const existingDecorator = square.querySelector('.cell-decorator') as HTMLElement | null;
 
       if (!decorator) {
@@ -714,7 +709,11 @@ export class ChessBoard extends HTMLElement {
     });
   }
 
-  private updateBoardOrientation(activeColor: 'w' | 'b'): void {
+  /**
+   * Sets the board orientation attribute
+   * @param activeColor - 'w' for white to move, 'b' for black to move
+   */
+  #updateBoardOrientation(activeColor: 'w' | 'b'): void {
     if (activeColor === 'b') {
       this.setAttribute('black-to-move', '');
     } else {
@@ -722,24 +721,26 @@ export class ChessBoard extends HTMLElement {
     }
   }
 
-  private updateBoardOrientationFromCurrentFen(): void {
-    const fenString = this.currentFfen || this.currentFen;
+  #updateBoardOrientationFromCurrentFen(): void {
+    const fenString = this.#currentFen;
     if (!fenString) {
       return;
     }
 
     const position = parseFen(fenString);
     if (position) {
-      this.updateBoardOrientation(position.activeColor);
+      this.#updateBoardOrientation(position.activeColor);
     }
+    
+    this.#serializeBoardState();
+
   }
 
-  private updatePiecesFromFen(): void {
+  #updatePiecesFromFen(): void {
     // Clear existing pieces
-    this.clearPieces();
+    this.#clearPieces();
 
-    // FFEN takes priority over FEN
-    const fenString = this.currentFfen || this.currentFen;
+    const fenString = this.#currentFen;
     
     if (!fenString) {
       return;
@@ -747,13 +748,14 @@ export class ChessBoard extends HTMLElement {
 
     // Parse FEN/FFEN and place pieces
     const position = parseFen(fenString);
+
     if (!position) {
       console.warn('Invalid FEN/FFEN string:', fenString);
       return;
     }
 
     // Update board orientation based on active color
-    this.updateBoardOrientation(position.activeColor);
+    this.#updateBoardOrientationFromCurrentFen();
 
     // Place each piece on the board
     for (const piece of position.pieces) {
@@ -764,15 +766,15 @@ export class ChessBoard extends HTMLElement {
         piece.fairyCondition = metadata.fairyCondition;
       }
       
-      this.placePiece(piece);
+      this.#placePiece(piece);
     }
 
     // Sync computed FEN/FFEN fields after loading from attribute
-    this.serializeBoardState();
+    this.#serializeBoardState();
   }
 
-  private clearPieces(): void {
-    const squares = this.shadow.querySelectorAll('.square');
+  #clearPieces(): void {
+    const squares = this.#shadow.querySelectorAll('.square');
     squares.forEach(square => {
       const existingPiece = square.querySelector('.piece');
       if (existingPiece) {
@@ -793,12 +795,12 @@ export class ChessBoard extends HTMLElement {
       }
     }
 
-    this.cellDecorators = { ...decoratorsMap };
-    this.updateCellDecorators();
+    this.#cellDecorators = { ...decoratorsMap };
+    this.#updateCellDecorators();
   }
 
-  private placePiece(piece: FenChessPiece): void {
-    const square = this.shadow.querySelector(`[data-coordinate="${piece.square}"]`) as HTMLElement;
+  #placePiece(piece: FenChessPiece): void {
+    const square = this.#shadow.querySelector(`[data-coordinate="${piece.square}"]`) as HTMLElement;
     if (!square) {
       console.warn('Square not found for coordinate:', piece.square);
       return;
@@ -808,48 +810,96 @@ export class ChessBoard extends HTMLElement {
     const pieceElement = new ChessPiece();
     pieceElement.setAttribute('piece', piece.type);
     pieceElement.setAttribute('color', piece.color);
+    if (piece.fairyName) pieceElement.setAttribute('fairy-name', piece.fairyName);
+    if (piece.fairyCondition) pieceElement.setAttribute('fairy-condition', piece.fairyCondition);
+    if (piece.rotation) pieceElement.setAttribute('rotation', piece.rotation);
     pieceElement.classList.add('piece');
 
     // Add piece to square
     square.appendChild(pieceElement);
   }
 
-  private serializeBoardState(): void {
-    const fairyBySquare: NonNullable<FFenPosition['fairyBySquare']> = {};
-    this.squares?.forEach(square => {
+  #serializeBoardState(): void {
+    const fairyMetadata: NonNullable<FenPosition['fairyMetadata']> = {};
+    this.#squares?.forEach(square => {
       const coordinate = square.getAttribute('data-coordinate');
       const pieceElement = square.querySelector('chess-piece');
       if (!coordinate || !pieceElement) return;
       const fairyName = pieceElement.getAttribute('fairy-name');
       const fairyCondition = pieceElement.getAttribute('fairy-condition');
       if (fairyName || fairyCondition) {
-        fairyBySquare[coordinate] = {
+        fairyMetadata[coordinate] = {
           fairyName: fairyName || undefined,
           fairyCondition: fairyCondition || undefined
         };
       }
     });
 
-    const position: FFenPosition = {
+    const position: FenPosition = {
       pieces: this.getAllPieces().map(piece => ({
         type: piece.type,
         color: piece.color,
-        square: piece.square
+        fairyCondition: piece.fairyCondition,
+        fairyName: piece.fairyName,
+        rotation: piece.rotation,
+        square: piece.square,
+        isNeutral: piece.color === 'n' ? true : undefined
       })),
       activeColor: this.hasAttribute('black-to-move') ? 'b' : 'w',
       castlingRights: '-',
       enPassantTarget: '-',
       halfmoveClock: 0,
       fullmoveNumber: 1,
-      fairyBySquare
+      fairyMetadata
     };
-    // Update only internal state; do NOT set attributes to avoid triggering
-    // attributeChangedCallback → updatePiecesFromFen() which would clear the board.
-    this.currentFen = positionToFen(position);
-    this.currentFFen = positionToFFen(position);
+
+    this.#currentFen = positionToFen(position);
+    this.setAttribute('fen', this.#currentFen);
+
+    this.#triggerFenChangeEvent();
   }
 
-  // Public methods
+  #iseventqueued = false;
+  #triggerFenChangeEvent(): void {
+    if (this.#iseventqueued) return;
+    this.#iseventqueued = true;
+    queueMicrotask(() => {
+      this.#iseventqueued = false;
+      this.dispatchEvent(new CustomEvent('fenChange', {
+        detail: { fen: this.#currentFen } satisfies FenChangeEventDetail,
+        bubbles: true,
+        composed: true
+      }));
+    });
+  }
+
+  /**
+   * toggles the selection of a piece on the board. 
+   * If a piece is present on the specified square, it becomes selected; 
+   * if the square is empty, any existing selection is cleared.
+   * @param coordinate - Square coordinate (e.g., "e4", "a1")
+   * @returns True if the piece was selected, false if the square is empty
+   */
+  #setSelectedPiece(coordinate: string): boolean {
+    if (!this.#isValidCoordinate(coordinate)) {
+      throw new Error(`Invalid square coordinate: ${coordinate}`);
+    }
+
+    this.#setCurrentSquare(coordinate);
+
+    if (!this.hasPiece(coordinate)) {
+      this.#clearSelectedPiece();
+      return false;
+    }
+
+    this.#selectedPieceSquare = coordinate;
+    this.#updateSelectedPieceState();
+    return true;
+  }
+
+  //#endregion
+
+  //#region Public Methods
 
   /**
    * Sets the board position using FEN notation
@@ -864,28 +914,7 @@ export class ChessBoard extends HTMLElement {
    * @returns Current FEN string or empty string if not set
    */
   getFen(): string {
-    return this.currentFen;
-  }
-
-  getFFen(): string {
-    return this.currentFFen;
-  }
-
-  /**
-   * Sets the board position using FFEN notation (Fairy FEN)
-   * FFEN takes priority over FEN when both are set
-   * @param ffen - Fairy Forsyth-Edwards Notation string (6 or 7 blocks)
-   */
-  setFfen(ffen: string): void {
-    this.setAttribute('ffen', ffen);
-  }
-
-  /**
-   * Gets the current FFEN string
-   * @returns Current FFEN string or empty string if not set
-   */
-  getFfen(): string {
-    return this.currentFfen;
+    return this.#currentFen;
   }
 
   /**
@@ -902,16 +931,17 @@ export class ChessBoard extends HTMLElement {
     this.setFen('8/8/8/8/8/8/8/8 w - - 0 1');
   }
 
+
   /**
    * Gets the currently selected square coordinate
    * @returns Current square coordinate or null if none selected
    */
   getCurrentSquare(): string | null {
-    return this.currentSquare;
+    return this.#currentSquare;
   }
 
   getSelectedPieceSquare(): string | null {
-    return this.selectedPieceSquare;
+    return this.#selectedPieceSquare;
   }
 
   /**
@@ -921,20 +951,7 @@ export class ChessBoard extends HTMLElement {
    * @throws Error if coordinate is invalid
    */
   selectPiece(coordinate: string): boolean {
-    if (!this.#isValidCoordinate(coordinate)) {
-      throw new Error(`Invalid square coordinate: ${coordinate}`);
-    }
-
-    this.setCurrentSquare(coordinate);
-
-    if (!this.hasPiece(coordinate)) {
-      this.clearSelectedPiece();
-      return false;
-    }
-
-    this.selectedPieceSquare = coordinate;
-    this.updateSelectedPieceState();
-    return true;
+    return this.#setSelectedPiece(coordinate);
   }
 
   /**
@@ -942,25 +959,13 @@ export class ChessBoard extends HTMLElement {
    * @param coordinate - Square coordinate (e.g., "e4", "a1")
    */
   selectSquare(coordinate: string): void {
-    this.setCurrentSquare(coordinate);
-  }
-
-  /**
-   * Validates if a coordinate is valid (a1-h8)
-   * @param coordinate - Square coordinate to validate
-   * @returns True if valid, false otherwise
-   */
-  #isValidCoordinate(coordinate: string): boolean {
-    if (!coordinate || coordinate.length !== 2) return false;
-    const file = coordinate[0];
-    const rank = coordinate[1];
-    return file >= 'a' && file <= 'h' && rank >= '1' && rank <= '8';
+    this.#setCurrentSquare(coordinate);
   }
 
   /**
    * Adds a piece to the specified square (replaces existing piece if present)
    * @param square - Square coordinate (e.g., "e4", "a1")
-   * @param pieceType - Type of piece ('k', 'q', 'r', 'b', 'n', 'p', 'e', 't', 'a')
+   * @param pieceType - Type of piece (`${number}` | "k" | "q" | "r" | "b" | "n" | "p" | "e" | "t" | "a" | "x" | "s" | "c" | `'${string}` | `''${string}`)
    * @param color - Color of piece ('w', 'b', 'n')
    * @param rotation - Optional rotation angle (0, 45, 90, 135, 180, 225, 270, 315)
    * @throws Error if coordinate is invalid
@@ -969,7 +974,11 @@ export class ChessBoard extends HTMLElement {
     if (!this.#isValidCoordinate(square)) {
       throw new Error(`Invalid square coordinate: ${square}. Must be a valid square from a1 to h8.`);
     }
-    this.#addPieceToSquare(square, pieceType, color, rotation);
+    this.#addPieceToSquare(square, { 
+      type: pieceType, 
+      color, 
+      rotation
+    });
   }
 
   /**
@@ -982,7 +991,7 @@ export class ChessBoard extends HTMLElement {
       throw new Error(`Invalid square coordinate: ${square}. Must be a valid square from a1 to h8.`);
     }
     this.#removePieceFromSquare(square);
-    this.serializeBoardState();
+    this.#serializeBoardState();
   }
 
   /**
@@ -1015,9 +1024,9 @@ export class ChessBoard extends HTMLElement {
    * Gets all pieces currently on the board
    * @returns Array of pieces with their positions and properties
    */
-  getAllPieces(): PieceInfo[] {
-    const pieces: PieceInfo[] = [];
-    const squares = this.shadow.querySelectorAll('.square');
+  getAllPieces(): PieceInfoWithSquare[] {
+    const pieces: PieceInfoWithSquare[] = [];
+    const squares = this.#shadow.querySelectorAll('.square');
     
     squares.forEach(square => {
       const coordinate = square.getAttribute('data-coordinate');
@@ -1025,8 +1034,8 @@ export class ChessBoard extends HTMLElement {
         const pieceInfo = this.#getPieceAtSquare(coordinate);
         if (pieceInfo) {
           pieces.push({
+            ...pieceInfo,
             square: coordinate,
-            ...pieceInfo
           });
         }
       }
@@ -1040,7 +1049,7 @@ export class ChessBoard extends HTMLElement {
    * @param pieces - Array of pieces with their positions and properties
    * @throws Error if any coordinate is invalid
    */
-  setPieces(pieces: Array<Omit<PieceInfo, 'rotation'> & { rotation?: ChessPieceRotation }>): void {
+  setPieces(pieces: Array<PieceInfoWithSquare>): void {
     // Validate all coordinates first
     for (const piece of pieces) {
       if (!this.#isValidCoordinate(piece.square)) {
@@ -1049,13 +1058,13 @@ export class ChessBoard extends HTMLElement {
     }
     
     // Clear board
-    this.clearPieces();
+    this.#clearPieces();
     
     // Add all pieces (skip per-piece serialization; serialize once at the end)
     for (const piece of pieces) {
-      this.#addPieceToSquare(piece.square, piece.type, piece.color, piece.rotation, true);
+      this.#addPieceToSquare(piece.square, piece, true);
     }
-    this.serializeBoardState();
+    this.#serializeBoardState();
   }
 
   /**
@@ -1096,12 +1105,12 @@ export class ChessBoard extends HTMLElement {
    * @returns Rotation angle or null if square is empty
    * @throws Error if coordinate is invalid
    */
-  getPieceRotation(square: string): ChessPieceRotation | null {
+  getPieceRotation(square: string): ChessPieceRotation | undefined {
     if (!this.#isValidCoordinate(square)) {
       throw new Error(`Invalid square coordinate: ${square}. Must be a valid square from a1 to h8.`);
     }
     const pieceInfo = this.#getPieceAtSquare(square);
-    return pieceInfo ? pieceInfo.rotation : null;
+    return pieceInfo ? pieceInfo.rotation : undefined;
   }
 
   /**
@@ -1109,7 +1118,7 @@ export class ChessBoard extends HTMLElement {
    * @param orientation - 'white' for white at bottom, 'black' for black at bottom
    */
   setOrientation(orientation: 'white' | 'black'): void {
-    this.setBoardOrientation(orientation);
+    this.#setBoardOrientation(orientation);
   }
 
   /**
@@ -1127,6 +1136,7 @@ export class ChessBoard extends HTMLElement {
     const currentOrientation = this.getOrientation();
     this.setOrientation(currentOrientation === 'white' ? 'black' : 'white');
   }
+  //#endregion
 }
 
 // Register the custom element

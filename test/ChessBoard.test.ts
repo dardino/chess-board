@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { ChessPiece } from '../src';
 import { ChessBoard, type CellClickEventDetail } from '../src/ChessBoard';
 
 describe('ChessBoard Web Component', () => {
@@ -204,7 +205,6 @@ describe('ChessBoard FEN support', () => {
   it('should accept fen attribute', () => {
     element.setAttribute('fen', '8/8/8/8/8/8/8/8 w - - 0 1');
     expect(element.getFen()).toBe('8/8/8/8/8/8/8/8 w - - 0 1');
-    expect(element.getFFen()).toContain('"pieces":[]');
   });
 
   it('should place pieces from FEN string', () => {
@@ -271,12 +271,14 @@ describe('ChessBoard FEN support', () => {
     element.setFen('8/8/8/8/8/8/8/4K3 w - - 0 1');
 
     const e1Square = element.shadowRoot?.querySelector('[data-coordinate="e1"]');
-    const piece = e1Square?.querySelector('.piece');
+    const piece = e1Square?.querySelector('.piece') as ChessPiece | null;
+    piece?.setFairyName('GRA');
+    piece?.setFairyCondition('Imitator');
 
     expect(piece).not.toBeNull();
     expect(piece?.getAttribute('piece')).toBe('k');
     expect(piece?.getAttribute('color')).toBe('w');
-    expect(element.getFFen()).toContain('"square":"e1"');
+    expect(element.getFen()).toContain('e1:');
   });
 
   it('should support setStartingPosition method', () => {
@@ -316,7 +318,7 @@ describe('ChessBoard FEN support', () => {
     e4Square?.click();
 
     expect(eventDetail).toBeDefined();
-    expect(eventDetail!.cell).toBe('e4');
+    expect(eventDetail!.square).toBe('e4');
     expect(eventDetail!.piece).toBeUndefined(); // Empty square
 
     element.removeEventListener('cellClick', eventHandler);
@@ -338,9 +340,9 @@ describe('ChessBoard FEN support', () => {
     e4Square?.click();
 
     expect(eventDetail).toBeDefined();
-    expect(eventDetail!.cell).toBe('e4');
+    expect(eventDetail!.square).toBe('e4');
     expect(eventDetail!.piece).toBeDefined();
-    expect(eventDetail!.piece!.color).toBe('white');
+    expect(eventDetail!.piece!.color).toBe('w');
     expect(eventDetail!.piece!.type).toBe('p');
 
     element.removeEventListener('cellClick', eventHandler);
@@ -371,9 +373,9 @@ describe('ChessBoard FEN support', () => {
     e4Square?.click();
 
     expect(eventDetail).toBeDefined();
-    expect(eventDetail!.cell).toBe('e4');
+    expect(eventDetail!.square).toBe('e4');
     expect(eventDetail!.piece).toBeDefined();
-    expect(eventDetail!.piece!.color).toBe('white');
+    expect(eventDetail!.piece!.color).toBe('w');
     expect(eventDetail!.piece!.type).toBe('p');
     expect(eventDetail!.piece!.rotation).toBe('90');
     expect(eventDetail!.piece!.fairyName).toBe('GRA');
@@ -404,9 +406,9 @@ describe('ChessBoard FEN support', () => {
     e4Square?.click();
 
     expect(eventDetail).toBeDefined();
-    expect(eventDetail!.cell).toBe('e4');
+    expect(eventDetail!.square).toBe('e4');
     expect(eventDetail!.piece).toBeDefined();
-    expect(eventDetail!.piece!.color).toBe('neutral');
+    expect(eventDetail!.piece!.color).toBe('n');
     expect(eventDetail!.piece!.type).toBe('e');
 
     element.removeEventListener('cellClick', eventHandler);
@@ -428,9 +430,9 @@ describe('ChessBoard FEN support', () => {
     e4Square?.click();
 
     expect(eventDetail).toBeDefined();
-    expect(eventDetail!.cell).toBe('e4');
+    expect(eventDetail!.square).toBe('e4');
     expect(eventDetail!.piece).toBeDefined();
-    expect(eventDetail!.piece!.color).toBe('white');
+    expect(eventDetail!.piece!.color).toBe('w');
     expect(eventDetail!.piece!.type).toBe('p');
     expect(eventDetail!.piece!.rotation).toBeUndefined();
     expect(eventDetail!.piece!.fairyName).toBeUndefined();
@@ -732,6 +734,90 @@ describe('ChessBoard Keyboard Handlers', () => {
       squares?.forEach(square => {
         expect(square.querySelector('chess-piece')).toBeNull();
       });
+    });
+  });
+
+  describe('Piece Selection and Movement', () => {
+    it('should select a piece when Enter is pressed on a square with a piece', () => {
+      // Set up a position with a piece on e4
+      element.setFen('8/8/8/8/4P3/8/8/8 w - - 0 1');
+      
+      // Select e4 square
+      element.selectSquare('e4');
+
+      // Press Enter to select the piece
+      const board = element.shadowRoot?.querySelector('.board') as HTMLElement;
+      const enterEvent = new KeyboardEvent('keydown', { key: 'Enter' });
+      board.dispatchEvent(enterEvent);
+
+      // Verify that the piece is selected (currentSquare should be e4)
+      expect(element.getSelectedPieceSquare()).toBe('e4');
+    });
+
+    it('should move a selected piece to a new square when Enter is pressed again', () => {
+      // Set up a position with a piece on e4
+      element.setFen('8/8/8/8/4P3/8/8/8 w - - 0 1');
+      
+      // Select e4 square
+      element.selectSquare('e4');
+
+      // Press Enter to select the piece
+      const board = element.shadowRoot?.querySelector('.board') as HTMLElement;
+      board.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+
+      expect(element.getSelectedPieceSquare()).toBe('e4');
+
+      // Move to f4
+      element.selectSquare('f4');
+      board.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+
+      expect(element.getSelectedPieceSquare()).toBeNull(); // Piece should be moved, no longer selected
+
+      // Verify that the piece moved to f4 and e4 is empty
+      const e4Square = element.shadowRoot?.querySelector('[data-coordinate="e4"]') as HTMLElement;
+      const f4Square = element.shadowRoot?.querySelector('[data-coordinate="f4"]') as HTMLElement;
+
+      expect(e4Square.querySelector('chess-piece')).toBeNull();
+      expect(f4Square.querySelector('chess-piece')?.getAttribute('piece')).toBe('p');
+      expect(f4Square.querySelector('chess-piece')?.getAttribute('color')).toBe('w');
+    });
+
+    it('should not move a piece if no piece is selected', () => {
+      // Set up a position with a piece on e4
+      element.setFen('8/8/8/8/4P3/8/8/8 w - - 0 1');
+      
+      // Select f4 square (empty)
+      element.selectSquare('f4');
+
+      // Press Enter to attempt to move (no piece selected)
+      const board = element.shadowRoot?.querySelector('.board') as HTMLElement;
+      board.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+
+      expect(element.getSelectedPieceSquare()).toBeNull(); // No piece should be selected
+
+    });
+
+    it('should replace a piece if move piece over another piece', () => {
+      // Set up a position with a piece on d4 and e4
+      element.setFen('8/8/8/8/3Pp3/8/8/8 w - - 0 1');
+      
+      // Select d4 square (piece)
+      element.selectPiece('d4');
+
+      element.selectSquare('e4'); // Select e4 square (occupied by another piece)
+
+      // Press Enter to attempt to move over the existing piece
+      const board = element.shadowRoot?.querySelector('.board') as HTMLElement;
+      board.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+
+      expect(element.getSelectedPieceSquare()).toBeNull(); // No piece should be selected
+
+      expect(element.getPieceAt('d4')).toBeNull(); // d4 should be empty
+      const e4Piece = element.getPieceAt('e4');
+      expect(e4Piece).not.toBeNull();
+      expect(e4Piece?.type).toBe('p');
+      expect(e4Piece?.color).toBe('w'); // The white pawn from d4 should now be on e4
+      
     });
   });
 });

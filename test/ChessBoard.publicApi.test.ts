@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { ChessBoard, type PieceInfo } from '../src/ChessBoard';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ChessBoard, PieceInfoWithSquare } from '../src/ChessBoard';
 
 describe('ChessBoard Public API - Piece Manipulation', () => {
   let element: ChessBoard;
@@ -23,9 +23,9 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
       expect(piece).not.toBeNull();
       expect(piece?.type).toBe('q');
       expect(piece?.color).toBe('w');
-      expect(piece?.rotation).toBe('0');
+      expect(piece?.rotation).toBeUndefined();
       expect(element.getFen()).toBe('8/8/8/8/4Q3/8/8/8 w - - 0 1');
-      expect(element.getFFen()).toContain('"square":"e4"');
+      expect(element.getFen()).not.toContain('*0.5Q');
     });
 
     it('should add a piece with rotation', () => {
@@ -34,7 +34,7 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
       const piece = element.getPieceAt('e4');
       expect(piece).not.toBeNull();
       expect(piece?.rotation).toBe('45');
-      expect(element.getFFen()).toContain('"square":"e4"');
+      expect(element.getFen()).toContain('*0.5Q');
     });
 
     it('should replace existing piece on square', () => {
@@ -87,7 +87,7 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
       
       const piece = element.getPieceAt('e4');
       expect(piece?.color).toBe('n');
-      expect(element.getFFen()).toContain('"color":"n"');
+      expect(element.getFen()).toContain('-P');
     });
   });
 
@@ -189,7 +189,7 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
       expect(pieces).toHaveLength(3);
       
       const e4Piece = pieces.find(p => p.square === 'e4');
-      expect(e4Piece).toEqual({ square: 'e4', type: 'q', color: 'w', rotation: '0' });
+      expect(e4Piece).toEqual({ square: 'e4', type: 'q', color: 'w' });
       
       const d4Piece = pieces.find(p => p.square === 'd4');
       expect(d4Piece).toEqual({ square: 'd4', type: 'k', color: 'b', rotation: '45' });
@@ -208,7 +208,7 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
 
   describe('setPieces', () => {
     it('should set multiple pieces at once', () => {
-      const piecesToSet: Array<Omit<PieceInfo, 'rotation'> & { rotation?: '0' | '45' | '90' }> = [
+      const piecesToSet: Array<PieceInfoWithSquare> = [
         { square: 'e4', type: 'q', color: 'w', rotation: '0' },
         { square: 'd4', type: 'k', color: 'b', rotation: '45' },
         { square: 'c3', type: 'r', color: 'w' }
@@ -221,7 +221,7 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
       expect(element.hasPiece('e4')).toBe(true);
       expect(element.hasPiece('d4')).toBe(true);
       expect(element.hasPiece('c3')).toBe(true);
-      expect(element.getFen()).toBe('8/8/8/8/3kQ3/2R5/8/8 w - - 0 1');
+      expect(element.getFen()).toBe('8/8/8/8/3*0.5kQ3/2R5/8/8 w - - 0 1');
     });
 
     it('should clear board before setting pieces', () => {
@@ -239,7 +239,7 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
     });
 
     it('should throw error if any coordinate is invalid', () => {
-      const invalidPieces: Array<Omit<PieceInfo, 'rotation'> & { rotation?: '0' }> = [
+      const invalidPieces: Array<PieceInfoWithSquare> = [
         { square: 'e4', type: 'q', color: 'w', rotation: '0' },
         { square: 'z9', type: 'k', color: 'b', rotation: '0' }
       ];
@@ -258,6 +258,25 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
       
       expect(element.getAllPieces()).toHaveLength(0);
       expect(element.getFen()).toBe('8/8/8/8/8/8/8/8 w - - 0 1');
+    });
+
+    it('should serialize board state only once for multiple pieces', () => {
+      const fenChangeSpy = vi.fn();
+      element.addEventListener('fenChange', fenChangeSpy);
+
+      const piecesToSet: Array<PieceInfoWithSquare> = [
+        { square: 'e4', type: 'q', color: 'w' },
+        { square: 'd4', type: 'k', color: 'b' },
+        { square: 'c3', type: 'r', color: 'w' },
+      ];
+
+      element.setPieces(piecesToSet);
+
+      // Flush microtask queue so the debounced fenChange fires
+      return Promise.resolve().then(() => {
+        expect(fenChangeSpy).toHaveBeenCalledTimes(1);
+        element.removeEventListener('fenChange', fenChangeSpy);
+      });
     });
   });
 
@@ -379,8 +398,8 @@ describe('ChessBoard Public API - Rotation', () => {
   });
 
   describe('getPieceRotation', () => {
-    it('should return null for empty square', () => {
-      expect(element.getPieceRotation('e4')).toBeNull();
+    it('should return undefined for empty square', () => {
+      expect(element.getPieceRotation('e4')).toBeUndefined();
     });
 
     it('should return piece rotation', () => {
@@ -388,9 +407,9 @@ describe('ChessBoard Public API - Rotation', () => {
       expect(element.getPieceRotation('e4')).toBe('135');
     });
 
-    it('should return "0" for piece without explicit rotation', () => {
+    it('should return undefined for piece without explicit rotation', () => {
       element.addPiece('e4', 'q', 'w');
-      expect(element.getPieceRotation('e4')).toBe('0');
+      expect(element.getPieceRotation('e4')).toBe(undefined);
     });
 
     it('should throw error for invalid square', () => {

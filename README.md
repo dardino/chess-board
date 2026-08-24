@@ -52,7 +52,7 @@ import {
   FenPosition,
   parseFen,
   positionToFen
-} from '@accademiadelproblema/chess-board';
+} from '@dardino/chess-board';
 
 // Types for piece properties
 type ChessPieceType = 'k' | 'q' | 'r' | 'b' | 'n' | 'p' | 'e' | 't' | 'a';
@@ -148,7 +148,7 @@ TypeScript declaration files are generated in the `dist/types/` directory:
 ## Installation
 
 ```bash
-pnpm add @accademiadelproblema/chess-board
+pnpm add @dardino/chess-board
 ```
 
 ## Chess Pieces
@@ -211,7 +211,7 @@ The components use ligature-based font rendering for chess pieces:
   <chess-piece piece="a" color="n"></chess-piece> <!-- Neutral Angel/Archbishop -->
 
   <script type="module">
-    import '@accademiadelproblema/chess-board';
+    import '@dardino/chess-board';
   </script>
 </body>
 </html>
@@ -244,9 +244,9 @@ e4Square.appendChild(king);
 
 ### FEN / FFEN Support
 
-The chess board supports standard Forsyth-Edwards Notation (FEN) and the fairy-aware FFEN format used for composed chess problems and custom piece metadata.
+The chess board accepts a single `fen` attribute that works with either standard Forsyth-Edwards Notation (FEN) or the fairy-aware FFEN format used for composed chess problems and custom piece metadata. The parser automatically detects which notation is being used and applies the right rules.
 
-#### Setting Position with FEN
+#### Setting Position with FEN or FFEN
 
 ```html
 <!-- Starting position -->
@@ -257,19 +257,12 @@ The chess board supports standard Forsyth-Edwards Notation (FEN) and the fairy-a
 
 <!-- Custom position -->
 <chess-board fen="r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 4 4"></chess-board>
+
+<!-- Fairy-aware FFEN string: format is detected automatically -->
+<chess-board fen="8/8/8/8/8/8/8/8 w - - 0 1 e4:gn:Chameleon"></chess-board>
 ```
 
-#### Setting Position with FFEN
-
-```html
-<!-- FFEN sets fairy metadata and takes priority over FEN when both are present -->
-<chess-board
-  fen="8/8/8/8/8/8/8/8 w - - 0 1"
-  ffen='{"pieces":[{"square":"e4","type":"q","color":"w"}],"activeColor":"w","castlingRights":"-","enPassantTarget":"-","halfmoveClock":0,"fullmoveNumber":1,"fairyBySquare":{"e4":{"fairyName":"N","fairyCondition":"@"}}}'
-></chess-board>
-```
-
-The board keeps the internal state synchronized automatically: every mutation recomputes both the standard FEN and the lossless FFEN JSON. When both values are available, FFEN is treated as the authoritative representation for the current board state.
+The board keeps the internal state synchronized automatically: when the position contains fairy metadata, it preserves it in the returned FFEN-compatible string; otherwise it remains a standard FEN string. There is no separate `ffen` attribute or duplicate state to keep in sync.
 
 #### Board Rotation Based on Active Color
 
@@ -292,14 +285,13 @@ const board = document.querySelector('chess-board');
 
 // Standard FEN
 board.setFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
-const currentFen = board.getFen();
 
-// Fairy-aware FFEN (lossless, includes fairy metadata)
-board.setFfen('{"pieces":[{"square":"e4","type":"q","color":"w"}],"activeColor":"w","castlingRights":"-","enPassantTarget":"-","halfmoveClock":0,"fullmoveNumber":1,"fairyBySquare":{"e4":{"fairyName":"N","fairyCondition":"@"}}}');
-const currentFfen = board.getFFen();
+// Fairy-aware FFEN string (auto-detected)
+board.setFen('8/8/8/8/8/8/8/8 w - - 0 1 e4:gn:Chameleon');
 
-// Sync is automatic after board edits; getFen()/getFFen() always reflect the latest state
-// FFEN takes precedence when both FEN and FFEN are present
+const currentPosition = board.getFen();
+// Returns the current board state in the appropriate FEN/FFEN form
+// without requiring a separate ffen attribute or getter.
 
 // Set starting position
 board.setStartingPosition();
@@ -466,21 +458,18 @@ The `chess-board` element renders a complete 8x8 chess board with:
 #### Attributes
 
 - `hide-labels`: When present, hides all coordinate labels, showing only the chess board squares
-- `fen`: Forsyth-Edwards Notation string to set the board position
+- `fen`: Standard FEN or FFEN string to set the board position. The component auto-detects whether the input is a normal FEN or a fairy-aware FFEN string.
 
 #### Methods
 
 ##### FEN / FFEN Management
 
-- `setFen(fen: string)`: Set board position using standard FEN notation
-- `getFen(): string`: Get the current standard FEN string
-- `setFfen(ffen: string)`: Set board position using FFEN (fairy-aware notation)
-- `getFFen(): string`: Get the current FFEN JSON payload for the board state
-- `getFfen(): string`: Alias for the current FFEN value, kept for compatibility with the FFEN attribute API
+- `setFen(fenOrFfen: string)`: Set board position using either standard FEN or FFEN notation; format is inferred automatically
+- `getFen(): string`: Get the current board state as the active FEN/FFEN string, preserving fairy metadata when present
 - `setStartingPosition()`: Set board to standard starting position
 - `clearBoard()`: Remove all pieces from the board
 
-> When both attributes are present, FFEN takes priority over FEN. The board keeps both values synchronized after each change, while standard FEN remains the lossy, engine-friendly view.
+> There is a single `fen` API now. FFEN support is handled automatically by the same attribute and method, so there is no separate `ffen` state to synchronize.
 
 ##### Square Selection
 
@@ -614,7 +603,7 @@ board.toggleOrientation();                  // Switch between white/black
 ###### TypeScript Types
 
 ```typescript
-import type { PieceInfo, ChessPieceType, ChessPieceColor, ChessPieceRotation } from '@accademiadelproblema/chess-board';
+import type { PieceInfo, ChessPieceType, ChessPieceColor, ChessPieceRotation } from '@dardino/chess-board';
 
 interface PieceInfo {
   square: string;                           // e.g., 'e4', 'a1'
@@ -627,7 +616,7 @@ interface PieceInfo {
 ###### Complete Example
 
 ```typescript
-import { ChessBoard, type PieceInfo } from '@accademiadelproblema/chess-board';
+import { ChessBoard, type PieceInfo } from '@dardino/chess-board';
 
 // Setup a chess problem
 const board = document.querySelector('chess-board') as ChessBoard;
@@ -720,7 +709,7 @@ Complete HTML page with programmatic API usage:
   <div id="info"></div>
   
   <script type="module">
-    import '@accademiadelproblema/chess-board';
+    import '@dardino/chess-board';
     
     const board = document.getElementById('board');
     const info = document.getElementById('info');
@@ -783,7 +772,7 @@ Complete HTML page with programmatic API usage:
 Complete TypeScript example with type safety:
 
 ```typescript
-import { ChessBoard, type PieceInfo, type ChessPieceType, type ChessPieceColor } from '@accademiadelproblema/chess-board';
+import { ChessBoard, type PieceInfo, type ChessPieceType, type ChessPieceColor } from '@dardino/chess-board';
 
 // Get board element with proper typing
 const board = document.querySelector('chess-board') as ChessBoard;
@@ -1059,7 +1048,7 @@ FEN uses the format: `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1`
 ### FEN Functions
 
 ```typescript
-import { parseFen, positionToFen, parsePiecePlacement, piecesToFenString, getStartingPositionFen, getEmptyBoardFen } from '@accademiadelproblema/chess-board';
+import { parseFen, positionToFen, parsePiecePlacement, piecesToFenString, getStartingPositionFen, getEmptyBoardFen } from '@dardino/chess-board';
 
 // Parse complete FEN string
 const position = parseFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
