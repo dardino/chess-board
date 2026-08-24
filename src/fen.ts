@@ -258,6 +258,7 @@ export function parsePiecePlacement(piecePlacement: string): {
     const rankStr = ranks[rank];
     let currentFile = 0;
     let matches: RegExpExecArray | null;
+    RankRx.lastIndex = 0; // Reset regex state before parsing each rank
     while (null !== (matches = RankRx.exec(rankStr))) {
       const fileChar = matches.groups?.figure || matches.groups?.emptyspaces;
       if (!fileChar) continue;
@@ -470,6 +471,7 @@ export function parseFairyMetadata(fairyBlock: string): Record<string, FairyPiec
   }
   const fairyMetadata: Record<string, FairyPieceMetadata> = {};
   let matches: RegExpExecArray | null;
+  FairyMetadataRegex.lastIndex = 0; // Reset regex state before parsing
   while (null !== (matches = FairyMetadataRegex.exec(fairyBlock))) {
     const cell = matches?.groups?.['cell'];
     if (!cell) {
