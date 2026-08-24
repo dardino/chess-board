@@ -5,7 +5,6 @@ import {
   parseFairyMetadata,
   parseFen,
   parseFfenPieceChar,
-  parsePieceChar,
   parsePiecePlacement,
   piecesToFenString,
   pieceToChar,
@@ -17,34 +16,6 @@ import {
 } from '../src/fen';
 
 describe('FEN Utilities', () => {
-  describe('parsePieceChar', () => {
-    it('should parse white king', () => {
-      const result = parsePieceChar('K');
-      expect(result).toEqual({ type: 'k', color: 'w' });
-    });
-
-    it('should parse black queen', () => {
-      const result = parsePieceChar('q');
-      expect(result).toEqual({ type: 'q', color: 'b' });
-    });
-
-    it('should parse white pawn', () => {
-      const result = parsePieceChar('P');
-      expect(result).toEqual({ type: 'p', color: 'w' });
-    });
-
-    it('should parse black rook', () => {
-      const result = parsePieceChar('r');
-      expect(result).toEqual({ type: 'r', color: 'b' });
-    });
-
-    it('should return null for invalid piece', () => {
-      expect(parsePieceChar('X')).toBeNull();
-      expect(parsePieceChar('')).toBeNull();
-      expect(parsePieceChar('KK')).toBeNull();
-    });
-  });
-
   describe('pieceToChar', () => {
     it('should convert white king to K', () => {
       const piece: FENChessPiece = { type: 'k', color: 'w', square: 'e1' };
@@ -471,6 +442,16 @@ describe('FEN Utilities', () => {
         expect(fairyLetter?.type).toBe('\'\'gn');
         expect(fairyLetter?.color).toBe('b');
       });
+
+      it("should parse very complicated FFEN: *2q7/'G'A'B'R'i'e'l'e/cxs2SCX/-c-x-s5/ETA5/KQRBNP2/eta'g'a'b2/kqrbnp2 w KQkq - 0 1 a8:GN:Imitator", () => {
+        const ffen = "*2q7/'G'A'B'R'i'e'l'e/cxs2SCX/-c-x-s5/ETA5/KQRBNP2/eta'g'a'b2/kqrbnp2 w KQkq - 0 1 a8:GN:Imitator";
+        const position = parseFen(ffen);
+        expect(position).not.toBeNull();
+        expect(position?.pieces).toHaveLength(39);
+
+      });
+
+
     });
 
     describe('positionToFFen', () => {

@@ -13,16 +13,18 @@
  * - Fullmove number (incremented after black's move)
  */
 
-import type { ChessPieceColor, ChessPieceType } from './ChessPiece';
+export type ChessPieceType = StandardPieces | `${number}` | `'${string}` | `''${string}`;
+export type ChessPieceColor = 'w' | 'b' | 'n';
+export type ChessPieceRotation = '0' | '45' | '90' | '135' | '180' | '225' | '270' | '315';
 
-export const StandardPiecesList = ['k', 'q', 'r', 'b', 'n', 'p', 'e', 't', 'a'] as const;
+export const StandardPiecesList = [
+  'k', 'q', 'r', 'b', 'n', 'p', 'e', 't', 'a', 'x', 's', 'c'
+] as const;
 export type StandardPieces = typeof StandardPiecesList[number];
 export const StandardPieceEnum = Object.freeze(StandardPiecesList.reduce((acc, piece) => {
   acc[piece] = piece;
   return acc;
 }, {} as Record<string, string>)) as { readonly [K in StandardPieces]: K };
-
-export type ChessPieceRotation = '0' | '45' | '90' | '135' | '180' | '225' | '270' | '315';
 
 /**
  * Represents a chess piece on the board
@@ -269,7 +271,10 @@ export function parsePiecePlacement(piecePlacement: string): {
         square: String.fromCharCode(97 + file) + (boardHeight - rank).toString(), // 'a' + file, rank from bottom
         color: matches.groups?.letter === matches.groups?.letter?.toLowerCase() ? 'b' : 'w',
       };
-      if (matches.groups?.neutral === '-') info.isNeutral = true;
+      if (matches.groups?.neutral === '-') {
+        info.isNeutral = true;
+        info.color = 'n';
+      }
       if (matches.groups?.rotation)
         info.rotation = (parseFloat(matches.groups?.degree ?? "0") * 90).toString() as ChessPieceRotation;
       pieces.push(info);
@@ -334,29 +339,6 @@ export function piecesToFenString(pieces: FENChessPiece[], isFfen: boolean = fal
   }
 
   return ranks.join('/');
-}
-
-/**
- * Parses a single piece character (standard FEN only)
- * @param char - Piece character (e.g., 'K', 'q', 'P')
- * @returns Piece object or null if invalid
- */
-export function parsePieceChar(char: string): { type: ChessPieceType; color: ChessPieceColor } | null {
-  if (char.length !== 1) {
-    return null;
-  }
-
-  const lowerChar = char.toLowerCase();
-  const validPieces: ChessPieceType[] = ['k', 'q', 'r', 'b', 'n', 'p'];
-
-  if (!validPieces.includes(lowerChar as ChessPieceType)) {
-    return null;
-  }
-
-  return {
-    type: lowerChar as ChessPieceType,
-    color: char === lowerChar ? 'b' : 'w'
-  };
 }
 
 /**
@@ -448,15 +430,14 @@ export function parseFfenPieceChar(pieceStr: string): {
     }
   }
 
-  // Standard pieces: K, Q, R, B, N, P, or markers: C, X, S, T
+  // Standard pieces: K, Q, R, B, N, P, E, T, A or markers: C, X, S
   if (currentStr.length !== 1) {
     return null;
   }
 
   const lowerChar = currentStr.toLowerCase();
-  const validPieces: string[] = ['k', 'q', 'r', 'b', 'n', 'p', 'c', 'x', 's', 't'];
 
-  if (!validPieces.includes(lowerChar)) {
+  if (!StandardPiecesList.includes(lowerChar as typeof StandardPiecesList[number])) {
     return null;
   }
 

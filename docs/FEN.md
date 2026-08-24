@@ -43,7 +43,7 @@ rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
 Parses a complete FEN string into a structured position object.
 
 ```typescript
-import { parseFen } from '@accademiadelproblema/chess-board';
+import { parseFen } from '@dardino/chess-board';
 
 const position = parseFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
 
@@ -60,7 +60,7 @@ if (position) {
 Converts a structured position object back to a FEN string.
 
 ```typescript
-import { positionToFen, type FenPosition } from '@accademiadelproblema/chess-board';
+import { positionToFen, type FenPosition } from '@dardino/chess-board';
 
 const position: FenPosition = {
   pieces: [
@@ -83,7 +83,7 @@ console.log(fen); // '4k3/8/8/8/8/8/8/4K3 w KQkq - 0 1'
 Parses only the piece placement part of FEN (first field).
 
 ```typescript
-import { parsePiecePlacement } from '@accademiadelproblema/chess-board';
+import { parsePiecePlacement } from '@dardino/chess-board';
 
 const pieces = parsePiecePlacement('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR');
 
@@ -101,7 +101,7 @@ if (pieces) {
 Converts an array of pieces back to FEN piece placement string.
 
 ```typescript
-import { piecesToFenString, type ChessPiece } from '@accademiadelproblema/chess-board';
+import { piecesToFenString, type ChessPiece } from '@dardino/chess-board';
 
 const pieces: ChessPiece[] = [
   { type: 'k', color: 'w', square: 'e1' },
@@ -119,7 +119,7 @@ console.log(fenString); // '3k4/8/8/8/8/8/8/4K3'
 Parses a single piece character (e.g., 'K', 'q') into type and color.
 
 ```typescript
-import { parsePieceChar } from '@accademiadelproblema/chess-board';
+import { parsePieceChar } from '@dardino/chess-board';
 
 console.log(parsePieceChar('K')); // { type: 'k', color: 'w' }
 console.log(parsePieceChar('q')); // { type: 'q', color: 'b' }
@@ -131,7 +131,7 @@ console.log(parsePieceChar('X')); // null (invalid)
 Converts a piece object back to FEN character.
 
 ```typescript
-import { pieceToChar, type ChessPiece } from '@accademiadelproblema/chess-board';
+import { pieceToChar, type ChessPiece } from '@dardino/chess-board';
 
 const whiteKing: ChessPiece = { type: 'k', color: 'w', square: 'e1' };
 console.log(pieceToChar(whiteKing)); // 'K'
@@ -145,7 +145,7 @@ console.log(pieceToChar(blackQueen)); // 'q'
 Returns the FEN string for the standard chess starting position.
 
 ```typescript
-import { getStartingPositionFen } from '@accademiadelproblema/chess-board';
+import { getStartingPositionFen } from '@dardino/chess-board';
 
 const startingFen = getStartingPositionFen();
 console.log(startingFen); // 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
@@ -156,7 +156,7 @@ console.log(startingFen); // 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq
 Returns the FEN string for an empty chess board.
 
 ```typescript
-import { getEmptyBoardFen } from '@accademiadelproblema/chess-board';
+import { getEmptyBoardFen } from '@dardino/chess-board';
 
 const emptyFen = getEmptyBoardFen();
 console.log(emptyFen); // '8/8/8/8/8/8/8/8 w - - 0 1'
@@ -204,7 +204,7 @@ type ChessPieceColor = 'w' | 'b';
 ### Loading Chess Positions
 
 ```typescript
-import { parseFen } from '@accademiadelproblema/chess-board';
+import { parseFen } from '@dardino/chess-board';
 
 // Scholar's mate position
 const scholarsMate = parseFen('r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 1');
@@ -219,7 +219,7 @@ const endgame = parseFen('8/8/8/8/8/8/8/R3K2k w Q - 0 1');
 ### Creating Custom Positions
 
 ```typescript
-import { piecesToFenString, positionToFen, type ChessPiece } from '@accademiadelproblema/chess-board';
+import { piecesToFenString, positionToFen, type ChessPiece } from '@dardino/chess-board';
 
 // Create a custom piece arrangement
 const pieces: ChessPiece[] = [
@@ -250,7 +250,7 @@ console.log(fullFen); // 'r3k3/8/8/8/8/5N2/8/3QK1K1 w - - 0 1'
 ### Board Integration
 
 ```typescript
-import { parseFen } from '@accademiadelproblema/chess-board';
+import { parseFen } from '@dardino/chess-board';
 
 // HTML: <chess-board id="board"></chess-board>
 const board = document.getElementById('board') as any; // ChessBoard element
@@ -275,7 +275,7 @@ if (caroKann) {
 ### Position Analysis
 
 ```typescript
-import { parseFen } from '@accademiadelproblema/chess-board';
+import { parseFen } from '@dardino/chess-board';
 
 function analyzePosition(fen: string) {
   const position = parseFen(fen);
@@ -303,7 +303,7 @@ analyzePosition('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
 All parsing functions return `null` for invalid input:
 
 ```typescript
-import { parseFen, parsePiecePlacement } from '@accademiadelproblema/chess-board';
+import { parseFen, parsePiecePlacement } from '@dardino/chess-board';
 
 // Invalid FEN strings
 console.log(parseFen('invalid')); // null

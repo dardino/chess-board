@@ -4,11 +4,22 @@
  */
 import style from './ChessPiece.css?raw';
 import template from './ChessPiece.html?raw';
-import { FairyPieceMetadata } from './fen';
+import { ChessPieceColor, ChessPieceRotation, ChessPieceType, FairyPieceMetadata, StandardPieces, StandardPiecesList } from './fen';
 
-export type ChessPieceType = 'k' | 'q' | 'r' | 'b' | 'n' | 'p' | 'e' | 't' | 'a' | 'c' | 'x' | 's' | `${number}` | `'${string}` | `''${string}`;
-export type ChessPieceColor = 'w' | 'b' | 'n';
-export type ChessPieceRotation = '0' | '45' | '90' | '135' | '180' | '225' | '270' | '315';
+const standardPieceNames = {
+  k: 'King',
+  q: 'Queen',
+  r: 'Rook',
+  b: 'Bishop',
+  n: 'Knight',
+  p: 'Pawn',
+  e: 'Empress',
+  t: 'Amazon',
+  a: 'Archbishop',
+  c: 'Circle',
+  s: 'Square',
+  x: 'Cross',
+} as const;
 
 // Augment DOM typings so addEventListener/removeEventListener recognize the custom 'cellClick' event
 declare global {
@@ -24,6 +35,14 @@ export class ChessPiece extends HTMLElement {
   #rotation: ChessPieceRotation = '0';
   #fairyName: string = '';
   #fairyCondition: string = '';
+
+  get #isStandardPiece(): boolean {
+    return StandardPiecesList.includes(this.#pieceType as typeof StandardPiecesList[number]);
+  }
+
+  get #trimmedPieceType(): string {
+    return this.#pieceType?.replace(/^'+/, '') ?? ""; // Remove leading apostrophes for fairy pieces
+  }
 
   static get observedAttributes(): string[] {
     return ['piece', 'color', 'rotation', 'fairy-name', 'fairy-condition'];
@@ -46,6 +65,14 @@ export class ChessPiece extends HTMLElement {
     }
   }
 
+  #isValidPieceType(piece: string | null): piece is ChessPieceType {
+    return piece !== null && (
+      StandardPiecesList.includes(piece as StandardPieces) 
+      || /^'[a-zA-Z0-9]+$/.test(piece) 
+      || /^''[a-zA-Z0-9]{2}$/.test(piece)
+    );
+  }
+
   #updatePieceAttributes(): void {
     const piece = this.getAttribute('piece') as ChessPieceType;
     const color = this.getAttribute('color') as ChessPieceColor;
@@ -53,9 +80,8 @@ export class ChessPiece extends HTMLElement {
     const fairyName = this.getAttribute('fairy-name');
     const fairyCondition = this.getAttribute('fairy-condition');
 
-    if (piece && ['k', 'q', 'r', 'b', 'n', 'p', 'e', 't', 'a', 'c', 'x', 's'].includes(piece)) {
+    if (this.#isValidPieceType(piece))
       this.#pieceType = piece;
-    }
 
     if (color && ['w', 'b', 'n'].includes(color)) {
       this.#pieceColor = color;
@@ -105,19 +131,29 @@ export class ChessPiece extends HTMLElement {
       const fgElement = clonedContent.querySelector('.piece-fg') as HTMLElement;
       const fairyNameElement = clonedContent.querySelector('.fairy-name') as HTMLElement;
       const fairyConditionElement = clonedContent.querySelector('.fairy-condition') as HTMLElement;
+      const pieceInner = pieceContainer.querySelector('.piece-inner') as HTMLElement | null;
 
-      if (bgElement) {
-        bgElement.textContent = `__${this.#pieceType}`;
-      }
-      if (fgElement) {
-        fgElement.textContent = `${this.#pieceColor}_${this.#pieceType}`;
+      if (!bgElement || !fgElement || !pieceContainer || !pieceInner) return;
+
+      if (!this.#isStandardPiece) {
+        bgElement.textContent = this.#trimmedPieceType.toUpperCase(); // admit only uppercase characters for fairy pieces
+        fgElement.textContent = this.#trimmedPieceType.toUpperCase();
+      } else {
+        bgElement.textContent = `__${this.#trimmedPieceType}`; // For standard pieces, prefix with '__'
+        fgElement.textContent = `${this.#pieceColor}_${this.#trimmedPieceType}`; // For standard pieces, prefix with color
       }
 
+      if (this.#pieceType?.startsWith("'")) {
+        // For fairy pieces, add a special class to the piece container
+        pieceContainer.classList.add('text-piece');
+      }
+
+      // Apply color class
+      pieceInner.classList.add(`color-${this.#pieceColor}`);
       // Apply rotation
-      if (pieceContainer && this.#rotation !== '0') {
-        pieceContainer.querySelectorAll('.piece-bg, .piece-fg').forEach(el => {
-          (el as HTMLElement).style.transform = `rotate(${this.#rotation}deg)`;
-        });
+      if (this.#rotation !== '0') {
+        pieceInner.style.transform = `rotate(${this.#rotation}deg)`;
+        pieceInner.classList.add('rotated');
       }
 
       // Update fairy-name
@@ -139,6 +175,8 @@ export class ChessPiece extends HTMLElement {
           fairyConditionElement.style.display = 'none';
         }
       }
+
+      pieceContainer?.setAttribute('title', this.getHumanReadableTitle());
 
       this.#shadow.appendChild(clonedContent);
     }
@@ -182,6 +220,33 @@ export class ChessPiece extends HTMLElement {
   setFairyCondition(condition: string): void {
     this.setAttribute('fairy-condition', condition);
     this.#triggerMetadataChangeEvent(this.#merge({ fairyCondition: condition || undefined }));
+  }
+
+  getHumanReadableTitle(): string {
+    let title = '';
+    if (this.#pieceColor === 'w') {
+      title += 'White ';
+    } else if (this.#pieceColor === 'b') {
+      title += 'Black ';
+    } else if (this.#pieceColor === 'n') {
+      title += 'Neutral ';
+    }
+
+    if (this.#isStandardPiece) {
+      title += standardPieceNames[this.#pieceType.toLowerCase() as keyof typeof standardPieceNames] 
+            || `Unknown Piece (${this.#trimmedPieceType})`;
+    } else {
+      title += `Fairy Piece (${this.#trimmedPieceType})`;
+    }
+
+    if (this.#fairyName) {
+      title += ` - Name: ${this.#fairyName}`;
+    }
+    if (this.#fairyCondition) {
+      title += ` - Condition: ${this.#fairyCondition}`;
+    }
+
+    return title;
   }
 
   #merge(metadata: Partial<FairyPieceMetadata>): FairyPieceMetadata {

@@ -4,8 +4,8 @@
  */
 import style from './ChessBoard.css?raw';
 import template from './ChessBoard.html?raw';
-import { ChessPiece, type ChessPieceColor, type ChessPieceRotation, type ChessPieceType } from './ChessPiece';
-import { FairyPieceMetadata, FenPosition, parseFen, positionToFen, type FENChessPiece as FenChessPiece } from './fen';
+import { ChessPiece } from './ChessPiece';
+import { FairyPieceMetadata, FenPosition, parseFen, positionToFen, type ChessPieceColor, type ChessPieceRotation, type ChessPieceType, type FENChessPiece as FenChessPiece } from './fen';
 
 export interface PieceInfo {
   type: ChessPieceType;
@@ -251,7 +251,14 @@ export class ChessBoard extends HTMLElement {
     't': this.#handleAddPiece('t', 'b'),
     'T': this.#handleAddPiece('t', 'w'),
     'a': this.#handleAddPiece('a', 'b'),
-    'A': this.#handleAddPiece('a', 'w')
+    'A': this.#handleAddPiece('a', 'w'),
+    // Symbolic pieces
+    'c': this.#handleAddPiece('c', 'b'),
+    'C': this.#handleAddPiece('c', 'w'),
+    's': this.#handleAddPiece('s', 'b'),
+    'S': this.#handleAddPiece('s', 'w'),
+    'x': this.#handleAddPiece('x', 'b'),
+    'X': this.#handleAddPiece('x', 'w')
   };
 
   #handleKeyDown = (event: KeyboardEvent): void => {
@@ -283,7 +290,9 @@ export class ChessBoard extends HTMLElement {
     this.#shadow = this.attachShadow({ mode: 'open' });
   }
 
+  #isConnected = false;
   connectedCallback(): void {
+    this.#isConnected = true;
     this.#firstRender();
     this.#updatePiecesFromFen();
     this.#updateBoardOrientationFromCurrentFen();
@@ -291,10 +300,17 @@ export class ChessBoard extends HTMLElement {
   }
 
   disconnectedCallback(): void {
+    this.#isConnected = false;
     this.#removeEventListeners();
   }
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string): void {
+    if (!this.#isConnected) {
+      // Safari calls this callback before connectedCallback,
+      // so we defer processing until after the component is connected
+      queueMicrotask(() => this.attributeChangedCallback(name, oldValue, newValue));
+      return;
+    }
     if (oldValue !== newValue) {
       if (name === 'fen') {
         if (this.#currentFen === newValue) return; // No change, no need to update
@@ -730,6 +746,7 @@ export class ChessBoard extends HTMLElement {
 
     // Parse FEN/FFEN and place pieces
     const position = parseFen(fenString);
+
     if (!position) {
       console.warn('Invalid FEN/FFEN string:', fenString);
       return;
@@ -946,7 +963,7 @@ export class ChessBoard extends HTMLElement {
   /**
    * Adds a piece to the specified square (replaces existing piece if present)
    * @param square - Square coordinate (e.g., "e4", "a1")
-   * @param pieceType - Type of piece ('k', 'q', 'r', 'b', 'n', 'p', 'e', 't', 'a')
+   * @param pieceType - Type of piece (`${number}` | "k" | "q" | "r" | "b" | "n" | "p" | "e" | "t" | "a" | "x" | "s" | "c" | `'${string}` | `''${string}`)
    * @param color - Color of piece ('w', 'b', 'n')
    * @param rotation - Optional rotation angle (0, 45, 90, 135, 180, 225, 270, 315)
    * @throws Error if coordinate is invalid

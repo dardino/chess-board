@@ -52,7 +52,7 @@ import {
   FenPosition,
   parseFen,
   positionToFen
-} from '@accademiadelproblema/chess-board';
+} from '@dardino/chess-board';
 
 // Types for piece properties
 type ChessPieceType = 'k' | 'q' | 'r' | 'b' | 'n' | 'p' | 'e' | 't' | 'a';
@@ -148,7 +148,7 @@ TypeScript declaration files are generated in the `dist/types/` directory:
 ## Installation
 
 ```bash
-pnpm add @accademiadelproblema/chess-board
+pnpm add @dardino/chess-board
 ```
 
 ## Chess Pieces
@@ -211,7 +211,7 @@ The components use ligature-based font rendering for chess pieces:
   <chess-piece piece="a" color="n"></chess-piece> <!-- Neutral Angel/Archbishop -->
 
   <script type="module">
-    import '@accademiadelproblema/chess-board';
+    import '@dardino/chess-board';
   </script>
 </body>
 </html>
@@ -603,7 +603,7 @@ board.toggleOrientation();                  // Switch between white/black
 ###### TypeScript Types
 
 ```typescript
-import type { PieceInfo, ChessPieceType, ChessPieceColor, ChessPieceRotation } from '@accademiadelproblema/chess-board';
+import type { PieceInfo, ChessPieceType, ChessPieceColor, ChessPieceRotation } from '@dardino/chess-board';
 
 interface PieceInfo {
   square: string;                           // e.g., 'e4', 'a1'
@@ -616,7 +616,7 @@ interface PieceInfo {
 ###### Complete Example
 
 ```typescript
-import { ChessBoard, type PieceInfo } from '@accademiadelproblema/chess-board';
+import { ChessBoard, type PieceInfo } from '@dardino/chess-board';
 
 // Setup a chess problem
 const board = document.querySelector('chess-board') as ChessBoard;
@@ -709,7 +709,7 @@ Complete HTML page with programmatic API usage:
   <div id="info"></div>
   
   <script type="module">
-    import '@accademiadelproblema/chess-board';
+    import '@dardino/chess-board';
     
     const board = document.getElementById('board');
     const info = document.getElementById('info');
@@ -772,7 +772,7 @@ Complete HTML page with programmatic API usage:
 Complete TypeScript example with type safety:
 
 ```typescript
-import { ChessBoard, type PieceInfo, type ChessPieceType, type ChessPieceColor } from '@accademiadelproblema/chess-board';
+import { ChessBoard, type PieceInfo, type ChessPieceType, type ChessPieceColor } from '@dardino/chess-board';
 
 // Get board element with proper typing
 const board = document.querySelector('chess-board') as ChessBoard;
@@ -1048,7 +1048,7 @@ FEN uses the format: `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1`
 ### FEN Functions
 
 ```typescript
-import { parseFen, positionToFen, parsePiecePlacement, piecesToFenString, getStartingPositionFen, getEmptyBoardFen } from '@accademiadelproblema/chess-board';
+import { parseFen, positionToFen, parsePiecePlacement, piecesToFenString, getStartingPositionFen, getEmptyBoardFen } from '@dardino/chess-board';
 
 // Parse complete FEN string
 const position = parseFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
