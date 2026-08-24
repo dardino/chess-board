@@ -39,6 +39,12 @@ jobs:
 
       - name: Test
         run: pnpm test:run
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: github-pages
+          path: ./dist
   
   publish-github-pages:
     if: github.event_name == 'release'
