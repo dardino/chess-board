@@ -791,6 +791,9 @@ export class ChessBoard extends HTMLElement {
     const pieceElement = new ChessPiece();
     pieceElement.setAttribute('piece', piece.type);
     pieceElement.setAttribute('color', piece.color);
+    if (piece.fairyName) pieceElement.setAttribute('fairy-name', piece.fairyName);
+    if (piece.fairyCondition) pieceElement.setAttribute('fairy-condition', piece.fairyCondition);
+    if (piece.rotation) pieceElement.setAttribute('rotation', piece.rotation);
     pieceElement.classList.add('piece');
 
     // Add piece to square
