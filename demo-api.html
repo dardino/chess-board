@@ -60,6 +60,11 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
     
+    .board-wrapper {
+      position: sticky;
+      top: 1rem;
+    }
+
     chess-board {
       width: 100%;
       max-width: 500px;
@@ -205,11 +210,13 @@
   <div class="container">
     <!-- Chess Board -->
     <div class="board-container">
-      <h2>Chess Board</h2>
-      <chess-board id="board"></chess-board>
-      <div>
-        <h3>📋 FFEN:</h3>
-        <div class="info-box" id="current-fen-sync-info"></div>
+      <div class="board-wrapper">
+        <h2>Chess Board</h2>
+        <chess-board id="board"></chess-board>
+        <div>
+          <h3>📋 FFEN:</h3>
+          <div class="info-box" id="current-fen-sync-info"></div>
+        </div>
       </div>
     </div>
     
@@ -531,10 +538,11 @@ setInterval(() => {
     function simulateSpace() {
       const selected = board.getSelectedPieceSquare();
       if (selected) {
-        updateSelectionInfo(null);
-        alert(`Piece at ${selected} would be moved. Try navigating and pressing Space to move it.`);
+        board.selectPiece('e4');
+        updateSelectionInfo('e4');
       } else {
-        alert('No piece selected. Focus board, navigate to e4, and press Space on a piece.');
+        board.selectPiece('e4');
+        updateSelectionInfo('e4');
       }
     }
     
