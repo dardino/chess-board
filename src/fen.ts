@@ -102,7 +102,13 @@ export function parseFen(fen: string): FenPosition | null {
   const fairyMetadataBlock = parts[6]; // Optional 7th block for FFEN
 
   // Parse piece placement (pass isFfen flag)
-  const pieces = parsePiecePlacement(piecePlacement);
+  const parsed = parsePiecePlacement(piecePlacement);
+  if (!parsed) return null;
+  const { boardSize, pieces } = parsed;
+  // supports board sizes between 4x4 and 11x11 for FFEN
+  if (boardSize.width < 4 || boardSize.width > 11 || boardSize.height < 4 || boardSize.height > 11) {
+    return null;
+  }
   if (!pieces) {
     return null;
   }
@@ -225,7 +231,7 @@ export function positionToFFen(position: FenPosition): string {
   return positionToFen(normalizedPosition);
 }
 
-const RankRx = /(?<piece>(?<rotation>\*(?<degree>[0-3](?:\.[5])?))?(?<figure>(?<neutral>-)?(?<letter>[kqrbnpcxs]|'\w|''\w\w)))|(?<emptyspaces>[0-9])/gi;
+const RankRx = /(?<piece>(?<rotation>\*(?<degree>[0-3](?:\.[5])?))?(?<figure>(?<neutral>-)?(?<letter>[kqrbnpetacxs]|'\w|''\w\w)))|(?<emptyspaces>[0-9])/giy;
 
 /**
  * Parses the piece placement part of FEN/FFEN and returns array of pieces
@@ -233,18 +239,14 @@ const RankRx = /(?<piece>(?<rotation>\*(?<degree>[0-3](?:\.[5])?))?(?<figure>(?<
  * @param isFfen - If true, parse FFEN format with extensions (default: false for standard FEN)
  * @returns Array of pieces or null if invalid
  */
-export function parsePiecePlacement(piecePlacement: string): FENChessPiece[] | null {
+export function parsePiecePlacement(piecePlacement: string): { 
+  pieces: FENChessPiece[], 
+  boardSize: { width: number, height: number }
+} | null {
+  if (!piecePlacement || typeof piecePlacement !== 'string') {
+    return null;
+  }
   const ranks = piecePlacement.split('/');
-  const isFfen = ranks.length > 8; // Determine if FFEN based on ranks count
-  // Support variable board size for FFEN, but require 8 for standard FEN
-  if (!isFfen && ranks.length !== 8) {
-    return null;
-  }
-  
-  if (isFfen && (ranks.length < 4 || ranks.length > 11)) {
-    // Support 4x4 to 11x11 boards for FFEN
-    return null;
-  }
 
   const pieces: FENChessPiece[] = [];
   const boardHeight = ranks.length;
@@ -279,7 +281,11 @@ export function parsePiecePlacement(piecePlacement: string): FENChessPiece[] | n
     boardWidth = Math.max(boardWidth, currentFile);
   }
 
-  return pieces;
+  if (boardWidth < 4 || boardWidth > 11 || boardHeight < 4 || boardHeight > 11) {
+    return null; // Invalid board size for FFEN
+  }
+
+  return { pieces, boardSize: { width: boardWidth, height: boardHeight } };
 }
 
 /**

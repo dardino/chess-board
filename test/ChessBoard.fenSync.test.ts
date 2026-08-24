@@ -23,8 +23,8 @@ beforeEach(() => {
 function ffenPieces(board: ChessBoard): Array<FENChessPiece> {
   const raw = board.getFen();
   if (!raw) return [];
-  const parsed = parsePiecePlacement(raw.split(' ')[0]);
-  return parsed ?? [];
+  const parsed = parsePiecePlacement(raw.split(' ')[0]) ?? { pieces: [], boardSize: { width: 0, height: 0 } };
+  return parsed.pieces;
 }
 
 // ─── addPiece ──────────────────────────────────────────────────────────────────
