@@ -30,6 +30,9 @@ jobs:
 
       - name: Test
         run: pnpm test:run --coverage
+      
+      - name: copy coverage report
+        run: cp ./coverage/coverage-summary.json ./github-pages/assets/coverage-summary.json
 
       - name: Upload Coverage Report
         if: always()
