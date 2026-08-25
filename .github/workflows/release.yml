@@ -40,8 +40,8 @@ jobs:
       - name: Test
         run: pnpm test:run
       
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v5
+      - name: Upload Pages artifacts
+        uses: actions/upload-pages-artifact@v5
         with:
           name: github-pages
           path: ./dist
