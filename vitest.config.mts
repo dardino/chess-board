@@ -12,9 +12,11 @@ export default defineConfig({
     setupFiles: ['./test/setup.ts'],
     coverage: {
       exclude: ['*.css', '*.html', "./index.ts"],
-      reporter: ['text', 'json', 'html', 'lcov', 'text-summary', 'json-summary'].concat(
-        process.env.GITHUB_ACTIONS ? ['github-actions'] : []
-      )
+      ...(process.env.GITHUB_ACTIONS ? {} : {
+        reporter: [
+          'text', 'json', 'html', 'lcov', 'text-summary', 'json-summary'
+        ]
+      }),
     },
   },
   resolve: {
