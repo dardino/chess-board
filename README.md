@@ -2,6 +2,10 @@
 
 A collection of web components for displaying chess boards and pieces, built with TypeScript and Vite.
 
+## Project HomePage
+
+This project is hosted on [GitHub Pages](https://dardino.github.io/chess-board/)
+
 ## Components
 
 ### ChessBoard (`chess-board`)
