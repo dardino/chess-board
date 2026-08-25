@@ -31,9 +31,6 @@ jobs:
       - name: Test
         run: pnpm test:run --coverage
       
-      - name: copy coverage report
-        run: cp ./coverage/coverage-summary.json ./github-pages/assets/coverage-summary.json
-
       - name: Upload Coverage Report
         if: always()
         uses: actions/upload-artifact@v5
@@ -43,6 +40,9 @@ jobs:
 
       - name: Build Pages
         run: pnpm build:pages
+
+      - name: Copy coverage report to GitHub Pages assets
+        run: cp ./coverage/coverage-summary.json ./github-pages/assets/coverage-summary.json
 
       - name: Upload Pages artifacts
         uses: actions/upload-pages-artifact@v5
