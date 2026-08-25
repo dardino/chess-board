@@ -31,10 +31,13 @@ jobs:
       - name: Test
         run: pnpm test:run
 
+      - name: Build Pages
+        run: pnpm build:pages
+
       - name: Upload Pages artifacts
         uses: actions/upload-pages-artifact@v5
         with:
-          path: ./dist
+          path: ./github-pages
 
   publish-github-pages:
     runs-on: ubuntu-latest

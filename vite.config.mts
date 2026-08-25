@@ -1,6 +1,6 @@
-import { defineConfig } from 'vite';
-import { resolve } from 'path';
 import { fileURLToPath } from 'node:url';
+import { resolve } from 'path';
+import { defineConfig } from 'vite';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
@@ -10,7 +10,7 @@ export default defineConfig({
     viteStaticCopy({
       targets: [
         {
-          src: 'assets/*',
+          src: 'assets/ScacchiPainter*',
           dest: '.'
         }
       ]
@@ -30,6 +30,6 @@ export default defineConfig({
     }
   },
   server: {
-    open: '/demo.html'
+    open: '/index.html'
   }
 });

@@ -22,10 +22,11 @@
     "dist"
   ],
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --config vite.config.pages.mts",
     "build": "vite build && pnpm tsc --project tsconfig.lib.json",
-    "preview": "vite preview",
-    "demo": "vite --open demo.html",
+    "build:pages": "vite build --config vite.config.pages.mts",
+    "preview": "vite --config vite.config.pages.mts  preview",
+    "demo": "vite --config vite.config.pages.mts --open demo.html",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
     "test": "vitest",
