@@ -31,6 +31,13 @@ jobs:
       - name: Test
         run: pnpm test:run --coverage
 
+      - name: Upload Coverage Report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: ./coverage
+
       - name: Build Pages
         run: pnpm build:pages
 
