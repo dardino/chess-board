@@ -238,8 +238,8 @@
             <option value="q">Queen</option>
             <option value="k">King</option>
             <option value="e">Empress (fairy)</option>
-            <option value="t">Dragon (fairy)</option>
-            <option value="a">Angel (fairy)</option>
+            <option value="t">Amazon (fairy)</option>
+            <option value="a">Archbishop (fairy)</option>
           </select>
           <select id="addColor">
             <option value="w">White</option>
@@ -547,8 +547,10 @@ setInterval(() => {
     }
     
     function clearPieceSelection() {
-      const squares = board.shadowRoot.querySelectorAll('.square');
-      squares.forEach(sq => sq.classList.remove('selected-piece'));
+      const selected = board.getSelectedPieceSquare();
+      if (selected) {
+        board.selectPiece(selected);
+      }
       updateSelectionInfo(null);
     }
     
@@ -588,9 +590,9 @@ setInterval(() => {
     // Listen to board changes
     board.addEventListener('cellClick', (e) => {
       console.log('Cell clicked:', e.detail);
-      if (e.detail?.cell) {
+      if (e.detail?.square) {
         board.setCellDecorators({
-          [e.detail.cell]: {
+          [e.detail.square]: {
             backgroundColor: 'rgba(255, 99, 132, 0.35)',
             innerBorder: 'solid 2px #ef4444'
           }
@@ -607,16 +609,8 @@ setInterval(() => {
     // Initial update
     updateInfo();
     
-    // Update info when board changes (using MutationObserver on shadow DOM)
-    const observer = new MutationObserver(updateInfo);
-    if (board.shadowRoot) {
-      observer.observe(board.shadowRoot, { 
-        childList: true, 
-        subtree: true, 
-        attributes: true,
-        attributeFilter: ['piece', 'color', 'rotation']
-      });
-    }
+    // Update info when board changes, including fairy metadata changes
+    board.addEventListener('fenChange', updateInfo);
   </script>
 </body>
 </html>

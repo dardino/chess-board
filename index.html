@@ -405,7 +405,7 @@
         
         <div class="feature-card">
           <h3>🧪 Fully Tested</h3>
-          <p>Comprehensive test suite with Vitest (168 tests passing)</p>
+          <p>Comprehensive test suite with Vitest (241 tests passing)</p>
         </div>
         
         <div class="feature-card">
@@ -535,6 +535,23 @@ console.log(wasSelected); // true when e4 contains a piece
 // 4. Press Escape → cancels selection without moving
 // 5. Any other key or blur event → clears selection</code></pre>
 
+      <h3>Current Square</h3>
+      <pre><code>// Get the current keyboard-navigation square
+const currentSquare = board.getCurrentSquare(); // string | null
+
+// Set the current square without selecting a piece
+board.selectSquare('e4');</code></pre>
+
+      <h3>Events</h3>
+      <pre><code>board.addEventListener('cellClick', (event) =&gt; {
+  const { square, piece } = event.detail;
+  console.log('Clicked:', square, piece);
+});
+
+board.addEventListener('fenChange', (event) =&gt; {
+  console.log('Current FEN/FFEN:', event.detail.fen);
+});</code></pre>
+
       <h3>Cell Decorators</h3>
       <pre><code>&lt;chess-board id="sample-board" fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"&gt;&lt;/chess-board&gt;
 
@@ -556,7 +573,7 @@ console.log(wasSelected); // true when e4 contains a piece
   });
 
   board.addEventListener('cellClick', ({ detail }) =&gt; {
-    if (detail.cell === 'e4') {
+    if (detail.square === 'e4') {
       board.setCellDecorators({
         e4: { backgroundColor: '#fca5a5', innerBorder: 'solid 2px #dc2626' }
       });
@@ -574,6 +591,10 @@ const orientation = board.getOrientation();  // 'white' | 'black'
 
 // Toggle orientation
 board.toggleOrientation();</code></pre>
+
+  <h3>Element Attributes</h3>
+  <p><code>chess-board</code> supports <code>fen</code> and the boolean <code>hide-labels</code> attribute. Its <code>black-to-move</code> attribute is managed by the orientation API and by the active color in FEN.</p>
+  <p><code>chess-piece</code> supports <code>piece</code>, <code>color</code>, <code>rotation</code>, <code>fairy-name</code>, and <code>fairy-condition</code>. Fairy names are limited to three characters.</p>
       
       <h3>FEN Support</h3>
       <pre><code>// Set position from FEN
@@ -604,7 +625,7 @@ board.clearBoard();                          // Empty board</code></pre>
 board.setFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
 
 // Neutral piece example
-board.setFen('8/8/8/8/8/8/8/-K3 w - - 0 1');
+board.setFen('8/8/8/8/8/8/8/-K6 w - - 0 1');
 
 // 90° rotation example
 board.setFen('8/8/8/8/4*1B3/8/8/8 w - - 0 1');
@@ -645,7 +666,7 @@ console.log(currentState);</code></pre>
           </tr>
           <tr>
             <td><code>E/e, T/t, A/a</code></td>
-            <td>Add fairy pieces (Empress, Dragon, Angel)</td>
+            <td>Add fairy pieces (Empress, Amazon, Archbishop)</td>
           </tr>
           <tr>
             <td><code>C/c, S/s, X/x</code></td>
@@ -684,6 +705,7 @@ console.log(currentState);</code></pre>
       <pre><code>import {
   ChessBoard,
   type PieceInfo,
+  type PieceInfoWithSquare,
   type ChessPieceType,
   type ChessPieceColor,
   type ChessPieceRotation
@@ -706,7 +728,7 @@ function addPiece(
 }
 
 // Type-safe piece information
-const pieces: PieceInfo[] = board.getAllPieces();
+const pieces: PieceInfoWithSquare[] = board.getAllPieces();
 pieces.forEach(piece => {
   console.log(`${piece.color} ${piece.type} on ${piece.square}`);
 });</code></pre>
@@ -722,7 +744,7 @@ pieces.forEach(piece => {
         <tbody>
           <tr>
             <td><code>ChessPieceType</code></td>
-            <td>'k' | 'q' | 'r' | 'b' | 'n' | 'p' | 'e' | 't' | 'a' | 'c' | 's' | 'x' | `'${string}` | `''${string}`</td>
+            <td>'k' | 'q' | 'r' | 'b' | 'n' | 'p' | 'e' | 't' | 'a' | 'x' | 's' | 'c' | `${number}` | `'${string}` | `''${string}`</td>
           </tr>
           <tr>
             <td><code>ChessPieceColor</code></td>
@@ -735,6 +757,18 @@ pieces.forEach(piece => {
           <tr>
             <td><code>PieceInfo</code></td>
             <td>{ type, color, rotation, fairyName, fairyCondition }</td>
+          </tr>
+          <tr>
+            <td><code>PieceInfoWithSquare</code></td>
+            <td>PieceInfo plus <code>square: string</code>; returned by <code>getAllPieces()</code></td>
+          </tr>
+          <tr>
+            <td><code>FenPosition</code></td>
+            <td>{ pieces, activeColor, castlingRights, enPassantTarget, halfmoveClock, fullmoveNumber, fairyMetadata? }</td>
+          </tr>
+          <tr>
+            <td><code>CellDecorator</code></td>
+            <td>{ backgroundColor: string, innerBorder: string }</td>
           </tr>
         </tbody>
       </table>
@@ -828,19 +862,19 @@ pieces.forEach(piece => {
             <td>Empress</td>
             <td><code>e</code></td>
             <td>
-              <chess-piece class="single-piece" piece="t" color="w"></chess-piece>
-              <chess-piece class="single-piece" piece="t" color="b"></chess-piece>
-              <chess-piece class="single-piece" piece="t" color="n"></chess-piece>
+              <chess-piece class="single-piece" piece="e" color="w"></chess-piece>
+              <chess-piece class="single-piece" piece="e" color="b"></chess-piece>
+              <chess-piece class="single-piece" piece="e" color="n"></chess-piece>
               Rook + Knight
             </td>
           </tr>
           <tr>
-            <td>Dragon</td>
+            <td>Amazon</td>
             <td><code>t</code></td>
             <td>
-              <chess-piece class="single-piece" piece="e" color="w"></chess-piece>
-              <chess-piece class="single-piece" piece="e" color="b"></chess-piece>
-              <chess-piece class="single-piece" piece="e" color="n"></chess-piece>
+              <chess-piece class="single-piece" piece="t" color="w"></chess-piece>
+              <chess-piece class="single-piece" piece="t" color="b"></chess-piece>
+              <chess-piece class="single-piece" piece="t" color="n"></chess-piece>
               Queen + Knight
             </td>
           </tr>
@@ -908,9 +942,8 @@ pieces.forEach(piece => {
         </thead>
         <tbody>
           <tr>
-            <td>1 char string</td>
-            <td>Example: <code>'A</code> with color <code>w</code><br />
-              Example: <code>'B</code> with color <code>b</code>
+            <td>Fairy letter or number</td>
+            <td>Examples: <code>'A</code> with color <code>w</code>, <code>'B</code> with color <code>b</code>, or <code>'7</code>
             </td>
             <td>
               Writes the character <chess-piece class="single-piece" piece="'A" color="w"></chess-piece> on the board<br />
@@ -918,20 +951,17 @@ pieces.forEach(piece => {
             </td>
           </tr>
           <tr>
-            <td>2 char string</td>
-            <td>Example: <code>'AB</code></td>
+            <td>Two-character fairy number</td>
+            <td>Example: <code>''23</code></td>
             <td>
-              Writes the characters <chess-piece class="single-piece" piece="'AB" color="w"></chess-piece> on the board<br />
-              the colors rule is the same as for 1 char string, also we can use numbers like <code>''23</code> to write the characters <chess-piece class="single-piece" piece="''23" color="b"></chess-piece> on the board
+              Writes <chess-piece class="single-piece" piece="''23" color="b"></chess-piece> on the board. Programmatic piece types may also use a single apostrophe followed by multiple alphanumeric characters.
             </td>
           </tr>
         </tbody>
         <tfoot>
           <tr>
             <td colspan="3">
-              <strong>Notes:</strong> <em>Using number in FFEN will result to only black numbers, so if you want to use numbers with white pieces
-              you must use the Programmatic API to add them. This is because it is not possible to distinguish between white and black numbers in FFEN,
-              so the component assumes that numbers are black by default. Neutral Characters will not be rendered!</em>
+              <strong>Notes:</strong> <em>Using letters or numbers in FFEN results in black fairy pieces by default. FFEN cannot distinguish white and black numbers, so use the Programmatic API when a character piece needs a different color.</em>
             </td>
           </tr>
         </tfoot>
@@ -942,12 +972,42 @@ pieces.forEach(piece => {
         This list is not exhaustive, and more APIs may be available.</p>
 
       <h3>parseFen</h3>
-      <p>Function to parse a FEN string into a <code>FenPosition</code> object</p>
+      <p>Function to parse a FEN or FFEN string into a <code>FenPosition</code> object</p>
       <pre>import { parseFen } from '@dardino/chess-board'
 function parseFen(fen: string): FenPosition | null
 // example usage:
-const fenString = 'rnbqkbnr/pppppppp/8/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+const fenString = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 const parsedPosition = parseFen(fenString);</pre>
+
+      <h3>positionToFFen</h3>
+      <p>Converts a <code>FenPosition</code> to FFEN, preserving fairy metadata and normalizing metadata values.</p>
+      <pre><code>import { positionToFFen } from '@dardino/chess-board'
+function positionToFFen(position: FenPosition): string</code></pre>
+
+      <h3>Piece-placement utilities</h3>
+      <pre><code>import {
+  parsePiecePlacement,
+  piecesToFenString,
+  parseFfenPieceChar,
+  type FENChessPiece,
+  type ChessPieceType,
+  type ChessPieceColor
+} from '@dardino/chess-board';
+
+function parsePiecePlacement(piecePlacement: string): {
+  pieces: FENChessPiece[];
+  boardSize: { width: number; height: number };
+} | null
+
+function piecesToFenString(pieces: FENChessPiece[], isFfen?: boolean): string
+
+function parseFfenPieceChar(piece: string): {
+  type: ChessPieceType;
+  color: ChessPieceColor | 'n';
+  isNeutral: boolean;
+  rotation?: number;
+  fairyName?: string;
+} | null</code></pre>
 
       <h3>positionToFen</h3>
       <p>Function to convert a <code>FenPosition</code> object back into a FEN string</p>
@@ -973,7 +1033,7 @@ const ffen = positionToFen(position);
 expect(ffen).toBe('4k3/8/8/8/8/8/8/4K3 w KQkq - 0 1 d5:gn:Chamaleon');</pre>
 
       <h2>🧪 Testing</h2>
-      <p>Comprehensive test suite with <span class="badge success">240 tests passing</span></p>
+      <p>Comprehensive test suite with <span class="badge success">241 tests passing</span></p>
       <pre><code>pnpm test</code></pre>
       
       <h2>📄 License</h2>
@@ -983,13 +1043,13 @@ expect(ffen).toBe('4k3/8/8/8/8/8/8/4K3 w KQkq - 0 1 d5:gn:Chamaleon');</pre>
       <ul>
         <li><a href="demo.html" style="color: #667eea;">Interactive Demo</a> - Try all features interactively</li>
         <li><a href="demo-api.html" style="color: #667eea;">Programmatic API Demo</a> - Test the TypeScript API</li>
-        <li><a href="https://github.com/accademiadelproblema/chess-board" style="color: #667eea;">GitHub Repository</a></li>
+        <li><a href="https://github.com/dardino/chess-board" style="color: #667eea;">GitHub Repository</a></li>
       </ul>
     </div>
   </div>
   
   <div class="footer">
-    <p>&copy; 2025 Accademia del Problema - Chess Board Web Components</p>
+    <p>&copy; 2026 Dardino - Chess Board Web Components</p>
     <p style="margin-top: 0.5rem; opacity: 0.8;">Built with TypeScript, Vite, and Web Components</p>
   </div>
   

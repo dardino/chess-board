@@ -29,7 +29,7 @@
       <li><strong>Piece Rotation</strong>: Rotate pieces in 45° increments using Alt/Option + Arrow keys</li>
       <li><strong>Fairy Chess Notation</strong>: Add custom annotations for problem compositions</li>
       <li><strong>Keyboard Navigation</strong>: Full keyboard support for piece placement and manipulation</li>
-      <li><strong>Board Orientation</strong>: Flip between white/black perspective with Meta+Arrow</li>
+      <li><strong>Board Orientation</strong>: Flip between white/black perspective with Shift+Arrow</li>
       <li><strong>Responsive Design</strong>: Adapts to container size with CSS Container Queries</li>
       <li><strong>FEN / FFEN Auto-Detect</strong>: Use the single <code>fen</code> attribute for either standard FEN or FFEN input, with automatic format detection</li>
     </ul>
@@ -91,7 +91,7 @@
     </div>
 
     <h2>Cell Click Events</h2>
-    <p>The chess board dispatches a <code>cellClick</code> event when any square is clicked. The event detail contains the cell coordinate and piece information including rotation and fairy notation (if present). Click on any square below to see the event details.</p>
+    <p>The chess board dispatches a <code>cellClick</code> event when any square is clicked. The event detail contains the square coordinate and piece information including rotation and fairy notation (if present). Click on any square below to see the event details.</p>
     <div class="board-container board-medium">
       <chess-board id="clickable-board" fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"></chess-board>
     </div>
@@ -107,7 +107,7 @@ const board = document.getElementById('clickable-board');
 const output = document.getElementById('click-output');
 
 board.addEventListener('cellClick', (event) => {
-  const { cell, piece } = event.detail;
+  const { square, piece } = event.detail;
   
   if (piece) {
     let info = `Clicked ${cell} - ${piece.color} ${piece.type}`;
@@ -129,7 +129,7 @@ board.addEventListener('cellClick', (event) => {
       <li><strong>Delete</strong>: Remove piece from current square</li>
       <li><strong>Escape</strong>: Clear board and cancel piece selection</li>
       <li><strong>P/p, R/r, N/n, B/b, Q/q, K/k</strong>: Add white/black piece (uppercase=white, lowercase=black)</li>
-      <li><strong>E/e, T/t, A/a</strong>: Add fairy pieces (Empress, Dragon, Angel)</li>
+      <li><strong>E/e, T/t, A/a</strong>: Add fairy pieces (Empress, Amazon, Archbishop)</li>
       <li><strong>Alt/Option+Left/Right</strong>: Rotate piece counter-clockwise/clockwise by 45°</li>
       <li><strong>Alt/Option+Up/Down</strong>: Reset rotation to 0° / Set to 180°</li>
       <li><strong>Shift+Up/Down</strong>: Flip board to white/black perspective</li>
@@ -281,7 +281,7 @@ setInterval(() => {
         </div>
         <div class="piece-square">
           <chess-piece piece="t" color="b" fairy-condition="(a)"></chess-piece>
-          <p>Tower with condition</p>
+          <p>Amazon with condition</p>
         </div>
         <div class="piece-square">
           <chess-piece piece="a" color="n" fairy-name="A" fairy-condition="(h)"></chess-piece>
@@ -295,7 +295,7 @@ setInterval(() => {
     </div>
 
     <h2>Chess Pieces Component</h2>
-    <p>The <code>chess-piece</code> component allows you to display individual chess pieces. Use the <code>piece</code> attribute for the piece type (k, q, r, b, n, p, e, t, a) and <code>color</code> attribute for the color (w, b, n for neutral).</p>
+    <p>The <code>chess-piece</code> component allows you to display individual chess pieces. Use the <code>piece</code> attribute for standard, fairy, or symbolic types (k, q, r, b, n, p, e, t, a, c, s, x, or a supported fairy-letter/number type) and the <code>color</code> attribute for white, black, or neutral pieces (w, b, n).</p>
 
     <div class="pieces-container">
       <div class="pieces-section">
@@ -540,16 +540,16 @@ const eFile = document.querySelector('chess-board').shadowRoot.querySelectorAll(
       const output = document.getElementById('click-output');
 
       board.addEventListener('cellClick', (event) => {
-        const { cell, piece } = event.detail;
+        const { square, piece } = event.detail;
 
         if (piece) {
-          let info = `Clicked ${cell} - ${piece.color} ${piece.type}`;
+          let info = `Clicked ${square} - ${piece.color} ${piece.type}`;
           if (piece.rotation) info += `, rotation: ${piece.rotation}°`;
           if (piece.fairyName) info += `, fairy-name: ${piece.fairyName}`;
           if (piece.fairyCondition) info += `, fairy-condition: ${piece.fairyCondition}`;
           output.textContent = info;
         } else {
-          output.textContent = `Clicked ${cell} - Empty square`;
+          output.textContent = `Clicked ${square} - Empty square`;
         }
       });
 
@@ -577,16 +577,8 @@ const eFile = document.querySelector('chess-board').shadowRoot.querySelectorAll(
       // Initial update (after component renders)
       setTimeout(updateFenDisplay, 0);
 
-      // Update on every board mutation
-      const fenObserver = new MutationObserver(updateFenDisplay);
-      if (fenSyncBoard.shadowRoot) {
-        fenObserver.observe(fenSyncBoard.shadowRoot, {
-          childList: true,
-          subtree: true,
-          attributes: true,
-          attributeFilter: ['piece', 'color', 'rotation']
-        });
-      }
+      // Update on every board mutation, including fairy metadata changes
+      fenSyncBoard.addEventListener('fenChange', updateFenDisplay);
     });
   </script>
 </body>
