@@ -44,7 +44,7 @@ jobs:
         run: pnpm build:pages
 
       - name: Copy coverage report to GitHub Pages assets
-        run: cp ./coverage/coverage-summary.json ./github-pages/assets/coverage-summary.json
+        run: cp ./coverage/*.json ./github-pages/assets
 
       - name: Upload Pages artifacts
         uses: actions/upload-pages-artifact@v5
