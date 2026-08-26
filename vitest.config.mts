@@ -10,6 +10,13 @@ export default defineConfig({
     environment: 'happy-dom',
     globals: true,
     setupFiles: ['./test/setup.ts'],
+    reporters: process.env.GITHUB_ACTIONS === 'true' 
+      ? ['default', 
+        ['json',{
+          outputFile: './coverage/test-results.json',
+        }],
+        'github-actions'] 
+      : ['default'],
     coverage: {
       exclude: ['*.css', '*.html', "./index.ts"],
       reporter: [

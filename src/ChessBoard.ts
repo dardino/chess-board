@@ -328,29 +328,20 @@ export class ChessBoard extends HTMLElement {
   constructor() {
     super();
     this.#shadow = this.attachShadow({ mode: 'open' });
-  }
-
-  #isConnected = false;
-  connectedCallback(): void {
-    this.#isConnected = true;
     this.#firstRender();
     this.#updatePiecesFromFen();
     this.#updateBoardOrientationFromCurrentFen();
+  }
+
+  connectedCallback(): void {
     this.#setupEventListeners();
   }
 
   disconnectedCallback(): void {
-    this.#isConnected = false;
     this.#removeEventListeners();
   }
-
+  
   attributeChangedCallback(name: string, oldValue: string, newValue: string): void {
-    if (!this.#isConnected) {
-      // Safari calls this callback only before connectedCallback,
-      // so we defer processing until after the component is connected
-      queueMicrotask(() => this.attributeChangedCallback(name, oldValue, newValue));
-      return;
-    }
     if (oldValue !== newValue) {
       if (name === 'fen') {
         if (this.#currentFen === newValue) return; // No change, no need to update
