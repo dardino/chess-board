@@ -38,13 +38,19 @@ jobs:
         run: pnpm build
 
       - name: Test
-        run: pnpm test:run
-      
+        run: pnpm test:run --coverage
+
+      - name: Build Pages
+        run: pnpm build:pages
+
+      - name: Copy coverage report to GitHub Pages assets
+        run: cp ./coverage/coverage-summary.json ./github-pages/assets/coverage-summary.json
+
       - name: Upload Pages artifacts
         uses: actions/upload-pages-artifact@v5
         with:
           name: github-pages
-          path: ./dist
+          path: ./github-pages
   
   publish-github-pages:
     if: github.event_name == 'release'
