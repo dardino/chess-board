@@ -1,4 +1,4 @@
-/* ChessPiece Component Styles */
+/* ChessPiece Component Styles v.1.4 */
 
 :host {
   --internal-chess-piece-color: var(--cb-chess-piece-color, black);
@@ -12,21 +12,9 @@
   container-type: size;
   height: 100%;
   width: 100%;
-  
+
   user-select: none;
   -webkit-user-select: none;
-}
-
-@font-face {
-  font-family: "ScacchiPainter";
-  src: url("./dist/ScacchiPainter.eot");
-  src: url("./dist/ScacchiPainter.eot?#iefix") format("embedded-opentype"),
-       url("./dist/ScacchiPainter.woff2") format("woff2"),
-       url("./dist/ScacchiPainter.woff") format("woff"),
-       url("./dist/ScacchiPainter.ttf") format("truetype"),
-       url("./dist/ScacchiPainter.svg#ScacchiPainter") format("svg");
-  font-weight: bold;
-  font-style: normal;
 }
 
 .piece {
@@ -38,11 +26,10 @@
   height: 100%;
   font-size: 70cqw;
   font-family: 'ScacchiPainter', monospace;
-  line-height: 1;
-  letter-spacing: 0px; /* to keep ligatures working properly */
   position: relative;
   transition: transform 0.2s ease;
 }
+
 .piece-inner {
   grid-column: 1 / -1;
   width: 100%;
@@ -52,7 +39,12 @@
   grid-template-columns: 1fr;
   grid-template-rows: 1fr;
 }
-.piece-fg, .piece-bg {
+
+.piece-fg,
+.piece-bg {
+  line-height: 1em;
+  letter-spacing: 0px;
+  /* to keep ligatures working properly */
   grid-column: 1 / -1;
   grid-row: 1 / -1;
   width: 100%;
@@ -61,15 +53,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-top: 0.11em;
-  padding-left: 0.01em;
 }
 
 .text-piece .piece-fg,
 .text-piece .piece-bg {
-  font-size: 0.8em; /* Adjust size for text-based pieces */
-  padding-top: 0em;
-  padding-left: 0em;
+  font-size: 0.8em;
+  /* Adjust size for text-based pieces */
+  padding-top: 0.05em;
+  /* Adjust vertical alignment for text-based pieces */
 }
 
 .text-piece .color-w {
