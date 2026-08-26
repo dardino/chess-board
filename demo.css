@@ -4,6 +4,10 @@ body {
   background-color: #f5f5f5;
 }
 
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 .demo-container {
   max-width: 800px;
   margin: 0 auto;
