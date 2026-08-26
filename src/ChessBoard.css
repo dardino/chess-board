@@ -8,8 +8,8 @@
   --internal-chess-piece-bg: var(--cb-chess-piece-bg, white);
   --internal-chess-outline-focus: var(--cb-chess-outline-focus, blue);
   --internal-chess-label-color: var(--cb-chess-label-color, #666);
-
-  user-select: none;
+  
+  -webkit-user-select: none;
 }
 
 @font-face {
