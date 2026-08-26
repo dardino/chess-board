@@ -593,8 +593,40 @@ const orientation = board.getOrientation();  // 'white' | 'black'
 board.toggleOrientation();</code></pre>
 
   <h3>Element Attributes</h3>
-  <p><code>chess-board</code> supports <code>fen</code> and the boolean <code>hide-labels</code> attribute. Its <code>black-to-move</code> attribute is managed by the orientation API and by the active color in FEN.</p>
+  <p><code>chess-board</code> supports the boolean <code>disabled</code> and <code>auto-select-piece-on-click</code> attributes, along with <code>fen</code> and the boolean <code>hide-labels</code> attribute. Its <code>black-to-move</code> attribute is managed by the orientation API and by the active color in FEN.</p>
   <p><code>chess-piece</code> supports <code>piece</code>, <code>color</code>, <code>rotation</code>, <code>fairy-name</code>, and <code>fairy-condition</code>. Fairy names are limited to three characters.</p>
+
+      <h4>fen</h4>
+      <pre><code>&lt;chess-board fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"&gt;&lt;/chess-board&gt;
+
+const board = document.querySelector('chess-board');
+board.setFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+const fen = board.getFen();</code></pre>
+      <p>Use the <code>fen</code> attribute or the <code>setFen()</code> API to control the board position. It accepts both standard FEN and FFEN values.</p>
+
+      <h4>hide-labels</h4>
+      <pre><code>&lt;chess-board hide-labels&gt;&lt;/chess-board&gt;
+
+const board = document.querySelector('chess-board');
+board.hideLabels = true;
+board.hideLabels = false;</code></pre>
+      <p>When enabled, the board hides square labels such as file and rank markers for a cleaner visual presentation.</p>
+
+      <h4>disabled</h4>
+      <pre><code>&lt;chess-board disabled&gt;&lt;/chess-board&gt;
+
+const board = document.querySelector('chess-board');
+board.disabled = true;
+board.disabled = false;</code></pre>
+      <p>When set, the board becomes non-interactive: pointer events and keyboard actions are disabled, and selections cannot change until the attribute is removed or set to false.</p>
+
+      <h4>auto-select-piece-on-click</h4>
+      <pre><code>&lt;chess-board auto-select-piece-on-click&gt;&lt;/chess-board&gt;
+
+const board = document.querySelector('chess-board');
+board.autoSelectPieceOnClick = true;
+board.autoSelectPieceOnClick = false;</code></pre>
+      <p>When enabled, clicking a piece automatically selects it, which is helpful for one-click move workflows. The attribute can be toggled through the DOM or through the <code>autoSelectPieceOnClick</code> property.</p>
       
       <h3>FEN Support</h3>
       <pre><code>// Set position from FEN

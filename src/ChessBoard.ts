@@ -57,8 +57,15 @@ export class ChessBoard extends HTMLElement {
     const squares = this.#shadow.querySelectorAll<HTMLElement>('.square');
     return squares;
   }
-  get #disabled() {
+  get disabled() {
     return this.hasAttribute('disabled') && this.getAttribute('disabled') !== 'false';
+  }
+  set disabled(value: boolean) {
+    if (value) {
+      this.setAttribute('disabled', '');
+    } else {
+      this.removeAttribute('disabled');
+    }
   }
   #currentSquare: string | null = null;
   #selectedPieceSquare: string | null = null;
@@ -295,7 +302,7 @@ export class ChessBoard extends HTMLElement {
   };
 
   #handleKeyDown = (event: KeyboardEvent): void => {
-    if (!this.#currentSquare || this.#disabled) return;
+    if (!this.#currentSquare || this.disabled) return;
 
     // Handle regular keys (each handler checks its own modifiers)
     const handleToCall = this.#keyboardHandlers[event.key];
@@ -412,7 +419,7 @@ export class ChessBoard extends HTMLElement {
   }
 
   #handleBoardClick = (ev: MouseEvent): void => {
-    if (this.#disabled) return;
+    if (this.disabled) return;
     const target = ev.target as HTMLElement | null;
     const square = target?.closest('.square') as HTMLElement | null;
     if (!square) return;
@@ -458,7 +465,7 @@ export class ChessBoard extends HTMLElement {
   }
 
   #handleFocus = (): void => {
-    if (this.#disabled) return;
+    if (this.disabled) return;
     // If no current square is set, select a1
     if (!this.#currentSquare) {
       this.#setCurrentSquare('a1');
