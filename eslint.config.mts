@@ -1,15 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import css from "@eslint/css";
 import js from "@eslint/js";
-import globals from "globals";
-import tseslint from "typescript-eslint";
 import json from "@eslint/json";
 import markdown from "@eslint/markdown";
-import css from "@eslint/css";
 import { defineConfig } from "eslint/config";
+import globals from "globals";
+import tseslint from "typescript-eslint";
 
 export default defineConfig([
   {
     ignores: [
+      "github-pages",
+      "coverage",
       "dist/**",
       "node_modules/**",
       "*.min.js",
@@ -22,5 +24,9 @@ export default defineConfig([
   { files: ["**/*.jsonc"], plugins: { json: json as any }, language: "json/jsonc", extends: ["json/recommended"] },
   { files: ["**/*.json5"], plugins: { json: json as any }, language: "json/json5", extends: ["json/recommended"] },
   { files: ["**/*.md"], plugins: { markdown }, language: "markdown/commonmark", extends: ["markdown/recommended"] },
-  { files: ["**/*.css"], plugins: { css: css as any }, language: "css/css", extends: ["css/recommended"] },
+  { files: ["**/*.css"], plugins: { css: css as any }, language: "css/css", extends: ["css/recommended"],
+    rules: {
+      "css/use-baseline": ["error", { available: 2026, allowProperties: ["user-select"] }],
+    } 
+  },
 ]);
