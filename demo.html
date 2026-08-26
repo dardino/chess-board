@@ -495,13 +495,43 @@ const fourthRank = document.querySelector('chess-board').shadowRoot.querySelecto
 const eFile = document.querySelector('chess-board').shadowRoot.querySelectorAll('[data-coordinate^="e"]');
         </code></pre>
     </div>
+    <div>
+      <h2>Compatible with html2canvas</h2>
+      <p>
+        to see the chess board as an image, you can use the <a href="https://html2canvas.hertzen.com/" target="_blank">html2canvas</a> library to capture the current state of the chess board and render it as a canvas image. 
+        This is useful for saving or sharing the board position as an image.
+      </p>
+    <div class="code-example">
+      <pre><code>
+// Example: Capture the chess board as an image using html2canvas
+import html2canvas from 'html2canvas';
+document.getElementById('snapshot').addEventListener('click', () => {
+  const board = document.getElementById('board-with-f-pieces');
+  const snapshotImage = document.getElementById('snapshot-image');
+
+  // use html2canvas to capture the board as an image
+  html2canvas(board).then(canvas => {
+    snapshotImage.src = canvas.toDataURL();
+  });
+});
+      </code></pre>
+    </div>
+      Try:
+      <button id="snapshot">Take Snapshot</button>
+      <button id="save-snapshot">Save Snapshot</button>
+      <figure>
+        <img alt="snapshot" id="snapshot-image" src="" style="max-width: 100%; border: 1px solid #ccc; border-radius: 4px; margin-top: 10px;">
+        <figcaption>Click the "Take Snapshot" button to capture the current state of the chess board as an image.</figcaption>
+      </figure>
     </div>
 
-    <p><strong>Note:</strong> This is an empty chess board with no pieces. The board provides a clean foundation for implementing chess games or displaying positions programmatically.</p>
   </div>
 
+  </div>
+
+
   <script type="module" src="./src/index.ts"></script>
-  <script>
+  <script type="module">
 
     document.getElementById("toggle-disabled").addEventListener("click", () => {
       const board = document.getElementById("interactive-demo");
@@ -622,6 +652,32 @@ const eFile = document.querySelector('chess-board').shadowRoot.querySelectorAll(
 
       // Update on every board mutation, including fairy metadata changes
       fenSyncBoard.addEventListener('fenChange', updateFenDisplay);
+    });
+
+    import html2canvas from 'html2canvas';
+    document.getElementById('snapshot').addEventListener('click', () => {
+      const board = document.getElementById('board-with-f-pieces');
+      const snapshotImage = document.getElementById('snapshot-image');
+
+      // use html2canvas to capture the board as an image
+      html2canvas(board).then(canvas => {
+        snapshotImage.src = canvas.toDataURL();
+      });
+    });
+    document.getElementById('save-snapshot').addEventListener('click', () => {
+      const board = document.getElementById('board-with-f-pieces');
+      html2canvas(board).then(
+        /**
+         * @param {HTMLCanvasElement} canvas
+         */
+        canvas => {
+        canvas.toBlob(blob => {
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = 'chess-board-snapshot.png';
+          link.click();
+        }, 'image/png');
+      });
     });
   </script>
 </body>
