@@ -42,7 +42,22 @@
       <strong>♟️ Add Pieces:</strong> P/R/N/B/Q/K for white, p/r/n/b/q/k for black<br>
       <strong>🔄 Rotate:</strong> Alt/Option+Left/Right to rotate ±45°, Alt/Option+Up/Down for 0°/180°<br>
       <strong>🔃 Flip Board:</strong> Shift+Up (white view) / Shift+Down (black view)<br>
-      <strong>🗑️ Delete:</strong> Delete key to remove piece, Escape to clear board
+      <strong>🗑️ Delete:</strong> Delete key to remove piece, Escape to clear board<br>
+      <strong>🎯 Piece selection and movement:</strong> Click to select a square and re-click to move piece
+    </div>
+    <div>
+      <h3>property <code>disabled</code></h3>
+      <p>When the <code>disabled</code> attribute is set, the chess board will not respond to any user interactions. This is useful for displaying a static position or preventing changes during analysis.</p>
+      <button id="toggle-disabled">Toggle Disabled</button>
+      <code id="toggle-disabled-samplecode">&lt;chess-board /&gt;</code>
+    </div>
+    <div>
+      <h3>property <code>auto-select-piece-on-click</code></h3>
+      <p>When the <code>auto-select-piece-on-click</code> attribute is set, 
+        clicking on a square with a piece will automatically select it. 
+        Clicking on an empty square will move the selected piece there.</p>
+      <button id="toggle-auto-select">Toggle Auto-Select</button>
+      <code id="toggle-auto-select-samplecode">&lt;chess-board /&gt;</code>
     </div>
     <div class="board-container board-medium">
       <chess-board id="interactive-demo" fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"></chess-board>
@@ -487,6 +502,34 @@ const eFile = document.querySelector('chess-board').shadowRoot.querySelectorAll(
 
   <script type="module" src="./src/index.ts"></script>
   <script>
+
+    document.getElementById("toggle-disabled").addEventListener("click", () => {
+      const board = document.getElementById("interactive-demo");
+      const isDisabled = board.hasAttribute("disabled");
+      if (isDisabled) {
+        board.removeAttribute("disabled");
+        document.getElementById("toggle-disabled-samplecode").textContent = "<chess-board />";
+      } else {
+        board.setAttribute("disabled", "");
+        document.getElementById("toggle-disabled-samplecode").textContent = "<chess-board disabled />";
+      }
+    });
+    document.getElementById("toggle-auto-select").addEventListener("click", () => {
+      const board = document.getElementById("interactive-demo");
+      const isAutoSelect = board.hasAttribute("auto-select-piece-on-click");
+      if (isAutoSelect) {
+        board.removeAttribute("auto-select-piece-on-click");
+        document.getElementById("toggle-auto-select-samplecode").textContent = "<chess-board />";
+      } else {
+        board.setAttribute("auto-select-piece-on-click", "");
+        document.getElementById("toggle-auto-select-samplecode").textContent = "<chess-board auto-select-piece-on-click />";
+      }
+    });
+    document.querySelectorAll('chess-board').forEach(board => {
+      board.addEventListener('fenChange', (event) => {
+        console.log(`FEN changed: ${event.detail.fen}`, event.target.id);
+      });
+    });
     // Example: Add pieces to create a starting position
     document.addEventListener('DOMContentLoaded', () => {
       const board = document.getElementById('board-with-pieces');
