@@ -43,16 +43,38 @@ export interface CellDecorator {
 
 export class ChessBoard extends HTMLElement {
   static get observedAttributes(): string[] {
-    return ['fen', 'hide-labels'];
+    return ['fen', 'hide-labels', 'disabled'];
   }
 
   #shadow: ShadowRoot;
   #currentFen: string = '';
-  #squares: NodeListOf<HTMLElement> | null = null;
-  #clickHandlers: WeakMap<Element, EventListener> = new WeakMap();
+
+  get #board(): HTMLElement | null {
+    const board = this.#shadow.querySelector<HTMLElement>('.board');
+    return board;
+  }
+  get #squares(): NodeListOf<HTMLElement> | null {
+    const squares = this.#shadow.querySelectorAll<HTMLElement>('.square');
+    return squares;
+  }
+  get #disabled() {
+    return this.hasAttribute('disabled') && this.getAttribute('disabled') !== 'false';
+  }
   #currentSquare: string | null = null;
   #selectedPieceSquare: string | null = null;
   #cellDecorators: Partial<Record<Square, CellDecorator>> = {};
+
+  // Auto-select piece on click attribute
+  get autoSelectPieceOnClick(): boolean {
+    return this.hasAttribute('auto-select-piece-on-click') && this.getAttribute('auto-select-piece-on-click') !== 'false';
+  }
+  set autoSelectPieceOnClick(value: boolean) {
+    if (value) {
+      this.setAttribute('auto-select-piece-on-click', '');
+    } else {
+      this.removeAttribute('auto-select-piece-on-click');
+    }
+  }
 
   //#region Private Helper Methods
   #checkModifiers = (event: KeyboardEvent): boolean => {
@@ -140,6 +162,7 @@ export class ChessBoard extends HTMLElement {
     if (!this.#checkModifiers(event)) return;
     this.#removePieceFromCurrentSquare();
     this.#clearSelectedPiece();
+    this.#serializeBoardState(true);
     event.preventDefault();
   };
   #handleEscape = (event: KeyboardEvent): void => {
@@ -181,15 +204,20 @@ export class ChessBoard extends HTMLElement {
       return;
     }
     // else move the selected piece to the current square
-    const piece = this.#getPieceAtSquare(this.#selectedPieceSquare!);
-    this.#removePieceFromSquare(this.#currentSquare!);
-    this.#removePieceFromSquare(this.#selectedPieceSquare!);
+    this.#movePiece(currentSelection, this.#currentSquare);
+  };
+  
+  #movePiece = (fromSquare: string, toSquare: string): void => {
+    const piece = this.#getPieceAtSquare(fromSquare);
+    this.#removePieceFromSquare(toSquare);
+    this.#removePieceFromSquare(fromSquare);
     if (piece) {
-      this.#addPieceToSquare(this.#currentSquare!, piece);
+      this.#addPieceToSquare(toSquare, piece);
     }
     this.#clearSelectedPiece();
-    this.#setCurrentSquare(this.#currentSquare);
+    this.#serializeBoardState(true);
   };
+
   #handleAddPiece = (pieceType: ChessPieceType, color: ChessPieceColor): (event: KeyboardEvent) => void => {
     return (event: KeyboardEvent) => {
       if (!this.#checkModifiers(event)) return;
@@ -197,6 +225,7 @@ export class ChessBoard extends HTMLElement {
         type: pieceType,
         color
       });
+      this.#serializeBoardState(true);
       event.preventDefault();
     };
   };
@@ -266,7 +295,7 @@ export class ChessBoard extends HTMLElement {
   };
 
   #handleKeyDown = (event: KeyboardEvent): void => {
-    if (!this.#currentSquare) return;
+    if (!this.#currentSquare || this.#disabled) return;
 
     // Handle regular keys (each handler checks its own modifiers)
     const handleToCall = this.#keyboardHandlers[event.key];
@@ -284,7 +313,7 @@ export class ChessBoard extends HTMLElement {
         && event.key !== 'Escape'
       ) this.#clearSelectedPiece();
     
-    this.#serializeBoardState();
+    this.#serializeBoardState(true);
   }
   //#endregion
 
@@ -310,7 +339,7 @@ export class ChessBoard extends HTMLElement {
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string): void {
     if (!this.#isConnected) {
-      // Safari calls this callback before connectedCallback,
+      // Safari calls this callback only before connectedCallback,
       // so we defer processing until after the component is connected
       queueMicrotask(() => this.attributeChangedCallback(name, oldValue, newValue));
       return;
@@ -323,13 +352,17 @@ export class ChessBoard extends HTMLElement {
       } else if (name === 'hide-labels') {
         this.#updateLabelsVisibility();
       }
+
+      if (name === "disabled") {
+        this.#updateDisabledState();
+      }
     }
   }
 
   //#endregion
 
   //#region Private Methods
-
+  
   #firstRender(): void {
     // Create container from imported HTML template
     const templateContainer = document.createElement('div');
@@ -353,46 +386,38 @@ export class ChessBoard extends HTMLElement {
     if (this.#currentSquare) {
       this.#setCurrentSquare(this.#currentSquare);
     }
+
+    this.#serializeBoardState(false);
   }
 
-  #setupEventListeners(): void {
-    this.#squares = this.#shadow.querySelectorAll('.square');
-    this.#squares.forEach(square => {
-      if (!(square instanceof HTMLElement)) return;
-      const boundHandler = this.#handleSquareClick.bind(this, square);
-      this.#clickHandlers.set(square, boundHandler);
-      square.addEventListener('click', boundHandler);
-    });
-
+  #setupEventListeners(): void {    
     // Add keyboard navigation
-    const board = this.#shadow.querySelector('.board') as HTMLElement;
-    if (board) {
-      board.addEventListener('keydown', this.#handleKeyDown);
-      board.addEventListener('focus', this.#handleFocus);
-      board.addEventListener('blur', this.#handleBlur);
-      board.addEventListener('fairy-metadata-changed', this.#handleFairyMetadataChange);
+    if (this.#board) {
+      this.#board.addEventListener("click", this.#handleBoardClick);
+      this.#board.addEventListener('keydown', this.#handleKeyDown);
+      this.#board.addEventListener('focus', this.#handleFocus);
+      this.#board.addEventListener('blur', this.#handleBlur);
+      this.#board.addEventListener('fairy-metadata-changed', this.#handleFairyMetadataChange);
     }
   }
 
   #removeEventListeners(): void {
-    if (this.#squares) {
-      this.#squares.forEach(square => {
-        const boundHandler = this.#clickHandlers.get(square);
-        if (boundHandler) {
-          square.removeEventListener('click', boundHandler);
-          this.#clickHandlers.delete(square);
-        }
-      });
-      this.#squares = null;
+    if (this.#board) {
+      this.#board.removeEventListener("click", this.#handleBoardClick);
+      this.#board.removeEventListener('keydown', this.#handleKeyDown);
+      this.#board.removeEventListener('focus', this.#handleFocus);
+      this.#board.removeEventListener('blur', this.#handleBlur);
+      this.#board.removeEventListener('fairy-metadata-changed', this.#handleFairyMetadataChange);
     }
+  }
 
-    // Remove keyboard and focus event listeners
-    const board = this.#shadow.querySelector('.board') as HTMLElement;
-    if (board) {
-      board.removeEventListener('keydown', this.#handleKeyDown);
-      board.removeEventListener('focus', this.#handleFocus);
-      board.removeEventListener('blur', this.#handleBlur);
-      board.removeEventListener('fairy-metadata-changed', this.#handleFairyMetadataChange);
+  #handleBoardClick = (ev: MouseEvent): void => {
+    if (this.#disabled) return;
+    const target = ev.target as HTMLElement | null;
+    const square = target?.closest('.square') as HTMLElement | null;
+    if (!square) return;
+    if (square.classList.contains('square')) {
+      this.#handleSquareClick(square);
     }
   }
 
@@ -404,34 +429,24 @@ export class ChessBoard extends HTMLElement {
     }
 
     // Set this square as current
-    this.#setCurrentSquare(cell);
-
-    // Check if there's a piece on this square
-    const pieceElement = square.querySelector('chess-piece') as ChessPiece;
-    let piece: PieceInfo | undefined;
-
-    if (pieceElement) {
-      const pieceType = pieceElement.getPiece();
-      const pieceColor = pieceElement.getColor();
-      const rotation = pieceElement.getRotation();
-      const fairyName = pieceElement.getFairyName();
-      const fairyCondition = pieceElement.getFairyCondition();
-      
-      if (pieceType && pieceColor) {
-
-        piece = {
-          type: pieceType,
-          color: pieceColor,
-        };
-
-        // Add optional properties if present
-        if (parseInt(rotation) > 0) piece.rotation = rotation;
-        if (fairyName) piece.fairyName = fairyName;
-        if (fairyCondition) piece.fairyCondition = fairyCondition;
-        
+    // If the square is already current, call SelectedPiece logic to toggle selection or move piece
+    const alreadyCurrent = this.#currentSquare === cell;
+    if (alreadyCurrent) {
+      this.selectPiece(cell);
+    } else {
+      this.#setCurrentSquare(cell);
+      // check if a piece is selected and if so, move it to the clicked square
+      if (this.#selectedPieceSquare !== cell && this.#selectedPieceSquare) {
+        this.#movePiece(this.#selectedPieceSquare, cell);
+      } else if (this.autoSelectPieceOnClick) {
+        // else if auto-select is enabled, select the piece on the clicked square if it has one
+        this.selectPiece(cell);
       }
+
     }
 
+    // trigger cellClick event with square and piece info
+    const piece = this.getPieceAt(cell) ?? undefined;
     this.dispatchEvent(new CustomEvent('cellClick', {
       detail: {
         square: cell,
@@ -443,6 +458,7 @@ export class ChessBoard extends HTMLElement {
   }
 
   #handleFocus = (): void => {
+    if (this.#disabled) return;
     // If no current square is set, select a1
     if (!this.#currentSquare) {
       this.#setCurrentSquare('a1');
@@ -455,7 +471,14 @@ export class ChessBoard extends HTMLElement {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   #handleFairyMetadataChange = (_ev: CustomEvent<FairyPieceMetadata>): void => {
-    this.#serializeBoardState();
+    this.#serializeBoardState(true);
+  }
+
+  #updateDisabledState(): void {
+    const isDisabled = this.hasAttribute('disabled');
+    if (this.#board) {
+      this.#board.style.pointerEvents = isDisabled ? 'none' : 'auto';
+    }
   }
 
   #setCurrentSquare(coordinate: string): void {
@@ -544,17 +567,18 @@ export class ChessBoard extends HTMLElement {
   #removePieceFromCurrentSquare(): void {
     if (!this.#currentSquare) return;
     this.#removePieceFromSquare(this.#currentSquare);
-    this.#serializeBoardState();
   }
 
   /**
    * Helper method to add or replace piece on a specific square
+   * This method doesn't trigger FEN serialization, so you need to call 
+   * #serializeBoardState(true) after calling this method if you want to update the FEN.
    * @param coordinate - Square coordinate (e.g., "e4", "a1")
    * @param pieceType - Type of piece to add
    * @param color - Color of piece
    * @param rotation - Optional rotation angle
    */
-  #addPieceToSquare(coordinate: string, piece: PieceInfo, skipSerialization = false): void {
+  #addPieceToSquare(coordinate: string, piece: PieceInfo): void {
     const square = this.#shadow.querySelector(`[data-coordinate="${coordinate}"]`) as HTMLElement;
     if (!square) return;
 
@@ -575,9 +599,6 @@ export class ChessBoard extends HTMLElement {
     }
     newPiece.classList.add('piece');
     square.appendChild(newPiece);
-    if (!skipSerialization) {
-      this.#serializeBoardState();
-    }
   }
 
   /**
@@ -636,9 +657,10 @@ export class ChessBoard extends HTMLElement {
    * @returns Piece information or null if square is empty
    */
   #getPieceAtSquare(coordinate: string): PieceInfo | null {
+
     const square = this.#shadow.querySelector(`[data-coordinate="${coordinate}"]`) as HTMLElement;
     if (!square) return null;
-
+    
     const piece = square.querySelector('chess-piece') as ChessPiece;
     if (!piece) return null;
 
@@ -736,8 +758,6 @@ export class ChessBoard extends HTMLElement {
       this.#updateBoardOrientation(position.activeColor);
     }
     
-    this.#serializeBoardState();
-
   }
 
   #updatePiecesFromFen(): void {
@@ -772,9 +792,6 @@ export class ChessBoard extends HTMLElement {
       
       this.#placePiece(piece);
     }
-
-    // Sync computed FEN/FFEN fields after loading from attribute
-    this.#serializeBoardState();
   }
 
   #clearPieces(): void {
@@ -823,7 +840,9 @@ export class ChessBoard extends HTMLElement {
     square.appendChild(pieceElement);
   }
 
-  #serializeBoardState(): void {
+  #serializeBoardState(triggerChange: boolean): void {
+    const oldFen = this.#currentFen;
+
     const fairyMetadata: NonNullable<FenPosition['fairyMetadata']> = {};
     this.#squares?.forEach(square => {
       const coordinate = square.getAttribute('data-coordinate');
@@ -857,15 +876,21 @@ export class ChessBoard extends HTMLElement {
       fairyMetadata
     };
 
-    this.#currentFen = positionToFen(position);
-    this.setAttribute('fen', this.#currentFen);
-
-    this.#triggerFenChangeEvent();
+    const newFen = positionToFen(position);
+    if (oldFen !== newFen) {
+      this.#currentFen = newFen;
+      this.setAttribute('fen', this.#currentFen);
+      if (triggerChange) this.#triggerFenChangeEvent();
+      
+    }
   }
 
   #iseventqueued = false;
   #triggerFenChangeEvent(): void {
+    // Prevent multiple events from being queued simultaneously
     if (this.#iseventqueued) return;
+    // Prevent dispatching if the FEN hasn't really changed
+    // if (this.#lastDispatchedFen === this.#currentFen) return;
     this.#iseventqueued = true;
     queueMicrotask(() => {
       this.#iseventqueued = false;
@@ -987,6 +1012,7 @@ export class ChessBoard extends HTMLElement {
       color, 
       rotation
     });
+    this.#serializeBoardState(true);
   }
 
   /**
@@ -999,7 +1025,7 @@ export class ChessBoard extends HTMLElement {
       throw new Error(`Invalid square coordinate: ${square}. Must be a valid square from a1 to h8.`);
     }
     this.#removePieceFromSquare(square);
-    this.#serializeBoardState();
+    this.#serializeBoardState(true);
   }
 
   /**
@@ -1070,9 +1096,9 @@ export class ChessBoard extends HTMLElement {
     
     // Add all pieces (skip per-piece serialization; serialize once at the end)
     for (const piece of pieces) {
-      this.#addPieceToSquare(piece.square, piece, true);
+      this.#addPieceToSquare(piece.square, piece);
     }
-    this.#serializeBoardState();
+    this.#serializeBoardState(true);
   }
 
   /**
