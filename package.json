@@ -1,6 +1,6 @@
 {
   "name": "@dardino/chess-board",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "repository": {
     "type": "git",
     "url": "https://github.com/dardino/chess-board"
@@ -10,14 +10,13 @@
   "main": "./dist/chess-board.umd.js",
   "module": "./dist/chess-board.es.js",
   "types": "./dist/types/index.d.ts",
+  "packageManager": "pnpm@10.33.0",
   "exports": {
     ".": {
-      "default": "./dist/chess-board.umd.js",
-      "module-sync": "./dist/chess-board.es.js",
-      "node": "./dist/chess-board.cjs",
       "types": "./dist/types/index.d.ts",
       "import": "./dist/chess-board.es.js",
-      "require": "./dist/chess-board.umd.js"
+      "require": "./dist/chess-board.umd.js",
+      "default": "./dist/chess-board.es.js"
     },
     "./css": "./dist/assets/ScacchiPainter.css",
     "./assets": "./dist/assets"
@@ -68,6 +67,5 @@
     "vite": "^8.2.1",
     "vite-plugin-static-copy": "^4.1.1",
     "vitest": "^4.1.11"
-  },
-  "packageManager": "pnpm@11.24.0+sha512.bd27e345e976dcb0be0b7a1228217b049a817e21b1f355c90dbe7dc46671895a8bc1e6d06c24554505ea93ea0b45f489a27ec1bfbc8de6a9659fca0f16fa0000"
+  }
 }

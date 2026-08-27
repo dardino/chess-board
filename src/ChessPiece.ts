@@ -112,74 +112,72 @@ export class ChessPiece extends HTMLElement {
     this.#shadow.innerHTML = '';
 
     // Add styles
-    const styleElement = document.createElement('style');
-    styleElement.textContent = style;
-    this.#shadow.appendChild(styleElement);
+    const sheet = new CSSStyleSheet();
+    sheet.replaceSync(style);
+    this.#shadow.adoptedStyleSheets = [sheet];
 
     // Create container from imported HTML template
-    const templateContainer = document.createElement('div');
+    const templateContainer = document.createElement('template');
     templateContainer.innerHTML = template;
 
     // Clone the template content
-    const templateElement = templateContainer.querySelector('template');
-    if (templateElement) {
-      const clonedContent = templateElement.content.cloneNode(true) as DocumentFragment;
+    const clonedContent = templateContainer.content.cloneNode(true) as DocumentFragment;
 
-      // Update piece content
-      const pieceContainer = clonedContent.querySelector('.piece') as HTMLElement;
-      const bgElement = clonedContent.querySelector('.piece-bg') as HTMLElement;
-      const fgElement = clonedContent.querySelector('.piece-fg') as HTMLElement;
-      const fairyNameElement = clonedContent.querySelector('.fairy-name') as HTMLElement;
-      const fairyConditionElement = clonedContent.querySelector('.fairy-condition') as HTMLElement;
-      const pieceInner = pieceContainer.querySelector('.piece-inner') as HTMLElement | null;
+    // Update piece content
+    const pieceContainer = clonedContent.querySelector('.piece') as HTMLElement;
+    const bgElement = clonedContent.querySelector('.piece-bg') as HTMLElement;
+    const fgElement = clonedContent.querySelector('.piece-fg') as HTMLElement;
+    const fairyNameElement = clonedContent.querySelector('.fairy-name') as HTMLElement;
+    const fairyConditionElement = clonedContent.querySelector('.fairy-condition') as HTMLElement;
+    const pieceInner = pieceContainer.querySelector('.piece-inner') as HTMLElement | null;
 
-      if (!bgElement || !fgElement || !pieceContainer || !pieceInner) return;
+    if (!bgElement || !fgElement || !pieceContainer || !pieceInner) return;
 
-      if (!this.#isStandardPiece) {
-        bgElement.textContent = this.#trimmedPieceType.toUpperCase(); // admit only uppercase characters for fairy pieces
-        fgElement.textContent = this.#trimmedPieceType.toUpperCase();
-      } else {
-        bgElement.textContent = `__${this.#trimmedPieceType}`; // For standard pieces, prefix with '__'
-        fgElement.textContent = `${this.#pieceColor}_${this.#trimmedPieceType}`; // For standard pieces, prefix with color
-      }
-
-      if (this.#pieceType?.startsWith("'")) {
-        // For fairy pieces, add a special class to the piece container
-        pieceContainer.classList.add('text-piece');
-      }
-
-      // Apply color class
-      pieceInner.classList.add(`color-${this.#pieceColor}`);
-      // Apply rotation
-      if (this.#rotation !== '0') {
-        pieceInner.style.transform = `rotate(${this.#rotation}deg)`;
-        pieceInner.classList.add('rotated');
-      }
-
-      // Update fairy-name
-      if (fairyNameElement) {
-        if (this.#fairyName) {
-          fairyNameElement.textContent = this.#fairyName;
-          fairyNameElement.style.display = 'block';
-        } else {
-          fairyNameElement.style.display = 'none';
-        }
-      }
-
-      // Update fairy-condition
-      if (fairyConditionElement) {
-        if (this.#fairyCondition) {
-          fairyConditionElement.textContent = this.#fairyCondition;
-          fairyConditionElement.style.display = 'block';
-        } else {
-          fairyConditionElement.style.display = 'none';
-        }
-      }
-
-      pieceContainer?.setAttribute('title', this.getHumanReadableTitle());
-
-      this.#shadow.appendChild(clonedContent);
+    if (!this.#isStandardPiece) {
+      bgElement.textContent = this.#trimmedPieceType.toUpperCase(); // admit only uppercase characters for fairy pieces
+      fgElement.textContent = this.#trimmedPieceType.toUpperCase();
+    } else {
+      bgElement.textContent = `__${this.#trimmedPieceType}`; // For standard pieces, prefix with '__'
+      fgElement.textContent = `${this.#pieceColor}_${this.#trimmedPieceType}`; // For standard pieces, prefix with color
     }
+
+    if (this.#pieceType?.startsWith("'")) {
+      // For fairy pieces, add a special class to the piece container
+      pieceContainer.classList.add('text-piece');
+    }
+
+    // Apply color class
+    pieceInner.classList.add(`color-${this.#pieceColor}`);
+    // Apply rotation
+    if (this.#rotation !== '0') {
+      pieceInner.style.transform = `rotate(${this.#rotation}deg)`;
+      pieceInner.classList.add('rotated');
+    }
+
+    // Update fairy-name
+    if (fairyNameElement) {
+      if (this.#fairyName) {
+        fairyNameElement.textContent = this.#fairyName;
+        fairyNameElement.style.display = 'block';
+      } else {
+        fairyNameElement.style.display = 'none';
+      }
+    }
+
+    // Update fairy-condition
+    if (fairyConditionElement) {
+      if (this.#fairyCondition) {
+        fairyConditionElement.textContent = this.#fairyCondition;
+        fairyConditionElement.style.display = 'block';
+      } else {
+        fairyConditionElement.style.display = 'none';
+      }
+    }
+
+    pieceContainer?.setAttribute('title', this.getHumanReadableTitle());
+
+    this.#shadow.appendChild(clonedContent);
+  
   }
 
   // Public methods to set piece programmatically

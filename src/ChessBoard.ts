@@ -67,6 +67,27 @@ export class ChessBoard extends HTMLElement {
       this.removeAttribute('disabled');
     }
   }
+  get disablePieceSelection() {
+    return this.hasAttribute('disable-piece-selection') && this.getAttribute('disable-piece-selection') !== 'false';
+  }
+  set disablePieceSelection(value: boolean) {
+    if (value) {
+      this.setAttribute('disable-piece-selection', '');
+    } else {
+      this.removeAttribute('disable-piece-selection');
+    }
+  }
+
+  get disablePieceAddition() {
+    return this.hasAttribute('disable-piece-addition') && this.getAttribute('disable-piece-addition') !== 'false';
+  }
+  set disablePieceAddition(value: boolean) {
+    if (value) {
+      this.setAttribute('disable-piece-addition', '');
+    } else {
+      this.removeAttribute('disable-piece-addition');
+    }
+  }
   #currentSquare: string | null = null;
   #selectedPieceSquare: string | null = null;
   #cellDecorators: Partial<Record<Square, CellDecorator>> = {};
@@ -228,6 +249,7 @@ export class ChessBoard extends HTMLElement {
   #handleAddPiece = (pieceType: ChessPieceType, color: ChessPieceColor): (event: KeyboardEvent) => void => {
     return (event: KeyboardEvent) => {
       if (!this.#checkModifiers(event)) return;
+      if (this.disablePieceAddition) return;
       this.#addPieceToSquare(this.#currentSquare!, {
         type: pieceType,
         color
@@ -328,12 +350,12 @@ export class ChessBoard extends HTMLElement {
   constructor() {
     super();
     this.#shadow = this.attachShadow({ mode: 'open' });
-    this.#firstRender();
-    this.#updatePiecesFromFen();
-    this.#updateBoardOrientationFromCurrentFen();
   }
 
   connectedCallback(): void {
+    this.#firstRender();
+    this.#updatePiecesFromFen();
+    this.#updateBoardOrientationFromCurrentFen();
     this.#setupEventListeners();
   }
 
@@ -363,19 +385,16 @@ export class ChessBoard extends HTMLElement {
   
   #firstRender(): void {
     // Create container from imported HTML template
-    const templateContainer = document.createElement('div');
+    const templateContainer = document.createElement('template');
     templateContainer.innerHTML = template;
 
     // Add styles
-    const styleElement = document.createElement('style');
-    styleElement.textContent = style;
-    this.#shadow.appendChild(styleElement);
+    const sheet = new CSSStyleSheet();
+    sheet.replaceSync(style);
+    this.#shadow.adoptedStyleSheets = [sheet];
 
-    const tmpl = templateContainer.querySelector("template");
-    if (!tmpl) {
-      throw new Error("Template not found in the provided HTML.");
-    }
-    this.#shadow.appendChild(tmpl.content.cloneNode(true));
+
+    this.#shadow.appendChild(templateContainer.content.cloneNode(true));
 
     // Update labels visibility based on attribute
     this.#updateLabelsVisibility();
@@ -385,7 +404,6 @@ export class ChessBoard extends HTMLElement {
       this.#setCurrentSquare(this.#currentSquare);
     }
 
-    this.#serializeBoardState(false);
   }
 
   #setupEventListeners(): void {    
@@ -879,7 +897,6 @@ export class ChessBoard extends HTMLElement {
       this.#currentFen = newFen;
       this.setAttribute('fen', this.#currentFen);
       if (triggerChange) this.#triggerFenChangeEvent();
-      
     }
   }
 
@@ -908,6 +925,7 @@ export class ChessBoard extends HTMLElement {
    * @returns True if the piece was selected, false if the square is empty
    */
   #setSelectedPiece(coordinate: string): boolean {
+    if (this.disablePieceSelection) return false;
     if (!this.#isValidCoordinate(coordinate)) {
       throw new Error(`Invalid square coordinate: ${coordinate}`);
     }
