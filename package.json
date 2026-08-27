@@ -16,7 +16,7 @@
       "types": "./dist/types/index.d.ts",
       "import": "./dist/chess-board.es.js",
       "require": "./dist/chess-board.umd.js",
-      "default": "./dist/chess-board.umd.js"
+      "default": "./dist/chess-board.es.js"
     },
     "./css": "./dist/assets/ScacchiPainter.css",
     "./assets": "./dist/assets"

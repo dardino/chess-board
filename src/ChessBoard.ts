@@ -328,12 +328,12 @@ export class ChessBoard extends HTMLElement {
   constructor() {
     super();
     this.#shadow = this.attachShadow({ mode: 'open' });
-    this.#firstRender();
-    this.#updatePiecesFromFen();
-    this.#updateBoardOrientationFromCurrentFen();
   }
 
   connectedCallback(): void {
+    this.#firstRender();
+    this.#updatePiecesFromFen();
+    this.#updateBoardOrientationFromCurrentFen();
     this.#setupEventListeners();
   }
 
@@ -363,19 +363,16 @@ export class ChessBoard extends HTMLElement {
   
   #firstRender(): void {
     // Create container from imported HTML template
-    const templateContainer = document.createElement('div');
+    const templateContainer = document.createElement('template');
     templateContainer.innerHTML = template;
 
     // Add styles
-    const styleElement = document.createElement('style');
-    styleElement.textContent = style;
-    this.#shadow.appendChild(styleElement);
+    const sheet = new CSSStyleSheet();
+    sheet.replaceSync(style);
+    this.#shadow.adoptedStyleSheets = [sheet];
 
-    const tmpl = templateContainer.querySelector("template");
-    if (!tmpl) {
-      throw new Error("Template not found in the provided HTML.");
-    }
-    this.#shadow.appendChild(tmpl.content.cloneNode(true));
+
+    this.#shadow.appendChild(templateContainer.content.cloneNode(true));
 
     // Update labels visibility based on attribute
     this.#updateLabelsVisibility();
@@ -385,7 +382,6 @@ export class ChessBoard extends HTMLElement {
       this.#setCurrentSquare(this.#currentSquare);
     }
 
-    this.#serializeBoardState(false);
   }
 
   #setupEventListeners(): void {    
@@ -879,7 +875,6 @@ export class ChessBoard extends HTMLElement {
       this.#currentFen = newFen;
       this.setAttribute('fen', this.#currentFen);
       if (triggerChange) this.#triggerFenChangeEvent();
-      
     }
   }
 
