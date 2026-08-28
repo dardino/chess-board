@@ -49,6 +49,17 @@ export class ChessBoard extends HTMLElement {
   #shadow: ShadowRoot;
   #currentFen: string = '';
 
+  #getBooleanAttribute(name: string): boolean {
+    return this.hasAttribute(name) && this.getAttribute(name) !== 'false';
+  }
+  #setBooleanAttribute(name: string, value: boolean): void {
+    if (value) {
+      this.setAttribute(name, '');
+    } else {
+      this.removeAttribute(name);
+    }
+  }
+
   get #board(): HTMLElement | null {
     const board = this.#shadow.querySelector<HTMLElement>('.board');
     return board;
@@ -58,35 +69,30 @@ export class ChessBoard extends HTMLElement {
     return squares;
   }
   get disabled() {
-    return this.hasAttribute('disabled') && this.getAttribute('disabled') !== 'false';
+    return this.#getBooleanAttribute('disabled');
   }
   set disabled(value: boolean) {
-    if (value) {
-      this.setAttribute('disabled', '');
-    } else {
-      this.removeAttribute('disabled');
-    }
+    this.#setBooleanAttribute('disabled', value);
   }
   get disablePieceSelection() {
-    return this.hasAttribute('disable-piece-selection') && this.getAttribute('disable-piece-selection') !== 'false';
+    return this.#getBooleanAttribute('disable-piece-selection');
   }
   set disablePieceSelection(value: boolean) {
-    if (value) {
-      this.setAttribute('disable-piece-selection', '');
-    } else {
-      this.removeAttribute('disable-piece-selection');
-    }
+    this.#setBooleanAttribute('disable-piece-selection', value);
   }
 
   get disablePieceAddition() {
-    return this.hasAttribute('disable-piece-addition') && this.getAttribute('disable-piece-addition') !== 'false';
+    return this.#getBooleanAttribute('disable-piece-addition');
   }
   set disablePieceAddition(value: boolean) {
-    if (value) {
-      this.setAttribute('disable-piece-addition', '');
-    } else {
-      this.removeAttribute('disable-piece-addition');
-    }
+    this.#setBooleanAttribute('disable-piece-addition', value);
+  }
+  
+  get ignoreFenActiveColor() {
+    return this.#getBooleanAttribute('ignore-fen-active-color');
+  }
+  set ignoreFenActiveColor(value: boolean) {
+    this.#setBooleanAttribute('ignore-fen-active-color', value);
   }
   #currentSquare: string | null = null;
   #selectedPieceSquare: string | null = null;
@@ -94,14 +100,10 @@ export class ChessBoard extends HTMLElement {
 
   // Auto-select piece on click attribute
   get autoSelectPieceOnClick(): boolean {
-    return this.hasAttribute('auto-select-piece-on-click') && this.getAttribute('auto-select-piece-on-click') !== 'false';
+    return this.#getBooleanAttribute('auto-select-piece-on-click');
   }
   set autoSelectPieceOnClick(value: boolean) {
-    if (value) {
-      this.setAttribute('auto-select-piece-on-click', '');
-    } else {
-      this.removeAttribute('auto-select-piece-on-click');
-    }
+    this.#setBooleanAttribute('auto-select-piece-on-click', value);
   }
 
   //#region Private Helper Methods
@@ -764,6 +766,7 @@ export class ChessBoard extends HTMLElement {
   }
 
   #updateBoardOrientationFromCurrentFen(): void {
+    if (this.ignoreFenActiveColor) return;
     const fenString = this.#currentFen;
     if (!fenString) {
       return;
