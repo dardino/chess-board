@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chess Board Web Components - Documentation</title>
-  
+
   <!-- Load chess piece font -->
   <link rel="stylesheet" href="./assets/ScacchiPainter.css" />
   <link rel="icon" type="image/png" sizes="96x96" href="./assets/favicon-96x96.png">
@@ -12,7 +13,7 @@
   <link rel="icon" href="./assets/favicon.ico">
   <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
   <link rel="manifest" href="./assets/site.webmanifest">
-  
+
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
 
@@ -22,14 +23,14 @@
       padding: 0;
       box-sizing: border-box;
     }
-    
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       line-height: 1.6;
       color: #333;
       background: #f8f9fa;
     }
-    
+
     .header {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
@@ -37,20 +38,20 @@
       text-align: center;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
-    
+
     .header h1 {
       font-size: 2.5rem;
       margin-bottom: 0.5rem;
       font-weight: 700;
     }
-    
+
     .header p {
       font-size: 1.2rem;
       opacity: 0.95;
       max-width: 800px;
       margin: 0 auto;
     }
-    
+
     .demo-links {
       display: flex;
       gap: 1rem;
@@ -58,7 +59,7 @@
       margin-top: 2rem;
       flex-wrap: wrap;
     }
-    
+
     .demo-link {
       display: inline-flex;
       align-items: center;
@@ -72,28 +73,28 @@
       transition: all 0.3s;
       border: 2px solid rgba(255, 255, 255, 0.3);
     }
-    
+
     .demo-link:hover {
       background: rgba(255, 255, 255, 0.3);
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
-    
+
     .demo-link::before {
       content: "🎮";
       font-size: 1.5rem;
     }
-    
+
     .demo-link.api::before {
       content: "⚙️";
     }
-    
+
     .container {
       max-width: 1200px;
       margin: 0 auto;
       padding: 2rem;
     }
-    
+
     .content {
       background: white;
       border-radius: 12px;
@@ -101,7 +102,7 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       margin-bottom: 2rem;
     }
-    
+
     .content h2 {
       color: #667eea;
       margin-top: 2rem;
@@ -110,38 +111,39 @@
       border-bottom: 2px solid #e9ecef;
       font-size: 1.8rem;
     }
-    
+
     .content h2:first-child {
       margin-top: 0;
     }
-    
+
     .content h3 {
       color: #495057;
       margin-top: 1.5rem;
       margin-bottom: 0.75rem;
       font-size: 1.4rem;
     }
-    
+
     .content h4 {
       color: #6c757d;
       margin-top: 1.25rem;
       margin-bottom: 0.5rem;
       font-size: 1.1rem;
     }
-    
-    .content ul, .content ol {
+
+    .content ul,
+    .content ol {
       margin-left: 1.5rem;
       margin-bottom: 1rem;
     }
-    
+
     .content li {
       margin-bottom: 0.5rem;
     }
-    
+
     .content p {
       margin-bottom: 1rem;
     }
-    
+
     .content code {
       background: #f8f9fa;
       padding: 0.2rem 0.4rem;
@@ -150,7 +152,7 @@
       font-size: 0.9em;
       color: #e83e8c;
     }
-    
+
     .content pre {
       background: #2d2d2d;
       color: #f8f8f2;
@@ -160,38 +162,38 @@
       margin-bottom: 1.5rem;
       border-left: 4px solid #667eea;
     }
-    
+
     .content pre code {
       background: none;
       color: inherit;
       padding: 0;
     }
-    
+
     .features-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 1.5rem;
       margin: 2rem 0;
     }
-    
+
     .feature-card {
       background: #f8f9fa;
       padding: 1.5rem;
       border-radius: 8px;
       border-left: 4px solid #667eea;
     }
-    
+
     .feature-card h3 {
       margin-top: 0;
       color: #667eea;
       font-size: 1.1rem;
     }
-    
+
     .feature-card p {
       margin-bottom: 0;
       font-size: 0.95rem;
     }
-    
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -199,23 +201,24 @@
       background: white;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
-    
-    th, td {
+
+    th,
+    td {
       padding: 0.75rem;
       text-align: left;
       border-bottom: 1px solid #dee2e6;
     }
-    
+
     th {
       background: #667eea;
       color: white;
       font-weight: 600;
     }
-    
+
     tr:hover {
       background: #f8f9fa;
     }
-    
+
     .badge {
       display: inline-block;
       padding: 0.25rem 0.6rem;
@@ -226,20 +229,20 @@
       font-weight: 600;
       margin-left: 0.5rem;
     }
-    
+
     .badge.success {
       background: #28a745;
     }
-    
+
     .badge.info {
       background: #17a2b8;
     }
-    
+
     .badge.warning {
       background: #ffc107;
       color: #333;
     }
-    
+
     .toc {
       background: #f8f9fa;
       padding: 1.5rem;
@@ -247,27 +250,27 @@
       margin-bottom: 2rem;
       border-left: 4px solid #667eea;
     }
-    
+
     .toc h3 {
       margin-top: 0;
       color: #667eea;
     }
-    
+
     .toc ul {
       list-style: none;
       margin-left: 0;
     }
-    
+
     .toc a {
       color: #495057;
       text-decoration: none;
       transition: color 0.2s;
     }
-    
+
     .toc a:hover {
       color: #667eea;
     }
-    
+
     .footer {
       background: #2d3748;
       color: #cbd5e0;
@@ -275,7 +278,7 @@
       text-align: center;
       margin-top: 3rem;
     }
-    
+
     .demo-board {
       width: 400px;
       max-width: 100%;
@@ -292,31 +295,32 @@
     .badges {
       margin-top: 1rem;
     }
-    
+
     @media (max-width: 768px) {
       .header h1 {
         font-size: 2rem;
       }
-      
+
       .header p {
         font-size: 1rem;
       }
-      
+
       .content {
         padding: 1.5rem;
       }
-      
+
       .features-grid {
         grid-template-columns: 1fr;
       }
     }
   </style>
 </head>
+
 <body>
   <div class="header">
     <h1>♟️ Chess Board Web Components</h1>
     <p>A collection of web components for displaying chess boards and pieces, built with TypeScript and Vite</p>
-    
+
     <div class="demo-links">
       <a href="demo.html" class="demo-link">
         Interactive Demo
@@ -327,14 +331,19 @@
     </div>
 
     <div class="badges">
-      <a href="https://www.npmjs.com/package/@dardino/chess-board"><img src="https://img.shields.io/npm/v/@dardino/chess-board.svg" alt="npm version"></a>
-      <img alt="coverage lines" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdardino.github.io%2Fchess-board%2Fassets%2Fcoverage-summary.json&query=%24.total.lines.pct&suffix=%20%25&label=Coverage%20Lines%3A&color=green" />
-      <img alt="coverage statements" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdardino.github.io%2Fchess-board%2Fassets%2Fcoverage-summary.json&query=%24.total.statements.pct&suffix=%20%25&label=Coverage%20Statements%3A&color=green" />
-      <img alt="coverage functions" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdardino.github.io%2Fchess-board%2Fassets%2Fcoverage-summary.json&query=%24.total.functions.pct&suffix=%20%25&label=Coverage%20Functions%3A&color=green" />
-      <img alt="coverage branches" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdardino.github.io%2Fchess-board%2Fassets%2Fcoverage-summary.json&query=%24.total.branches.pct&suffix=%20%25&label=Coverage%20Branches%3A&color=green" />
+      <a href="https://www.npmjs.com/package/@dardino/chess-board"><img
+          src="https://img.shields.io/npm/v/@dardino/chess-board.svg" alt="npm version"></a>
+      <img alt="coverage lines"
+        src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdardino.github.io%2Fchess-board%2Fassets%2Fcoverage-summary.json&query=%24.total.lines.pct&suffix=%20%25&label=Coverage%20Lines%3A&color=green" />
+      <img alt="coverage statements"
+        src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdardino.github.io%2Fchess-board%2Fassets%2Fcoverage-summary.json&query=%24.total.statements.pct&suffix=%20%25&label=Coverage%20Statements%3A&color=green" />
+      <img alt="coverage functions"
+        src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdardino.github.io%2Fchess-board%2Fassets%2Fcoverage-summary.json&query=%24.total.functions.pct&suffix=%20%25&label=Coverage%20Functions%3A&color=green" />
+      <img alt="coverage branches"
+        src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdardino.github.io%2Fchess-board%2Fassets%2Fcoverage-summary.json&query=%24.total.branches.pct&suffix=%20%25&label=Coverage%20Branches%3A&color=green" />
     </div>
   </div>
-  
+
   <div class="container">
     <div class="content">
       <div class="toc">
@@ -349,50 +358,50 @@
           <li><a href="#typescript">TypeScript Support</a></li>
         </ul>
       </div>
-      
+
       <h2 id="features">✨ Features</h2>
-      
+
       <div class="features-grid">
         <div class="feature-card">
           <h3>🎯 8x8 Chess Board</h3>
           <p>Traditional chess board layout with alternating colors and coordinate labels</p>
         </div>
-        
+
         <div class="feature-card">
           <h3>♟️ Individual Chess Pieces</h3>
           <p>Separate component for each piece type and color, including fairy pieces</p>
         </div>
-        
+
         <div class="feature-card">
           <h3>🔄 Piece Rotation</h3>
           <p>Rotate pieces in 45° increments (0-315°) with keyboard shortcuts or API</p>
         </div>
-        
+
         <div class="feature-card">
           <h3>🎨 Fairy Chess Notation</h3>
           <p>Support for fairy-name and fairy-condition annotations for problem compositions</p>
         </div>
-        
+
         <div class="feature-card">
           <h3>⌨️ Keyboard Navigation</h3>
           <p>Full keyboard support for piece placement, rotation, and board manipulation</p>
         </div>
-        
+
         <div class="feature-card">
           <h3>📐 FEN Support</h3>
           <p>Load and display chess positions using Forsyth-Edwards Notation</p>
         </div>
-        
+
         <div class="feature-card">
           <h3>↔️ Board Orientation</h3>
           <p>Flip between white/black perspective with keyboard shortcuts</p>
         </div>
-        
+
         <div class="feature-card">
           <h3>📱 Responsive Design</h3>
           <p>Automatically adapts to container size with CSS Container Queries</p>
         </div>
-        
+
         <div class="feature-card">
           <h3>⚙️ Programmatic API</h3>
           <p>Complete TypeScript API for adding, removing, and rotating pieces</p>
@@ -402,17 +411,17 @@
           <h3>🧩 Cell Decorators</h3>
           <p>Add a visual overlay layer inside each square above the background and below pieces or notation</p>
         </div>
-        
+
         <div class="feature-card">
           <h3>🧪 Fully Tested</h3>
           <p>Comprehensive test suite with Vitest (241 tests passing)</p>
         </div>
-        
+
         <div class="feature-card">
           <h3>🔧 TypeScript</h3>
           <p>Full type safety and modern development experience</p>
         </div>
-        
+
         <div class="feature-card">
           <h3>🌐 Web Components</h3>
           <p>Native custom elements with Shadow DOM for safe integration</p>
@@ -423,22 +432,24 @@
           <p>Fully compatible with html2canvas for capturing the board as an image</p>
         </div>
       </div>
-      
+
       <h2 id="demo">🎮 Live Demo</h2>
-      <p>Try the interactive chess board below. Click to select a square, then use keyboard shortcuts to add and manipulate pieces:</p>
-      
+      <p>Try the interactive chess board below. Click to select a square, then use keyboard shortcuts to add and
+        manipulate pieces:</p>
+
       <chess-board class="demo-board" fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"></chess-board>
-      
+
       <p style="text-align: center; color: #6c757d; font-style: italic;">
-        💡 Click on the board and try: Arrow keys (navigate), P/p (add pieces), Alt/Option+Arrow (rotate), Delete (remove)
+        💡 Click on the board and try: Arrow keys (navigate), P/p (add pieces), Alt/Option+Arrow (rotate), Delete
+        (remove)
       </p>
-      
+
       <h2 id="installation">📦 Installation</h2>
-      
+
       <pre><code>pnpm add @dardino/chess-board</code></pre>
-      
+
       <h2 id="usage">🚀 Basic Usage</h2>
-      
+
       <h3>HTML</h3>
       <pre><code>&lt;!DOCTYPE html&gt;
 &lt;html lang="en"&gt;
@@ -462,10 +473,10 @@
   &lt;/script&gt;
 &lt;/body&gt;
 &lt;/html&gt;</code></pre>
-      
+
       <h2 id="api">⚙️ Programmatic API</h2>
       <p>The chess board provides a complete TypeScript API for programmatic manipulation:</p>
-      
+
       <h3>Adding and Removing Pieces</h3>
       <pre><code>const board = document.querySelector('chess-board');
 
@@ -484,7 +495,7 @@ if (board.hasPiece('d4')) {
 // Get piece information
 const piece = board.getPieceAt('d4');
 console.log(piece); // { type: 'k', color: 'b', rotation: '45' }</code></pre>
-      
+
       <h3>Bulk Operations</h3>
       <pre><code>// Get all pieces on board
 const pieces = board.getAllPieces();
@@ -497,7 +508,7 @@ board.setPieces([
   { square: 'e8', type: 'k', color: 'b', rotation: '0' },
   { square: 'd1', type: 'q', color: 'w', rotation: '45' }
 ]);</code></pre>
-      
+
       <h3>Piece Rotation</h3>
       <pre><code>// Rotate piece by relative amount
 board.rotatePiece('e4', 45);                 // Rotate clockwise by 45°
@@ -585,7 +596,7 @@ board.addEventListener('fenChange', (event) =&gt; {
     }
   });
 &lt;/script&gt;</code></pre>
-      
+
       <h3>Board Orientation</h3>
       <pre><code>// Set orientation
 board.setOrientation('white');               // White at bottom
@@ -597,9 +608,14 @@ const orientation = board.getOrientation();  // 'white' | 'black'
 // Toggle orientation
 board.toggleOrientation();</code></pre>
 
-  <h3>Element Attributes</h3>
-  <p><code>chess-board</code> supports the boolean <code>disabled</code> and <code>auto-select-piece-on-click</code> attributes, along with <code>fen</code> and the boolean <code>hide-labels</code> attribute. Its <code>black-to-move</code> attribute is managed by the orientation API and by the active color in FEN.</p>
-  <p><code>chess-piece</code> supports <code>piece</code>, <code>color</code>, <code>rotation</code>, <code>fairy-name</code>, and <code>fairy-condition</code>. Fairy names are limited to three characters.</p>
+      <h3>Element Attributes</h3>
+      <p><code>chess-board</code> supports the boolean <code>disabled</code> and <code>auto-select-piece-on-click</code>
+        attributes, along with <code>fen</code> and the boolean <code>hide-labels</code> attribute. Its
+        <code>black-to-move</code> attribute is managed by the orientation API and by the active color in FEN.
+      </p>
+      <p><code>chess-piece</code> supports <code>piece</code>, <code>color</code>, <code>rotation</code>,
+        <code>fairy-name</code>, and <code>fairy-condition</code>. Fairy names are limited to three characters.
+      </p>
 
       <h4>fen</h4>
       <pre><code>&lt;chess-board fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"&gt;&lt;/chess-board&gt;
@@ -607,7 +623,8 @@ board.toggleOrientation();</code></pre>
 const board = document.querySelector('chess-board');
 board.setFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
 const fen = board.getFen();</code></pre>
-      <p>Use the <code>fen</code> attribute or the <code>setFen()</code> API to control the board position. It accepts both standard FEN and FFEN values.</p>
+      <p>Use the <code>fen</code> attribute or the <code>setFen()</code> API to control the board position. It accepts
+        both standard FEN and FFEN values.</p>
 
       <h4>hide-labels</h4>
       <pre><code>&lt;chess-board hide-labels&gt;&lt;/chess-board&gt;
@@ -615,7 +632,8 @@ const fen = board.getFen();</code></pre>
 const board = document.querySelector('chess-board');
 board.hideLabels = true;
 board.hideLabels = false;</code></pre>
-      <p>When enabled, the board hides square labels such as file and rank markers for a cleaner visual presentation.</p>
+      <p>When enabled, the board hides square labels such as file and rank markers for a cleaner visual presentation.
+      </p>
 
       <h4>disabled</h4>
       <pre><code>&lt;chess-board disabled&gt;&lt;/chess-board&gt;
@@ -623,7 +641,8 @@ board.hideLabels = false;</code></pre>
 const board = document.querySelector('chess-board');
 board.disabled = true;
 board.disabled = false;</code></pre>
-      <p>When set, the board becomes non-interactive: pointer events and keyboard actions are disabled, and selections cannot change until the attribute is removed or set to false.</p>
+      <p>When set, the board becomes non-interactive: pointer events and keyboard actions are disabled, and selections
+        cannot change until the attribute is removed or set to false.</p>
 
       <h4>auto-select-piece-on-click</h4>
       <pre><code>&lt;chess-board auto-select-piece-on-click&gt;&lt;/chess-board&gt;
@@ -631,8 +650,9 @@ board.disabled = false;</code></pre>
 const board = document.querySelector('chess-board');
 board.autoSelectPieceOnClick = true;
 board.autoSelectPieceOnClick = false;</code></pre>
-      <p>When enabled, clicking a piece automatically selects it, which is helpful for one-click move workflows. The attribute can be toggled through the DOM or through the <code>autoSelectPieceOnClick</code> property.</p>
-      
+      <p>When enabled, clicking a piece automatically selects it, which is helpful for one-click move workflows. The
+        attribute can be toggled through the DOM or through the <code>autoSelectPieceOnClick</code> property.</p>
+
       <h3>FEN Support</h3>
       <pre><code>// Set position from FEN
 board.setFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
@@ -645,7 +665,8 @@ board.setStartingPosition();                 // Standard starting position
 board.clearBoard();                          // Empty board</code></pre>
 
       <h2 id="ffen">🧩 FFEN support</h2>
-      <p>The board accepts a single <code>fen</code> attribute or <code>setFen()</code> call for either standard FEN or FFEN. The component automatically detects the format and preserves fairy metadata when it is present.</p>
+      <p>The board accepts a single <code>fen</code> attribute or <code>setFen()</code> call for either standard FEN or
+        FFEN. The component automatically detects the format and preserves fairy metadata when it is present.</p>
 
       <h3>Supported FFEN features</h3>
       <ul>
@@ -653,8 +674,10 @@ board.clearBoard();                          // Empty board</code></pre>
         <li>FFEN values with optional fairy metadata suffixes</li>
         <li>Neutral pieces with the <code>-</code> prefix, for example <code>-K</code> or <code>-b</code></li>
         <li>Rotated pieces with the <code>*</code> prefix, for example <code>*1B</code> or <code>*3q</code></li>
-        <li>Fairy letters and numbers with the <code>'</code> prefix, for example <code>'a</code> or <code>''23</code></li>
-        <li>Non-standard board sizes like 4x4 or 11x11 layouts (* work in progress: parsing is OK but not the renderer)</li>
+        <li>Fairy letters and numbers with the <code>'</code> prefix, for example <code>'a</code> or <code>''23</code>
+        </li>
+        <li>Non-standard board sizes like 4x4 or 11x11 layouts (* work in progress: parsing is OK but not the renderer)
+        </li>
       </ul>
 
       <h3>FFEN examples</h3>
@@ -673,10 +696,13 @@ board.setFen('8/8/8/8/8/8/8/4K3 w - - 0 1 e4:gn:Chameleon');
 const currentState = board.getFen();
 console.log(currentState);</code></pre>
 
-      <p>In short, FFEN is handled as the same notation family as FEN: the same <code>fen</code> attribute and the same <code>setFen()</code> API are used, and the component automatically applies the correct parsing logic based on the value passed in.</p>
-      
+      <p>In short, FFEN is handled as the same notation family as FEN: the same <code>fen</code> attribute and the same
+        <code>setFen()</code> API are used, and the component automatically applies the correct parsing logic based on
+        the value passed in.
+      </p>
+
       <h2 id="keyboard">⌨️ Keyboard Navigation</h2>
-      
+
       <table>
         <thead>
           <tr>
@@ -735,10 +761,10 @@ console.log(currentState);</code></pre>
           </tr>
         </tbody>
       </table>
-      
+
       <h2 id="typescript">🔧 TypeScript Support</h2>
       <p>Full TypeScript support with comprehensive type definitions:</p>
-      
+
       <pre><code>import {
   ChessBoard,
   type PieceInfo,
@@ -769,7 +795,7 @@ const pieces: PieceInfoWithSquare[] = board.getAllPieces();
 pieces.forEach(piece => {
   console.log(`${piece.color} ${piece.type} on ${piece.square}`);
 });</code></pre>
-      
+
       <h3>Available Types</h3>
       <table>
         <thead>
@@ -781,7 +807,8 @@ pieces.forEach(piece => {
         <tbody>
           <tr>
             <td><code>ChessPieceType</code></td>
-            <td>'k' | 'q' | 'r' | 'b' | 'n' | 'p' | 'e' | 't' | 'a' | 'x' | 's' | 'c' | `${number}` | `'${string}` | `''${string}`</td>
+            <td>'k' | 'q' | 'r' | 'b' | 'n' | 'p' | 'e' | 't' | 'a' | 'x' | 's' | 'c' | `${number}` | `'${string}` |
+              `''${string}`</td>
           </tr>
           <tr>
             <td><code>ChessPieceColor</code></td>
@@ -801,7 +828,8 @@ pieces.forEach(piece => {
           </tr>
           <tr>
             <td><code>FenPosition</code></td>
-            <td>{ pieces, activeColor, castlingRights, enPassantTarget, halfmoveClock, fullmoveNumber, fairyMetadata? }</td>
+            <td>{ pieces, activeColor, castlingRights, enPassantTarget, halfmoveClock, fullmoveNumber }
+            </td>
           </tr>
           <tr>
             <td><code>CellDecorator</code></td>
@@ -809,9 +837,9 @@ pieces.forEach(piece => {
           </tr>
         </tbody>
       </table>
-      
+
       <h2>🎯 Chess Pieces</h2>
-      
+
       <h3>Standard Pieces</h3>
       <table>
         <thead>
@@ -884,7 +912,7 @@ pieces.forEach(piece => {
           </tr>
         </tbody>
       </table>
-      
+
       <h3>Fairy Pieces</h3>
       <table>
         <thead>
@@ -980,10 +1008,12 @@ pieces.forEach(piece => {
         <tbody>
           <tr>
             <td>Fairy letter or number</td>
-            <td>Examples: <code>'A</code> with color <code>w</code>, <code>'B</code> with color <code>b</code>, or <code>'7</code>
+            <td>Examples: <code>'A</code> with color <code>w</code>, <code>'B</code> with color <code>b</code>, or
+              <code>'7</code>
             </td>
             <td>
-              Writes the character <chess-piece class="single-piece" piece="'A" color="w"></chess-piece> on the board<br />
+              Writes the character <chess-piece class="single-piece" piece="'A" color="w"></chess-piece> on the
+              board<br />
               Writes the character <chess-piece class="single-piece" piece="'B" color="b"></chess-piece> on the board
             </td>
           </tr>
@@ -991,21 +1021,24 @@ pieces.forEach(piece => {
             <td>Two-character fairy number</td>
             <td>Example: <code>''23</code></td>
             <td>
-              Writes <chess-piece class="single-piece" piece="''23" color="b"></chess-piece> on the board. Programmatic piece types may also use a single apostrophe followed by multiple alphanumeric characters.
+              Writes <chess-piece class="single-piece" piece="''23" color="b"></chess-piece> on the board. Programmatic
+              piece types may also use a single apostrophe followed by multiple alphanumeric characters.
             </td>
           </tr>
         </tbody>
         <tfoot>
           <tr>
             <td colspan="3">
-              <strong>Notes:</strong> <em>Using letters or numbers in FFEN results in black fairy pieces by default. FFEN cannot distinguish white and black numbers, so use the Programmatic API when a character piece needs a different color.</em>
+              <strong>Notes:</strong> <em>Using letters or numbers in FFEN results in black fairy pieces by default.
+                FFEN cannot distinguish white and black numbers, so use the Programmatic API when a character piece
+                needs a different color.</em>
             </td>
           </tr>
         </tfoot>
       </table>
 
       <h2>⚙️ Other available APIs</h2>
-      <p>This library exposes several APIs for interacting with the chess board programmatically. 
+      <p>This library exposes several APIs for interacting with the chess board programmatically.
         This list is not exhaustive, and more APIs may be available.</p>
 
       <h3>parseFen</h3>
@@ -1016,10 +1049,10 @@ function parseFen(fen: string): FenPosition | null
 const fenString = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 const parsedPosition = parseFen(fenString);</pre>
 
-      <h3>positionToFFen</h3>
+      <h3>positionToFen</h3>
       <p>Converts a <code>FenPosition</code> to FFEN, preserving fairy metadata and normalizing metadata values.</p>
-      <pre><code>import { positionToFFen } from '@dardino/chess-board'
-function positionToFFen(position: FenPosition): string</code></pre>
+      <pre></pre>import { positionToFen } from '@dardino/chess-board'
+      function positionToFen(position: FenPosition): string</pre>
 
       <h3>Piece-placement utilities</h3>
       <pre><code>import {
@@ -1046,36 +1079,13 @@ function parseFfenPieceChar(piece: string): {
   fairyName?: string;
 } | null</code></pre>
 
-      <h3>positionToFen</h3>
-      <p>Function to convert a <code>FenPosition</code> object back into a FEN string</p>
-      <pre>import { positionToFen } from '@dardino/chess-board'
-function positionToFen(position: FenPosition): string
-// example usage:
-const position: FenPosition = {
-  pieces: [
-    { type: 'k', color: 'w', square: 'e1' },
-    { type: 'k', color: 'b', square: 'e8' }
-  ],
-  activeColor: 'w',
-  castlingRights: 'KQkq',
-  enPassantTarget: '-',
-  halfmoveClock: 0,
-  fullmoveNumber: 1,
-  fairyMetadata: {
-    'd5': { fairyName: 'gn', fairyCondition: 'Chamaleon' }
-  }
-};
-
-const ffen = positionToFen(position);
-expect(ffen).toBe('4k3/8/8/8/8/8/8/4K3 w KQkq - 0 1 d5:gn:Chamaleon');</pre>
-
       <h2>🧪 Testing</h2>
       <p>Comprehensive test suite with <span class="badge success">241 tests passing</span></p>
       <pre><code>pnpm test</code></pre>
-      
+
       <h2>📄 License</h2>
       <p>MIT License - See LICENSE file for details</p>
-      
+
       <h2>🔗 Links</h2>
       <ul>
         <li><a href="demo.html" style="color: #667eea;">Interactive Demo</a> - Try all features interactively</li>
@@ -1084,12 +1094,13 @@ expect(ffen).toBe('4k3/8/8/8/8/8/8/4K3 w KQkq - 0 1 d5:gn:Chamaleon');</pre>
       </ul>
     </div>
   </div>
-  
+
   <div class="footer">
     <p>&copy; 2026 Dardino - Chess Board Web Components</p>
     <p style="margin-top: 0.5rem; opacity: 0.8;">Built with TypeScript, Vite, and Web Components</p>
   </div>
-  
+
   <script type="module" src="./src/index.ts"></script>
 </body>
+
 </html>

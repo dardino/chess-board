@@ -72,8 +72,6 @@ export interface FenPosition {
   halfmoveClock: number;
   /** Fullmove number (increments after black's move) */
   fullmoveNumber: number;
-  /** Optional: Fairy piece metadata (FFEN only, 7th block) */
-  fairyMetadata?: Record<string, FairyPieceMetadata>;
 }
 
 /**
@@ -147,7 +145,17 @@ export function parseFen(fen: string): FenPosition | null {
   if (fairyMetadataBlock) {
     fairyMetadata = parseFairyMetadata(fairyMetadataBlock);
     if (!fairyMetadata) {
+      console.warn("Invalid fairy metadata block in FFEN!");
       return null;
+    } else {
+      // Assign fairy metadata to pieces if applicable
+      for (const piece of pieces) {
+        const metadata = fairyMetadata[piece.square];
+        if (metadata) {
+          piece.fairyName = metadata.fairyName;
+          piece.fairyCondition = metadata.fairyCondition;
+        }
+      }
     }
   }
 
@@ -157,20 +165,18 @@ export function parseFen(fen: string): FenPosition | null {
     castlingRights,
     enPassantTarget,
     halfmoveClock,
-    fullmoveNumber,
-    fairyMetadata
+    fullmoveNumber
   };
 }
 
 /**
  * Converts a structured position object to a FEN string
- * Generates FFEN format (with 7th block) if fairyMetadata is present
+ * Generates FFEN format (with 7th block) if at least one fairy piece is present
  * @param position - The position to convert
  * @returns FEN or FFEN string representation
  */
 export function positionToFen(position: FenPosition): string {
   const isFfen =
-    (position.fairyMetadata && Object.keys(position.fairyMetadata).length > 0) ||
     position.pieces.some(
       p => p.color === 'n' || p.isNeutral || p.rotation !== undefined || p.fairyName !== undefined || p.fairyCondition !== undefined
     );
@@ -185,52 +191,15 @@ export function positionToFen(position: FenPosition): string {
   ];
 
   // Add fairy metadata block if present
-  if (position.fairyMetadata && Object.keys(position.fairyMetadata).length > 0) {
-    const fairyBlockParts: string[] = [];
-    for (const [cell, metadata] of Object.entries(position.fairyMetadata)) {
-      fairyBlockParts.push(`${cell}:${metadata.fairyName || ""}:${metadata.fairyCondition || ""}`);
-    }
-    fenParts.push(fairyBlockParts.join(','));
+  const fairySourceBlock = position.pieces
+    .filter(p => p.fairyName || p.fairyCondition)
+    .map(p => `${p.square}:${p.fairyName || ''}:${p.fairyCondition || ''}`);
+
+  if (fairySourceBlock && fairySourceBlock.length > 0) {
+    fenParts.push(fairySourceBlock.join(','));
   }
 
   return fenParts.join(' ');
-}
-
-/**
- * Converts a structured FFEN position to a proper FFEN string.
- * FFEN is the same as standard FEN plus an optional 7th block containing
- * fairy metadata entries like "e5:gn:Chameleon".
- */
-export function positionToFFen(position: FenPosition): string {
-  const fairyMetadata: Record<string, FairyPieceMetadata> | undefined =
-    position.fairyMetadata && Object.keys(position.fairyMetadata).length > 0
-      ? Object.entries(position.fairyMetadata)
-          .filter(([, meta]) => !!meta?.fairyName || !!meta?.fairyCondition)
-          .reduce<Record<string, FairyPieceMetadata>>((acc, [cell, meta]) => {
-            const fairyName = meta?.fairyName?.trim();
-            const fairyCondition = meta?.fairyCondition?.trim();
-            if (!fairyName && !fairyCondition) {
-              return acc;
-            }
-            acc[cell] = {
-              fairyName: fairyName || '',
-              fairyCondition: fairyCondition || ''
-            };
-            return acc;
-          }, {})
-      : undefined;
-
-  const normalizedPosition: FenPosition = {
-    ...position,
-    fairyMetadata,
-    pieces: position.pieces.map(piece => ({
-      ...piece,
-      fairyName: position.fairyMetadata?.[piece.square]?.fairyName,
-      fairyCondition: position.fairyMetadata?.[piece.square]?.fairyCondition
-    }))
-  };
-
-  return positionToFen(normalizedPosition);
 }
 
 const RankRx = /(?<piece>(?<rotation>\*(?<degree>[0-3](?:\.[5])?))?(?<figure>(?<neutral>-)?(?<letter>[kqrbnpetacxs]|'\w|''\w\w)))|(?<emptyspaces>[0-9])/giy;
@@ -246,6 +215,7 @@ export function parsePiecePlacement(piecePlacement: string): {
   boardSize: { width: number, height: number }
 } | null {
   if (!piecePlacement || typeof piecePlacement !== 'string') {
+    console.warn("Invalid piece placement string");
     return null;
   }
   const ranks = piecePlacement.split('/');
@@ -282,12 +252,14 @@ export function parsePiecePlacement(piecePlacement: string): {
       currentFile++;
     }
     if (currentFile !== boardWidth && boardWidth !== 0) {
+      console.warn(`Invalid rank length in FFEN: expected ${boardWidth}, got ${currentFile}.`);
       return null; // Invalid rank length
     }
     boardWidth = Math.max(boardWidth, currentFile);
   }
 
   if (boardWidth < 4 || boardWidth > 11 || boardHeight < 4 || boardHeight > 11) {
+    console.warn(`Invalid board size for FFEN: ${boardWidth}x${boardHeight}. Must be between 4x4 and 11x11.`);
     return null; // Invalid board size for FFEN
   }
 
@@ -467,6 +439,10 @@ export function parseFairyMetadata(fairyBlock: string): Record<string, FairyPiec
   }
   if (fairyBlock.includes(' ')) {
     console.error("Fairy metadata block contains spaces, which is invalid");
+    return undefined;
+  }
+  if (!/^[a-z][0-9]:[^:]*:[^,]*(,[a-z][0-9]:[^:]*:[^,]*)*$/.test(fairyBlock)) {
+    console.error("Fairy metadata block has an invalid format");
     return undefined;
   }
   const fairyMetadata: Record<string, FairyPieceMetadata> = {};

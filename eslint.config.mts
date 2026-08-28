@@ -18,12 +18,19 @@ export default defineConfig([
       "*.map"
     ]
   },
-  { files: ["**/*.{js,mjs,cjs,ts,mts,cts}"], plugins: { js }, extends: ["js/recommended"], languageOptions: { globals: {...globals.browser, ...globals.node} } },
-  tseslint.configs.recommended,
+  { files: ["**/*.{js,mjs,cjs,ts,mts,cts}"], plugins: { js },
+    extends: ["js/recommended", tseslint.configs.recommended], 
+    languageOptions: { 
+      globals: {...globals.browser, ...globals.node},
+      parserOptions: {
+        tsconfigRootDir: import.meta.dirname,
+      }
+    } 
+  },
   { files: ["**/*.json"], plugins: { json: json as any }, language: "json/json", extends: ["json/recommended"] },
   { files: ["**/*.jsonc"], plugins: { json: json as any }, language: "json/jsonc", extends: ["json/recommended"] },
   { files: ["**/*.json5"], plugins: { json: json as any }, language: "json/json5", extends: ["json/recommended"] },
-  { files: ["**/*.md"], plugins: { markdown }, language: "markdown/commonmark", extends: ["markdown/recommended"] },
+  { files: ["**/*.md"], plugins: { markdown }, language: "markdown/gfm", extends: ["markdown/recommended"] },
   { files: ["**/*.css"], plugins: { css: css as any }, language: "css/css", extends: ["css/recommended"],
     rules: {
       "css/use-baseline": ["error", { available: 2026, allowProperties: ["user-select"] }],

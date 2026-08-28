@@ -121,6 +121,7 @@ function setupBoard(): void {
 ### Type Definitions Location
 
 TypeScript declaration files are generated in the `dist/types/` directory:
+
 - `dist/types/index.d.ts` - Main entry point with all exports
 - `dist/types/ChessBoard.d.ts` - ChessBoard component types
 - `dist/types/ChessPiece.d.ts` - ChessPiece component types
@@ -162,7 +163,7 @@ The components use ligature-based font rendering for chess pieces:
 ### Standard Pieces
 
 | Piece | White | Black | Description |
-|-------|-------|-------|-------------|
+| ------- | ------- | ------- | ------------- |
 | King | `w_k` | `b_k` | King piece |
 | Queen | `w_q` | `b_q` | Queen piece |
 | Rook | `w_r` | `b_r` | Rook (castle) |
@@ -173,7 +174,7 @@ The components use ligature-based font rendering for chess pieces:
 ### Fairy Pieces
 
 | Piece | White | Black | Neutral | Description |
-|-------|-------|-------|---------|-------------|
+| ------- | ------- | ------- | --------- | ------------- |
 | Empress | `w_e` | `b_e` | `n_e` | Empress (Rook + Knight) |
 | Dragon | `w_t` | `b_t` | `n_t` | Dragon (Amazon) |
 | Angel/Archbishop | `w_a` | `b_a` | `n_a` | Angel/Archbishop (Bishop + Knight) |
@@ -513,6 +514,7 @@ if (piece) {
 ```
 
 **Methods:**
+
 - `addPiece(square: string, type: ChessPieceType, color: ChessPieceColor, rotation?: ChessPieceRotation): void`
   - Adds a piece to the specified square (replaces existing piece if present)
   - Throws `Error` if square coordinate is invalid
@@ -546,6 +548,7 @@ board.setPieces([
 ```
 
 **Methods:**
+
 - `getAllPieces(): PieceInfo[]`
   - Returns array of all pieces currently on the board
   - Each item includes `square`, `type`, `color`, and `rotation`
@@ -572,6 +575,7 @@ console.log(`Rotation: ${rotation}°`);
 ```
 
 **Methods:**
+
 - `rotatePiece(square: string, degrees: number): void`
   - Rotates piece by relative amount (rounds to nearest 45°)
   - Throws `Error` if square is invalid or empty
@@ -597,6 +601,7 @@ board.toggleOrientation();                  // Switch between white/black
 ```
 
 **Methods:**
+
 - `setOrientation(orientation: 'white' | 'black'): void`
   - Sets which side is at the bottom of the board
 - `getOrientation(): 'white' | 'black'`
@@ -1041,7 +1046,7 @@ FEN uses the format: `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1`
 ### Piece Notation
 
 | Piece | White | Black | Description |
-|-------|-------|-------|-------------|
+| ------- | ------- | ------- | ------------- |
 | King | `K` | `k` | King |
 | Queen | `Q` | `q` | Queen |
 | Rook | `R` | `r` | Rook |
@@ -1146,6 +1151,7 @@ The chess board automatically adapts to its container size using modern **CSS Co
 ### Label Positioning
 
 Standard chess notation labels on all four sides:
+
 - **Top & Bottom**: Column letters (a-h) for coordinate reference
 - **Left & Right**: Row numbers (8-1) for coordinate reference
 - **Orientation**: Viewed from white player's perspective (8th rank at top, 1st rank at bottom)

@@ -799,13 +799,6 @@ export class ChessBoard extends HTMLElement {
 
     // Place each piece on the board
     for (const piece of position.pieces) {
-      // Apply fairy metadata if available (from FFEN 7th block)
-      if (position.fairyMetadata && position.fairyMetadata[piece.square]) {
-        const metadata = position.fairyMetadata[piece.square];
-        piece.fairyName = metadata.fairyName;
-        piece.fairyCondition = metadata.fairyCondition;
-      }
-      
       this.#placePiece(piece);
     }
   }
@@ -859,21 +852,6 @@ export class ChessBoard extends HTMLElement {
   #serializeBoardState(triggerChange: boolean): void {
     const oldFen = this.#currentFen;
 
-    const fairyMetadata: NonNullable<FenPosition['fairyMetadata']> = {};
-    this.#squares?.forEach(square => {
-      const coordinate = square.getAttribute('data-coordinate');
-      const pieceElement = square.querySelector('chess-piece');
-      if (!coordinate || !pieceElement) return;
-      const fairyName = pieceElement.getAttribute('fairy-name');
-      const fairyCondition = pieceElement.getAttribute('fairy-condition');
-      if (fairyName || fairyCondition) {
-        fairyMetadata[coordinate] = {
-          fairyName: fairyName || undefined,
-          fairyCondition: fairyCondition || undefined
-        };
-      }
-    });
-
     const position: FenPosition = {
       pieces: this.getAllPieces().map(piece => ({
         type: piece.type,
@@ -888,8 +866,7 @@ export class ChessBoard extends HTMLElement {
       castlingRights: '-',
       enPassantTarget: '-',
       halfmoveClock: 0,
-      fullmoveNumber: 1,
-      fairyMetadata
+      fullmoveNumber: 1
     };
 
     const newFen = positionToFen(position);
