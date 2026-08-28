@@ -145,7 +145,8 @@ export function parseFen(fen: string): FenPosition | null {
   if (fairyMetadataBlock) {
     fairyMetadata = parseFairyMetadata(fairyMetadataBlock);
     if (!fairyMetadata) {
-      console.warn("Invalid fairy metadata block in FFEN, ignoring it.");
+      console.warn("Invalid fairy metadata block in FFEN!");
+      return null;
     } else {
       // Assign fairy metadata to pieces if applicable
       for (const piece of pieces) {
@@ -438,6 +439,10 @@ export function parseFairyMetadata(fairyBlock: string): Record<string, FairyPiec
   }
   if (fairyBlock.includes(' ')) {
     console.error("Fairy metadata block contains spaces, which is invalid");
+    return undefined;
+  }
+  if (!/^[a-z][0-9]:[^:]*:[^,]*(,[a-z][0-9]:[^:]*:[^,]*)*$/.test(fairyBlock)) {
+    console.error("Fairy metadata block has an invalid format");
     return undefined;
   }
   const fairyMetadata: Record<string, FairyPieceMetadata> = {};

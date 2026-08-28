@@ -10,7 +10,6 @@ import {
   pieceToChar,
   pieceToFfenChar,
   positionToFen,
-  positionToFFen,
   type FENChessPiece,
   type FenPosition
 } from '../src/fen';
@@ -366,25 +365,26 @@ describe('FEN Utilities', () => {
         const position = parseFen(fen);
         expect(position).not.toBeNull();
         expect(position?.pieces).toHaveLength(32);
-        expect(position?.fairyMetadata).toBeUndefined();
       });
 
       it('should parse FFEN with neutral pieces', () => {
-        const ffen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 d5:gn:Chamaleon';
+        const ffen = 'rnbqkbnr/pppppppp/8/3s4/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 d5:gn:Chamaleon';
         const position = parseFen(ffen);
         expect(position).not.toBeNull();
-        expect(position?.fairyMetadata).toEqual({
-          'd5': { fairyName: 'gn', fairyCondition: 'Chamaleon' }
-        });
+        expect(position?.pieces.find(p => p.square === 'd5')).toEqual(expect.objectContaining({
+          fairyName: 'gn',
+          fairyCondition: 'Chamaleon'
+        }));
       });
 
       it('should parse FFEN with rotated pieces', () => {
-        const ffen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 e5:(1,5)-leaper:None';
+        const ffen = 'rnbqkbnr/pppppppp/8/4s3/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 e5:(1,5)-leaper:None';
         const position = parseFen(ffen);
         expect(position).not.toBeNull();
-        expect(position?.fairyMetadata).toEqual({
-          'e5': { fairyName: '(1,5)-leaper', fairyCondition: 'None' }
-        });
+        expect(position?.pieces.find(p => p.square === 'e5')).toEqual(expect.objectContaining({
+          fairyName: '(1,5)-leaper',
+          fairyCondition: 'None'
+        }));
       });
 
       it('should return null for FFEN with invalid fairy metadata', () => {
@@ -406,7 +406,6 @@ describe('FEN Utilities', () => {
         expect(neutralKing).toBeDefined();
         expect(neutralKing?.isNeutral).toBe(true);
         expect(neutralKing?.type).toBe('k');
-        expect(position?.fairyMetadata).toBeUndefined();
       });
 
       it('should parse 6-block FFEN with rotated piece notation', () => {
@@ -458,20 +457,17 @@ describe('FEN Utilities', () => {
       it('should generate a proper FFEN string and not JSON', () => {
         const position: FenPosition = {
           pieces: [
-            { type: 'q', color: 'w', square: 'e4' },
+            { type: 'q', color: 'w', square: 'e4', fairyName: 'gn', fairyCondition: 'Chameleon' },
             { type: 'k', color: 'b', square: 'e8' }
           ],
           activeColor: 'w',
           castlingRights: '-',
           enPassantTarget: '-',
           halfmoveClock: 0,
-          fullmoveNumber: 1,
-          fairyMetadata: {
-            e4: { fairyName: 'gn', fairyCondition: 'Chameleon' }
-          }
+          fullmoveNumber: 1
         };
 
-        const ffen = positionToFFen(position);
+        const ffen = positionToFen(position);
         expect(ffen).toContain('4k3/8/8/8/4Q3/8/8/8');
         expect(ffen).toContain(' e4:gn:Chameleon');
         expect(ffen).not.toContain('{');
@@ -501,20 +497,18 @@ describe('FEN Utilities', () => {
         const position: FenPosition = {
           pieces: [
             { type: 'k', color: 'w', square: 'e1' },
-            { type: 'k', color: 'b', square: 'e8' }
+            { type: 'k', color: 'b', square: 'e8' },
+            { type: 's', color: 'n', rotation: "180", square: 'd5', isNeutral: true, fairyName: 'gn', fairyCondition: 'Chameleon' }
           ],
           activeColor: 'w',
           castlingRights: 'KQkq',
           enPassantTarget: '-',
           halfmoveClock: 0,
-          fullmoveNumber: 1,
-          fairyMetadata: {
-            'd5': { fairyName: 'gn', fairyCondition: 'Chamaleon' }
-          }
+          fullmoveNumber: 1
         };
 
         const ffen = positionToFen(position);
-        expect(ffen).toBe('4k3/8/8/8/8/8/8/4K3 w KQkq - 0 1 d5:gn:Chamaleon');
+        expect(ffen).toBe('4k3/8/8/3*2-S4/8/8/8/4K3 w KQkq - 0 1 d5:gn:Chameleon');
       });
 
       it('should generate FFEN piece placement for neutral pieces', () => {
@@ -564,7 +558,7 @@ describe('FEN Utilities', () => {
       });
 
       it('should round-trip FFEN with neutral pieces and fairy metadata', () => {
-        const original = '-Krnbqbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 e5:(1,5)-leaper:None';
+        const original = '-Krnbqbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 a1:(1,5)-leaper:None';
         const position = parseFen(original);
         expect(position).not.toBeNull();
         const serialized = positionToFen(position!);
@@ -575,11 +569,11 @@ describe('FEN Utilities', () => {
         const neutralKing = reparsed?.pieces.find(p => p.square === 'a8');
         expect(neutralKing?.isNeutral).toBe(true);
         // Fairy metadata should survive round-trip
-        expect(reparsed?.fairyMetadata?.['e5']).toEqual({ fairyName: '(1,5)-leaper', fairyCondition: 'None' });
+        expect(reparsed?.pieces.find(p => p.square === 'a1')).toEqual(expect.objectContaining({ fairyName: '(1,5)-leaper', fairyCondition: 'None' }));
       });
 
       it('should round-trip FFEN with neutral pieces and fairy metadata', () => {
-        const original = '-Krnbqbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 e5:(1,5)-leaper:,a1::Chamaleon,d4:gn:Imitator';
+        const original = '-Krnbqbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 e5:(1,5)-leaper:,a1::Chamaleon,h8:gn:Imitator';
         const position = parseFen(original);
         expect(position).not.toBeNull();
         const serialized = positionToFen(position!);
@@ -590,9 +584,9 @@ describe('FEN Utilities', () => {
         const neutralKing = reparsed?.pieces.find(p => p.square === 'a8');
         expect(neutralKing?.isNeutral).toBe(true);
         // Fairy metadata should survive round-trip
-        expect(reparsed?.fairyMetadata?.['e5']).toEqual({ fairyName: '(1,5)-leaper' });
-        expect(reparsed?.fairyMetadata?.['a1']).toEqual({ fairyCondition: 'Chamaleon' });
-        expect(reparsed?.fairyMetadata?.['d4']).toEqual({ fairyName: 'gn', fairyCondition: 'Imitator' });
+        expect(reparsed?.pieces.find(p => p.square === 'e5')).toBeUndefined(); // e5 has no piece, so no fairy metadata
+        expect(reparsed?.pieces.find(p => p.square === 'a1')).toEqual(expect.objectContaining({ fairyCondition: 'Chamaleon' }));
+        expect(reparsed?.pieces.find(p => p.square === 'h8')).toEqual(expect.objectContaining({ fairyName: 'gn', fairyCondition: 'Imitator' }));
       });
     });
   });

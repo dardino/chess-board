@@ -7,14 +7,14 @@
 ## Type of Change
 
 <!-- Check all that apply -->
-- ☐ 🐛 Bug fix (non-breaking change that fixes an issue)
-- ☐ ✨ New feature (non-breaking change that adds functionality)
-- ☐ 💥 Breaking change (fix or feature that changes existing behavior)
-- ☐ 🎨 UI / styling change
-- ☐ 📚 Documentation update
-- ☐ ⚙️ Build / tooling / configuration
-- ☐ ♻️ Refactoring (no functional changes)
-- ☐ ✅ Tests
+- [ ] 🐛 Bug fix (non-breaking change that fixes an issue)
+- [ ] ✨ New feature (non-breaking change that adds functionality)
+- [ ] 💥 Breaking change (fix or feature that changes existing behavior)
+- [ ] 🎨 UI / styling change
+- [ ] 📚 Documentation update
+- [ ] ⚙️ Build / tooling / configuration
+- [ ] ♻️ Refactoring (no functional changes)
+- [ ] ✅ Tests
 
 ## Related Issues
 
@@ -27,11 +27,11 @@
 ## Testing
 
 <!-- Describe how you tested your changes -->
-- ☐ I have added/updated tests for new functionality
-- ☐ `pnpm test:run` passes
-- ☐ `pnpm lint` passes
-- ☐ `pnpm type-check` passes
-- ☐ I have manually verified the demo (`pnpm demo`)
+- [ ] I have added/updated tests for new functionality
+- [ ] `pnpm test:run` passes
+- [ ] `pnpm lint` passes
+- [ ] `pnpm type-check` passes
+- [ ] I have manually verified the demo (`pnpm demo`)
 
 ## Screenshots / Demo
 
@@ -43,8 +43,8 @@
 
 ## Checklist
 
-- ☐ My code follows the project's style guidelines
-- ☐ I have performed a self-review of my code
-- ☐ I have updated the documentation (README, `docs/`) where relevant
-- ☐ My changes don't introduce new warnings
-- ☐ The build succeeds (`pnpm build`)
+- [ ] My code follows the project's style guidelines
+- [ ] I have performed a self-review of my code
+- [ ] I have updated the documentation (README, `docs/`) where relevant
+- [ ] My changes don't introduce new warnings
+- [ ] The build succeeds (`pnpm build`)
