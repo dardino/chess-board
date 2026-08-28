@@ -6,6 +6,11 @@
   --internal-chess-piece-black: var(--cb-chess-piece-fg, black);
   --internal-chess-piece-bg: var(--cb-chess-piece-bg, white);
   --internal-chess-piece-shadow: var(--cb-chess-piece-shadow, none);
+  --internal-font-name: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --internal-fn-text-transform: var(--cb-fairyname-font-transform, uppercase);
+  --internal-fn-font-weight: var(--cb-fairyname-font-weight, bold);
+  --internal-fn-font-size: var(--cb-fairyname-font-size, 0.3em);
+
   display: flex;
   align-items: center;
   justify-content: center;
@@ -77,9 +82,10 @@
   position: absolute;
   top: 0;
   left: 0;
-  font-size: 0.25em;
-  font-family: Arial, sans-serif;
-  font-weight: bold;
+  font-size: var(--internal-fn-font-size);
+  font-family: var(--cb-fairy-name-font-family, var(--internal-font-name));
+  font-weight: var(--internal-fn-font-weight);
+  text-transform: var(--internal-fn-text-transform);
   color: var(--cb-fairy-text-color, #333);
   background-color: var(--cb-fairy-bg-color, rgba(255, 255, 255, 0.8));
   padding: 1px 2px;
