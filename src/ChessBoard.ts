@@ -349,6 +349,7 @@ export class ChessBoard extends HTMLElement {
   //#endregion
 
   //#region Lifecycle Callbacks
+  #firstRenderDone: boolean = false;
   constructor() {
     super();
     this.#shadow = this.attachShadow({ mode: 'open' });
@@ -386,6 +387,11 @@ export class ChessBoard extends HTMLElement {
   //#region Private Methods
   
   #firstRender(): void {
+    if (this.#firstRenderDone) return;
+    this.#firstRenderDone = true;
+
+    this.#shadow.innerHTML = ''; // Clear any existing content
+    
     // Create container from imported HTML template
     const templateContainer = document.createElement('template');
     templateContainer.innerHTML = template;
@@ -394,7 +400,6 @@ export class ChessBoard extends HTMLElement {
     const sheet = new CSSStyleSheet();
     sheet.replaceSync(style);
     this.#shadow.adoptedStyleSheets = [sheet];
-
 
     this.#shadow.appendChild(templateContainer.content.cloneNode(true));
 
