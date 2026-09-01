@@ -169,6 +169,26 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
       expect(element.getSelectedPieceSquare()).toBeNull();
     });
 
+    it('should ignore selection when disable-piece-selection is set', () => {
+      element.setAttribute('disable-piece-selection', '');
+      element.addPiece('e4', 'q', 'w');
+
+      expect(element.selectPiece('e4')).toBe(false);
+      expect(element.getSelectedPieceSquare()).toBeNull();
+      expect(element.getCurrentSquare()).toBeNull();
+    });
+
+    it('should auto-select clicked piece when auto-select-piece-on-click is enabled', () => {
+      element.setAttribute('auto-select-piece-on-click', '');
+      element.addPiece('e4', 'q', 'w');
+
+      const e4Square = element.shadowRoot?.querySelector('[data-coordinate="e4"]') as HTMLElement;
+      e4Square.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 0 }));
+
+      expect(element.getSelectedPieceSquare()).toBe('e4');
+      expect(element.getCurrentSquare()).toBe('e4');
+    });
+
     it('should throw an error for an invalid square coordinate', () => {
       expect(() => element.selectPiece('z9')).toThrow('Invalid square coordinate');
     });

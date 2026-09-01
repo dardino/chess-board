@@ -139,69 +139,54 @@ export class ChessBoard extends HTMLElement {
   //#endregion
 
   //#region Keyboard Navigation Handlers
+  #arrowActionMap: Partial<Record<string, (event: KeyboardEvent) => void>> = {
+    'ArrowUp:shift': (event) => this.#handleFlipToWhite(event),
+    'ArrowUp:alt': (event) => this.#handleRotateReset(event),
+    'ArrowDown:shift': (event) => this.#handleFlipToBlack(event),
+    'ArrowDown:alt': (event) => this.#handleRotate180(event),
+    'ArrowLeft:alt': (event) => this.#handleRotateCounterClockwise(event),
+    'ArrowRight:alt': (event) => this.#handleRotateClockwise(event),
+  };
 
-  // Private keyboard handler properties (arrow functions for auto-binding)
-  #handleArrowUp = (event: KeyboardEvent): void => {
-    // Handle Shift+Up (flip to white)
-    if (event.shiftKey) {
-      this.#handleFlipToWhite(event);
+  #getArrowAction = (event: KeyboardEvent, key: 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight'): ((event: KeyboardEvent) => void) | undefined => {
+    if (event.shiftKey && event.altKey) {
+      return undefined;
+    }
+
+    const modifier = event.shiftKey ? 'shift' : event.altKey ? 'alt' : 'plain';
+    return this.#arrowActionMap[`${key}:${modifier}`];
+  };
+
+  #handleArrowNavigation = (
+    event: KeyboardEvent,
+    key: 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight',
+    move: (current: string, isRotated: boolean) => string | null,
+    isRotated: boolean
+  ): void => {
+    const action = this.#getArrowAction(event, key);
+    if (action) {
+      action(event);
       return;
     }
-    // Handle Alt/Option+Up (rotate reset to 0°)
-    if (event.altKey) {
-      this.#handleRotateReset(event);
-      return;
-    }
-    // Handle plain Up (navigate)
-    const newSquare = this.#moveUp(this.#currentSquare!, this.hasAttribute('black-to-move'));
+
+    const newSquare = move(this.#currentSquare!, isRotated);
     if (newSquare) {
       event.preventDefault();
       this.#setCurrentSquare(newSquare);
     }
+  };
+
+  #handleArrowUp = (event: KeyboardEvent): void => {
+    this.#handleArrowNavigation(event, 'ArrowUp', this.#moveUp, this.hasAttribute('black-to-move'));
   };
   #handleArrowDown = (event: KeyboardEvent): void => {
-    // Handle Shift+Down (flip to black)
-    if (event.shiftKey) {
-      this.#handleFlipToBlack(event);
-      return;
-    }
-    // Handle Alt/Option+Down (rotate to 180°)
-    if (event.altKey) {
-      this.#handleRotate180(event);
-      return;
-    }
-    // Handle plain Down (navigate)
-    const newSquare = this.#moveDown(this.#currentSquare!, this.hasAttribute('black-to-move'));
-    if (newSquare) {
-      event.preventDefault();
-      this.#setCurrentSquare(newSquare);
-    }
+    this.#handleArrowNavigation(event, 'ArrowDown', this.#moveDown, this.hasAttribute('black-to-move'));
   };
   #handleArrowLeft = (event: KeyboardEvent): void => {
-    // Handle Alt/Option+Left (rotate counter-clockwise)
-    if (event.altKey && !event.shiftKey) {
-      this.#handleRotateCounterClockwise(event);
-      return;
-    }
-    // Handle plain Left (navigate)
-    const newSquare = this.#moveLeft(this.#currentSquare!);
-    if (newSquare) {
-      event.preventDefault();
-      this.#setCurrentSquare(newSquare);
-    }
+    this.#handleArrowNavigation(event, 'ArrowLeft', (current) => this.#moveLeft(current), false);
   };
   #handleArrowRight = (event: KeyboardEvent): void => {
-    // Handle Alt/Option+Right (rotate clockwise)
-    if (event.altKey && !event.shiftKey) {
-      this.#handleRotateClockwise(event);
-      return;
-    }
-    // Handle plain Right (navigate)
-    const newSquare = this.#moveRight(this.#currentSquare!);
-    if (newSquare) {
-      event.preventDefault();
-      this.#setCurrentSquare(newSquare);
-    }
+    this.#handleArrowNavigation(event, 'ArrowRight', (current) => this.#moveRight(current), false);
   };
   #handleDelete = (event: KeyboardEvent): void => {
     if (!this.#checkModifiers(event)) return;
@@ -225,34 +210,23 @@ export class ChessBoard extends HTMLElement {
 
   #handleSelectPieceByKey = (event: KeyboardEvent): void => {
     event.preventDefault();
-    if (event.metaKey || event.altKey) return;
-
-    if (!this.#currentSquare) {
+    if (event.metaKey || event.altKey || !this.#currentSquare) {
       return;
     }
 
     const currentSquareHasPiece = this.hasPiece(this.#currentSquare);
     const currentSelection = this.#selectedPieceSquare;
 
-    // If the current square has a piece and no piece is selected, select the piece
-    if (currentSquareHasPiece && !currentSelection) {
+    if (currentSquareHasPiece && (!currentSelection || currentSelection === this.#currentSquare)) {
       this.#setSelectedPiece(this.#currentSquare);
       return;
     }
-    // If the current square has a piece and a piece is already selected, toggle selection
-    else if (currentSquareHasPiece && currentSelection === this.#currentSquare) {
-      this.#clearSelectedPiece();
-      return;
-    }
-    // If the current square does not have a piece and no piece is selected, do nothing
+
     if (!currentSelection) {
       return;
     }
-    // else move the selected piece to the current square
-    const mode = event.shiftKey ? "clone"
-              : event.ctrlKey ? "changecolor"
-              : "none";
-    this.#movePiece(currentSelection, this.#currentSquare, mode);
+
+    this.#movePiece(currentSelection, this.#currentSquare, this.#getMoveModeFromModifiers(event));
   };
   
   #movePiece = (fromSquare: string, toSquare: string, cloneMode: "clone" | "changecolor" | "none"): void => {
@@ -349,30 +323,26 @@ export class ChessBoard extends HTMLElement {
     'X': this.#handleAddPiece('x', 'w')
   };
 
+  #selectionClearExclusions = new Set([
+    ' ', 'Spacebar', 'Enter', 'Escape', 'ContextMenu', 'Shift', 'Control', 'Alt', 'Meta'
+  ]);
+
+  #shouldClearSelectionAfterKey = (event: KeyboardEvent): boolean => {
+    if (this.#selectionClearExclusions.has(event.key)) return false;
+    if (!event.key.startsWith('Arrow')) return true;
+    return !!(event.altKey || event.ctrlKey || event.metaKey || event.shiftKey);
+  };
+
   #handleKeyDown = (event: KeyboardEvent): void => {
     if (!this.#currentSquare || this.disabled) return;
 
-    // Handle regular keys (each handler checks its own modifiers)
     const handleToCall = this.#keyboardHandlers[event.key];
-    if (typeof handleToCall === 'function') {
-      handleToCall(event);
+    handleToCall?.(event);
+
+    if (this.#shouldClearSelectionAfterKey(event)) {
+      this.#clearSelectedPiece();
     }
 
-    // If the key is not an arrow key, space, or escape, and no modifiers are pressed, clear the selected piece
-    const isArrowNavigation = event.key === 'ArrowUp' || event.key === 'ArrowDown' || event.key === 'ArrowLeft' || event.key === 'ArrowRight';
-    const isPureArrowNavigation = isArrowNavigation && !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey;    
-    if (!isPureArrowNavigation 
-        && event.key !== ' ' 
-        && event.key !== 'Spacebar' 
-        && event.key !== 'Enter'
-        && event.key !== 'Escape'
-        && event.key !== 'ContextMenu'
-        && event.key !== 'Shift'
-        && event.key !== 'Control'
-        && event.key !== 'Alt'
-        && event.key !== 'Meta'
-      ) this.#clearSelectedPiece();
-    
     this.#serializeBoardState(true);
   }
   //#endregion
@@ -467,21 +437,23 @@ export class ChessBoard extends HTMLElement {
     }
   }
 
+  #normalizeModifierKeys = (ev: MouseEvent): ModifierKeys => ({
+    shiftKey: ev.shiftKey,
+    ctrlKey: ev.ctrlKey,
+    altKey: ev.altKey,
+    metaKey: ev.metaKey,
+  });
+
   #handleBoardClick = (ev: MouseEvent): void => {
     if (this.disabled) return;
-    const button = buttonMap[ev.button];
+
     const target = ev.target as HTMLElement | null;
     const square = target?.closest('.square') as HTMLElement | null;
-    if (!square) return;
-    if (square.classList.contains('square')) {
-      const prevent = this.#handleSquareClick(square, button, {
-        shiftKey: ev.shiftKey,
-        ctrlKey: ev.ctrlKey,
-        altKey: ev.altKey,
-        metaKey: ev.metaKey,
-      });
-      if (prevent) ev.preventDefault();
-    }
+    if (!square || !square.classList.contains('square')) return;
+
+    const button = buttonMap[ev.button] ?? 'main';
+    const prevent = this.#handleSquareClick(square, button, this.#normalizeModifierKeys(ev));
+    if (prevent) ev.preventDefault();
   }
 
   #handleContextMenuClick = (ev: MouseEvent): void => {
@@ -510,36 +482,38 @@ export class ChessBoard extends HTMLElement {
 
   }
 
+  #getMoveModeFromModifiers = (mods: Pick<ModifierKeys, 'shiftKey' | 'ctrlKey'>): 'clone' | 'changecolor' | 'none' => {
+    if (mods.shiftKey) return 'clone';
+    if (mods.ctrlKey) return 'changecolor';
+    return 'none';
+  };
+
   #moveOrSelectPieceByClick = (square: string, mods?: ModifierKeys): void => {
-    mods = mods ?? {
+    const safeMods: ModifierKeys = mods ?? {
       shiftKey: false,
       ctrlKey: false,
       altKey: false,
       metaKey: false,
     };
-    // Set this square as current
-    // If the square is already current, call SelectedPiece logic to toggle selection or move piece
-    const alreadyCurrent = this.#currentSquare === square;
-    if (alreadyCurrent) {
+
+    if (this.#currentSquare === square) {
       this.selectPiece(square);
-    } else {
-      this.#setCurrentSquare(square);
-      // check if a piece is selected and if so, move it to the clicked square
-      if (this.#selectedPieceSquare !== square && this.#selectedPieceSquare) {
-        const piece = this.getPieceAt(this.#selectedPieceSquare);
-        if (!piece) return;
-        if (mods.shiftKey) {
-          this.#movePiece(this.#selectedPieceSquare, square, "clone");
-        } else if (mods.ctrlKey) {
-          this.#movePiece(this.#selectedPieceSquare, square, "changecolor");
-        } else {
-          this.#movePiece(this.#selectedPieceSquare, square, "none");
-        }
-      } else if (this.autoSelectPieceOnClick) {
-        // else if auto-select is enabled, select the piece on the clicked square if it has one
-        this.selectPiece(square);
-      }
-    }    
+      return;
+    }
+
+    this.#setCurrentSquare(square);
+
+    if (this.#selectedPieceSquare && this.#selectedPieceSquare !== square) {
+      const piece = this.getPieceAt(this.#selectedPieceSquare);
+      if (!piece) return;
+
+      this.#movePiece(this.#selectedPieceSquare, square, this.#getMoveModeFromModifiers(safeMods));
+      return;
+    }
+
+    if (this.autoSelectPieceOnClick) {
+      this.selectPiece(square);
+    }
   }
 
   /**
@@ -634,6 +608,26 @@ export class ChessBoard extends HTMLElement {
     });
   }
 
+  #getSquareElement(coordinate: string): HTMLElement | null {
+    return this.#shadow.querySelector(`[data-coordinate="${coordinate}"]`) as HTMLElement | null;
+  }
+
+  #applyPieceAttributes(pieceElement: ChessPiece, piece: Partial<PieceInfo>): void {
+    if (!piece.type) {
+      throw new Error('Piece type is required to create a piece element.');
+    }
+    if (!piece.color) {
+      throw new Error('Piece color is required to create a piece element.');
+    }
+
+    pieceElement.setAttribute('piece', piece.type);
+    pieceElement.setAttribute('color', piece.color);
+    if (piece.fairyName) pieceElement.setAttribute('fairy-name', piece.fairyName);
+    if (piece.fairyCondition) pieceElement.setAttribute('fairy-condition', piece.fairyCondition);
+    if (piece.rotation) pieceElement.setAttribute('rotation', piece.rotation);
+    pieceElement.classList.add('piece');
+  }
+
   #clearSelectedPiece(): void {
     this.#selectedPieceSquare = null;
     this.#updateSelectedPieceState();
@@ -686,7 +680,7 @@ export class ChessBoard extends HTMLElement {
    * @param coordinate - Square coordinate (e.g., "e4", "a1")
    */
   #removePieceFromSquare = (coordinate: string): void => {
-    const square = this.#shadow.querySelector(`[data-coordinate="${coordinate}"]`) as HTMLElement;
+    const square = this.#getSquareElement(coordinate);
     if (!square) return;
 
     const piece = square.querySelector('chess-piece');
@@ -713,25 +707,16 @@ export class ChessBoard extends HTMLElement {
    * @param rotation - Optional rotation angle
    */
   #addPieceToSquare(coordinate: string, piece: PieceInfo): void {
-    const square = this.#shadow.querySelector(`[data-coordinate="${coordinate}"]`) as HTMLElement;
+    const square = this.#getSquareElement(coordinate);
     if (!square) return;
 
-    // Remove existing piece if present
     const existingPiece = square.querySelector('chess-piece');
     if (existingPiece) {
       square.removeChild(existingPiece);
     }
 
-    // Create and add new piece
     const newPiece = new ChessPiece();
-    newPiece.setAttribute('piece', piece.type);
-    newPiece.setAttribute('color', piece.color);
-    newPiece.setAttribute('fairy-name', piece.fairyName || '');
-    newPiece.setAttribute('fairy-condition', piece.fairyCondition || '');
-    if (piece.rotation) {
-      newPiece.setAttribute('rotation', piece.rotation);
-    }
-    newPiece.classList.add('piece');
+    this.#applyPieceAttributes(newPiece, piece);
     square.appendChild(newPiece);
 
     this.#clearSelectedPiece();
@@ -744,7 +729,7 @@ export class ChessBoard extends HTMLElement {
    * @param delta - Rotation delta in degrees
    */
   #rotatePieceOnSquare(coordinate: string, delta: number): void {
-    const square = this.#shadow.querySelector(`[data-coordinate="${coordinate}"]`) as HTMLElement;
+    const square = this.#getSquareElement(coordinate);
     if (!square) return;
 
     const piece = square.querySelector('chess-piece') as ChessPiece;
@@ -752,11 +737,8 @@ export class ChessBoard extends HTMLElement {
 
     const currentRotation = parseInt(piece.getRotation() as string) || 0;
     let newRotation = (currentRotation + delta) % 360;
-    
-    // Normalize to positive angle
+
     if (newRotation < 0) newRotation += 360;
-    
-    // Round to nearest 45 degrees
     newRotation = Math.round(newRotation / 45) * 45;
     if (newRotation === 360) newRotation = 0;
 
@@ -774,7 +756,7 @@ export class ChessBoard extends HTMLElement {
    * @param rotation - Rotation angle (0, 45, 90, 135, 180, 225, 270, 315)
    */
   #setPieceRotationOnSquare(coordinate: string, rotation: number): void {
-    const square = this.#shadow.querySelector(`[data-coordinate="${coordinate}"]`) as HTMLElement;
+    const square = this.#getSquareElement(coordinate);
     if (!square) return;
 
     const piece = square.querySelector('chess-piece') as ChessPiece;
@@ -794,10 +776,9 @@ export class ChessBoard extends HTMLElement {
    * @returns Piece information or null if square is empty
    */
   #getPieceAtSquare(coordinate: string): PieceInfo | null {
-
-    const square = this.#shadow.querySelector(`[data-coordinate="${coordinate}"]`) as HTMLElement;
+    const square = this.#getSquareElement(coordinate);
     if (!square) return null;
-    
+
     const piece = square.querySelector('chess-piece') as ChessPiece;
     if (!piece) return null;
 
@@ -813,11 +794,7 @@ export class ChessBoard extends HTMLElement {
   }
 
   #setBoardOrientation(orientation: 'white' | 'black'): void {
-    if (orientation === 'black') {
-      this.setAttribute('black-to-move', '');
-    } else {
-      this.removeAttribute('black-to-move');
-    }
+    this.#updateBoardOrientation(orientation === 'black' ? 'b' : 'w');
   }
 
   #updateLabelsVisibility(): void {
@@ -952,22 +929,14 @@ export class ChessBoard extends HTMLElement {
   }
 
   #placePiece(piece: FenChessPiece): void {
-    const square = this.#shadow.querySelector(`[data-coordinate="${piece.square}"]`) as HTMLElement;
+    const square = this.#getSquareElement(piece.square);
     if (!square) {
       console.warn('Square not found for coordinate:', piece.square);
       return;
     }
 
-    // Create chess piece element
     const pieceElement = new ChessPiece();
-    pieceElement.setAttribute('piece', piece.type);
-    pieceElement.setAttribute('color', piece.color);
-    if (piece.fairyName) pieceElement.setAttribute('fairy-name', piece.fairyName);
-    if (piece.fairyCondition) pieceElement.setAttribute('fairy-condition', piece.fairyCondition);
-    if (piece.rotation) pieceElement.setAttribute('rotation', piece.rotation);
-    pieceElement.classList.add('piece');
-
-    // Add piece to square
+    this.#applyPieceAttributes(pieceElement, piece);
     square.appendChild(pieceElement);
   }
 
