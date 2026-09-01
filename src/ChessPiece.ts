@@ -21,7 +21,7 @@ const standardPieceNames = {
   x: 'Cross',
 } as const;
 
-// Augment DOM typings so addEventListener/removeEventListener recognize the custom 'cellClick' event
+// Augment DOM typings so addEventListener/removeEventListener recognize the custom 'fairy-metadata-changed' event
 declare global {
   interface HTMLElementEventMap {
     "fairy-metadata-changed": CustomEvent<FairyPieceMetadata>;

@@ -930,15 +930,18 @@ placer.selectPiece('q', 'w'); // Now clicking board places white queens
 
 #### Events
 
-- `cellClick`: Fired when a board square is clicked
-  - **Detail**: `{ cell: string, piece?: CellClickPiece }`
-  - **cell**: Square coordinate in algebraic notation (e.g., "e4", "a1")
+- `cellMainClick`: Preferred event fired when the main mouse button is used on a square
+  - **Detail**: `{ square: string, piece?: CellClickPiece, button: 'main' }`
+  - **square**: Square coordinate in algebraic notation (e.g., "e4", "a1")
   - **piece**: Optional piece information if present on the square
     - `color`: "white" | "black" | "neutral"
     - `type`: Piece type ("p", "r", "n", "b", "q", "k", "e", "t", "a")
     - `rotation?`: Piece rotation in degrees (0-315)
     - `fairyName?`: Fairy chess name annotation (if present)
     - `fairyCondition?`: Fairy chess condition annotation (if present)
+- `cellContextClick`: Fired when the context mouse button is used on a square
+- `cellAuxiliaryClick`: Fired when the auxiliary/middle mouse button is used on a square
+- `cellClick`: Deprecated alias for `cellMainClick`, kept for backward compatibility with the pre-3-button event naming
 
 #### Keyboard Navigation
 
@@ -949,9 +952,12 @@ The chess board supports comprehensive keyboard navigation when focused:
   - `↑/↓`: Move along ranks (rows), direction respects board rotation
   - `←/→`: Move along files (columns)
 - **Space / Enter**: Select, deselect, or move the piece on the current square
+- **Shift + move**: Clone the selected piece while moving it
+- **Ctrl + move**: Clone the selected piece and invert its color
 - **Delete**: Remove piece from current square
 - **Escape**: Clear all pieces from the board
 - **Shift+Escape**: Reset board to starting position
+- **Mouse buttons**: Primary click selects/moves; auxiliary (middle) click removes any piece on the target square; context click emits a dedicated context event
 - **Piece Keys**: Add or replace piece on current square
   - **White pieces**: `P`, `R`, `N`, `B`, `Q`, `K` (uppercase)
   - **Black pieces**: `p`, `r`, `n`, `b`, `q`, `k` (lowercase)
@@ -966,8 +972,9 @@ The chess board supports comprehensive keyboard navigation when focused:
 - **Board Flip** (Shift + Arrow): Change board orientation
   - `Shift+↑`: White perspective (normal)
   - `Shift+↓`: Black perspective (rotated 180°)
-- **Click**: Click any square to select it
+- **Click**: Click any square to select it; auxiliary click removes an occupied piece from that square
 - **Visual Feedback**: Selected square shows green outline when board is focused
+- **Clone editing**: Drag/move a selected piece while holding Shift to clone it; hold Ctrl to clone and invert the color
 
 #### Methods
 

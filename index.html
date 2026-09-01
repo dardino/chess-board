@@ -383,6 +383,18 @@
         </div>
 
         <div class="feature-card">
+          <h3>🖱️ 3-Button Mouse Editing</h3>
+          <p>Main click selects/moves, middle/auxiliary click removes pieces, and context click dispatches a dedicated
+            event</p>
+        </div>
+
+        <div class="feature-card">
+          <h3>🧬 Clone & Invert Editing</h3>
+          <p>Move a selected piece while holding <code>Shift</code> to clone it, or <code>Ctrl</code> to clone and flip
+            the color</p>
+        </div>
+
+        <div class="feature-card">
           <h3>⌨️ Keyboard Navigation</h3>
           <p>Full keyboard support for piece placement, rotation, and board manipulation</p>
         </div>
@@ -543,13 +555,17 @@ if (selectedSquare) {
 const wasSelected = board.selectPiece('e4');
 console.log(wasSelected); // true when e4 contains a piece
 
-// Keyboard workflow (Space or Enter):
-// 1. Press Space or Enter on a square with a piece → selects it
-//    (selected pieces show with scale 1.1 and blue glow)
-// 2. Navigate with arrow keys to an empty square
-// 3. Press Space or Enter again → moves the piece there and clears selection
-// 4. Press Escape → cancels selection without moving
-// 5. Any other key or blur event → clears selection</code></pre>
+// Mouse workflow:
+// 1. Primary click selects/moves pieces
+// 2. Auxiliary (middle) click removes any piece on the clicked square
+// 3. Hold Shift while moving to clone the piece
+// 4. Hold Ctrl while moving to clone and invert the piece color
+// 5. Keyboard workflow (Space or Enter):
+//    a. Press Space or Enter on a square with a piece → selects it
+//    b. Navigate with arrow keys to an empty square
+//    c. Press Space or Enter again → moves the piece there and clears selection
+//    d. Press Escape → cancels selection without moving
+//    e. Any other key or blur event → clears selection</code></pre>
 
       <h3>Current Square</h3>
       <pre><code>// Get the current keyboard-navigation square
@@ -559,9 +575,16 @@ const currentSquare = board.getCurrentSquare(); // string | null
 board.selectSquare('e4');</code></pre>
 
       <h3>Events</h3>
-      <pre><code>board.addEventListener('cellClick', (event) =&gt; {
+      <pre><code>// Preferred event name for the main mouse button
+board.addEventListener('cellMainClick', (event) =&gt; {
   const { square, piece } = event.detail;
   console.log('Clicked:', square, piece);
+});
+
+// Deprecated compatibility alias for older code
+board.addEventListener('cellClick', (event) =&gt; {
+  const { square, piece } = event.detail;
+  console.log('Legacy click:', square, piece);
 });
 
 board.addEventListener('fenChange', (event) =&gt; {
@@ -718,6 +741,14 @@ console.log(currentState);</code></pre>
           <tr>
             <td><code>Space / Enter</code></td>
             <td>Select, deselect, or move the piece on the current square</td>
+          </tr>
+          <tr>
+            <td><code>Shift + move</code></td>
+            <td>Clone the selected piece while moving it</td>
+          </tr>
+          <tr>
+            <td><code>Ctrl + move</code></td>
+            <td>Clone the selected piece and invert its color</td>
           </tr>
           <tr>
             <td><code>P/R/N/B/Q/K</code></td>
