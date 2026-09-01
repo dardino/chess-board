@@ -305,13 +305,13 @@ describe('ChessBoard FEN support', () => {
     });
   });
 
-  it('should dispatch cellClick event when square is clicked', () => {
+  it('should dispatch cellMainClick event when square is clicked', () => {
     let eventDetail: CellClickEventDetail | null = null;
     const eventHandler = (event: CustomEvent<CellClickEventDetail>) => {
       eventDetail = event.detail;
     };
 
-    element.addEventListener('cellClick', eventHandler);
+    element.addEventListener('cellMainClick', eventHandler);
 
     // Click on e4 square
     const e4Square = element.shadowRoot?.querySelector('[data-coordinate="e4"]') as HTMLElement;
@@ -320,11 +320,12 @@ describe('ChessBoard FEN support', () => {
     expect(eventDetail).toBeDefined();
     expect(eventDetail!.square).toBe('e4');
     expect(eventDetail!.piece).toBeUndefined(); // Empty square
+    expect(eventDetail!.button).toBe('main');
 
-    element.removeEventListener('cellClick', eventHandler);
+    element.removeEventListener('cellMainClick', eventHandler);
   });
 
-  it('should dispatch cellClick event with piece info when square with piece is clicked', () => {
+  it('should dispatch cellMainClick event with piece info when square with piece is clicked', () => {
     // Set up a position with a piece on e4
     element.setFen('8/8/8/8/4P3/8/8/8 w - - 0 1');
 
@@ -333,7 +334,7 @@ describe('ChessBoard FEN support', () => {
       eventDetail = event.detail;
     };
 
-    element.addEventListener('cellClick', eventHandler);
+    element.addEventListener('cellMainClick', eventHandler);
 
     // Click on e4 square (should have a white pawn)
     const e4Square = element.shadowRoot?.querySelector('[data-coordinate="e4"]') as HTMLElement;
@@ -344,11 +345,12 @@ describe('ChessBoard FEN support', () => {
     expect(eventDetail!.piece).toBeDefined();
     expect(eventDetail!.piece!.color).toBe('w');
     expect(eventDetail!.piece!.type).toBe('p');
+    expect(eventDetail!.button).toBe('main');
 
-    element.removeEventListener('cellClick', eventHandler);
+    element.removeEventListener('cellMainClick', eventHandler);
   });
 
-  it('should dispatch cellClick event with rotation and fairy data when present', () => {
+  it('should dispatch cellMainClick event with rotation and fairy data when present', () => {
     // Set up a position with a piece on e4
     element.setFen('8/8/8/8/4P3/8/8/8 w - - 0 1');
 
@@ -367,7 +369,7 @@ describe('ChessBoard FEN support', () => {
       eventDetail = event.detail;
     };
 
-    element.addEventListener('cellClick', eventHandler);
+    element.addEventListener('cellMainClick', eventHandler);
 
     // Click on e4 square
     e4Square?.click();
@@ -380,11 +382,12 @@ describe('ChessBoard FEN support', () => {
     expect(eventDetail!.piece!.rotation).toBe('90');
     expect(eventDetail!.piece!.fairyName).toBe('GRA');
     expect(eventDetail!.piece!.fairyCondition).toBe('=');
+    expect(eventDetail!.button).toBe('main');
 
-    element.removeEventListener('cellClick', eventHandler);
+    element.removeEventListener('cellMainClick', eventHandler);
   });
 
-  it('should dispatch cellClick event with neutral color', () => {
+  it('should dispatch cellMainClick event with neutral color', () => {
     // Manually create a neutral piece on e4
     const e4Square = element.shadowRoot?.querySelector('[data-coordinate="e4"]') as HTMLElement;
     
@@ -400,7 +403,7 @@ describe('ChessBoard FEN support', () => {
       eventDetail = event.detail;
     };
 
-    element.addEventListener('cellClick', eventHandler);
+    element.addEventListener('cellMainClick', eventHandler);
 
     // Click on e4 square
     e4Square?.click();
@@ -410,8 +413,9 @@ describe('ChessBoard FEN support', () => {
     expect(eventDetail!.piece).toBeDefined();
     expect(eventDetail!.piece!.color).toBe('n');
     expect(eventDetail!.piece!.type).toBe('e');
+    expect(eventDetail!.button).toBe('main');
 
-    element.removeEventListener('cellClick', eventHandler);
+    element.removeEventListener('cellMainClick', eventHandler);
   });
 
   it('should not include rotation and fairy data when not present', () => {
@@ -423,7 +427,7 @@ describe('ChessBoard FEN support', () => {
       eventDetail = event.detail;
     };
 
-    element.addEventListener('cellClick', eventHandler);
+    element.addEventListener('cellMainClick', eventHandler);
 
     // Click on e4 square
     const e4Square = element.shadowRoot?.querySelector('[data-coordinate="e4"]') as HTMLElement;
@@ -437,8 +441,105 @@ describe('ChessBoard FEN support', () => {
     expect(eventDetail!.piece!.rotation).toBeUndefined();
     expect(eventDetail!.piece!.fairyName).toBeUndefined();
     expect(eventDetail!.piece!.fairyCondition).toBeUndefined();
+    expect(eventDetail!.button).toBe('main');
 
-    element.removeEventListener('cellClick', eventHandler);
+    element.removeEventListener('cellMainClick', eventHandler);
+  });
+
+  it('should dispatch the matching custom event for main, auxiliary and context mouse buttons', () => {
+    const mainEvents: CellClickEventDetail[] = [];
+    const auxiliaryEvents: CellClickEventDetail[] = [];
+    const contextEvents: CellClickEventDetail[] = [];
+
+    element.addEventListener('cellMainClick', (event: Event) => {
+      mainEvents.push((event as CustomEvent<CellClickEventDetail>).detail);
+    });
+    element.addEventListener('cellAuxiliaryClick', (event: Event) => {
+      auxiliaryEvents.push((event as CustomEvent<CellClickEventDetail>).detail);
+    });
+    element.addEventListener('cellContextClick', (event: Event) => {
+      contextEvents.push((event as CustomEvent<CellClickEventDetail>).detail);
+    });
+
+    const e4Square = element.shadowRoot?.querySelector('[data-coordinate="e4"]') as HTMLElement;
+    e4Square.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 0 }));
+    e4Square.dispatchEvent(new MouseEvent('auxclick', { bubbles: true, button: 1 }));
+    e4Square.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, button: 2, cancelable: true }));
+
+    expect(mainEvents).toHaveLength(1);
+    expect(mainEvents[0].button).toBe('main');
+    expect(auxiliaryEvents).toHaveLength(1);
+    expect(auxiliaryEvents[0].button).toBe('auxiliary');
+    expect(contextEvents).toHaveLength(1);
+    expect(contextEvents[0].button).toBe('context');
+  });
+
+  it('should remove a piece when auxiliary mouse button is clicked on its square', () => {
+    element.setFen('8/8/8/8/4P3/8/8/8 w - - 0 1');
+
+    const e4Square = element.shadowRoot?.querySelector('[data-coordinate="e4"]') as HTMLElement;
+    e4Square.dispatchEvent(new MouseEvent('auxclick', { bubbles: true, button: 1 }));
+
+    expect(element.getPieceAt('e4')).toBeNull();
+  });
+
+  it('should clone a selected piece when Shift is held while moving it with the mouse', () => {
+    element.setFen('8/8/8/8/4P3/8/8/8 w - - 0 1');
+    element.selectPiece('e4');
+
+    const f4Square = element.shadowRoot?.querySelector('[data-coordinate="f4"]') as HTMLElement;
+    f4Square.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 0, shiftKey: true }));
+
+    expect(element.getPieceAt('e4')).not.toBeNull();
+    expect(element.getPieceAt('f4')).not.toBeNull();
+    expect(element.getPieceAt('e4')?.type).toBe('p');
+    expect(element.getPieceAt('f4')?.type).toBe('p');
+    expect(element.getPieceAt('e4')?.color).toBe('w');
+    expect(element.getPieceAt('f4')?.color).toBe('w');
+  });
+
+  it('should clone and invert the color when Ctrl is held while moving a selected piece with the mouse', () => {
+    element.setFen('8/8/8/8/4P3/8/8/8 w - - 0 1');
+    element.selectPiece('e4');
+
+    const f4Square = element.shadowRoot?.querySelector('[data-coordinate="f4"]') as HTMLElement;
+    f4Square.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 0, ctrlKey: true }));
+
+    expect(element.getPieceAt('e4')).not.toBeNull();
+    expect(element.getPieceAt('f4')).not.toBeNull();
+    expect(element.getPieceAt('e4')?.color).toBe('w');
+    expect(element.getPieceAt('f4')?.color).toBe('b');
+    expect(element.getPieceAt('f4')?.type).toBe('p');
+  });
+
+  it('should clone a selected piece when Shift is held while moving it with the keyboard', () => {
+    element.setFen('8/8/8/8/4P3/8/8/8 w - - 0 1');
+    element.selectSquare('e4');
+
+    const board = element.shadowRoot?.querySelector('.board') as HTMLElement;
+    board.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    element.selectSquare('f4');
+    board.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true }));
+
+    expect(element.getPieceAt('e4')).not.toBeNull();
+    expect(element.getPieceAt('f4')).not.toBeNull();
+    expect(element.getPieceAt('e4')?.color).toBe('w');
+    expect(element.getPieceAt('f4')?.color).toBe('w');
+  });
+
+  it('should clone and invert the color when Ctrl is held while moving a selected piece with the keyboard', () => {
+    element.setFen('8/8/8/8/4P3/8/8/8 w - - 0 1');
+    element.selectSquare('e4');
+
+    const board = element.shadowRoot?.querySelector('.board') as HTMLElement;
+    board.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    element.selectSquare('f4');
+    board.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true }));
+
+    expect(element.getPieceAt('e4')).not.toBeNull();
+    expect(element.getPieceAt('f4')).not.toBeNull();
+    expect(element.getPieceAt('e4')?.color).toBe('w');
+    expect(element.getPieceAt('f4')?.color).toBe('b');
   });
 });
 
