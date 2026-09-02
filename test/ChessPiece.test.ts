@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { StandardPiecesList } from '../src';
-import { ChessPiece, type ChessPieceColor, type ChessPieceRotation, type ChessPieceType } from '../src/ChessPiece';
+import { type ChessPieceColor, type ChessPieceRotation, type ChessPieceType, StandardPiecesList } from '../src';
+import { ChessPiece } from '../src/ChessPiece/ChessPiece';
 
 describe('ChessPiece Web Component', () => {
   let element: ChessPiece;

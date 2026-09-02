@@ -16,7 +16,11 @@ export default defineConfig({
       ]
     })
   ],
+  esbuild: {
+    target: "es2025",
+  },
   build: {
+    target: 'es2025',
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
       name: 'ChessBoard',
@@ -26,7 +30,7 @@ export default defineConfig({
       external: [],
       output: {
         globals: {}
-      }
+      },
     }
   },
   server: {

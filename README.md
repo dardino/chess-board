@@ -62,16 +62,18 @@ import {
 type ChessPieceType = 'k' | 'q' | 'r' | 'b' | 'n' | 'p' | 'e' | 't' | 'a';
 type ChessPieceColor = 'w' | 'b' | 'n';
 
-// Interface for chess pieces
-interface ChessPiece {
+// Interface for chess pieces on a square
+interface PieceInfo {
   type: ChessPieceType;
   color: ChessPieceColor;
-  square: string; // e.g., 'e4', 'a1'
+  rotation?: '0' | '45' | '90' | '135' | '180' | '225' | '270' | '315';
+  fairyName?: string;
+  fairyCondition?: string;
 }
 
-// Interface for complete FEN positions
+// Interface for complete FEN positions: square -> piece
 interface FenPosition {
-  pieces: ChessPiece[];
+  pieces: PiecesOnBoard;
   activeColor: 'w' | 'b';
   castlingRights: string;
   enPassantTarget: string;
@@ -87,7 +89,7 @@ function setupBoard(): void {
   const position: FenPosition | null = parseFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
   if (position) {
     console.log('Active color:', position.activeColor); // 'w' | 'b'
-    console.log('Pieces count:', position.pieces.length);
+    console.log('Pieces count:', Object.keys(position.pieces).length);
   }
 
   // Type-safe piece creation
@@ -143,10 +145,10 @@ TypeScript declaration files are generated in the `dist/types/` directory:
 
 - `parseFen(fen: string): FenPosition | null` - Parse FEN string to position
 - `positionToFen(position: FenPosition): string` - Convert position to FEN string
-- `parsePiecePlacement(piecePlacement: string): ChessPiece[] | null` - Parse FEN piece placement
-- `piecesToFenString(pieces: ChessPiece[]): string` - Convert pieces to FEN string
+- `parsePiecePlacement(piecePlacement: string): { pieces: PiecesOnBoard; boardSize: { width: number; height: number } } | null` - Parse FEN piece placement
+- `piecesToFenString(pieces: PiecesOnBoard, isFfen?: boolean, boardSize?: { width: number; height: number }): string` - Convert square-indexed pieces to FEN string
 - `parsePieceChar(char: string): { type: ChessPieceType; color: ChessPieceColor } | null` - Parse piece character
-- `pieceToChar(piece: ChessPiece): string` - Convert piece to character
+- `pieceToChar(piece: PieceInfo): string` - Convert piece to character
 - `getStartingPositionFen(): string` - Get starting position FEN
 - `getEmptyBoardFen(): string` - Get empty board FEN
 
@@ -1068,18 +1070,18 @@ import { parseFen, positionToFen, parsePiecePlacement, piecesToFenString, getSta
 
 // Parse complete FEN string
 const position = parseFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
-console.log(position?.pieces.length); // 32
+console.log(position ? Object.keys(position.pieces).length : 0); // 32
 console.log(position?.activeColor); // 'w'
 
 // Convert position back to FEN
 const fen = positionToFen(position);
 
 // Parse only piece placement
-const pieces = parsePiecePlacement('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR');
-console.log(pieces.length); // 32
+const placement = parsePiecePlacement('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR');
+console.log(placement ? Object.keys(placement.pieces).length : 0); // 32
 
 // Convert pieces back to FEN string
-const pieceFen = piecesToFenString(pieces);
+const pieceFen = placement ? piecesToFenString(placement.pieces) : '';
 console.log(pieceFen); // 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
 
 // Get standard positions
@@ -1090,14 +1092,16 @@ const emptyFen = getEmptyBoardFen();
 ### Types
 
 ```typescript
-interface ChessPiece {
+interface PieceInfo {
   type: ChessPieceType;
   color: ChessPieceColor;
-  square: string; // e.g., 'e4', 'a1'
+  rotation?: ChessPieceRotation;
+  fairyName?: string;
+  fairyCondition?: string;
 }
 
 interface FenPosition {
-  pieces: ChessPiece[];
+  pieces: Record<string, PieceInfo | null>;
   activeColor: 'w' | 'b';
   castlingRights: string;
   enPassantTarget: string;
@@ -1113,24 +1117,24 @@ interface FenPosition {
 ```typescript
 const startingPosition = parseFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
 
-console.log(startingPosition.pieces.find(p => p.square === 'e1'));
-// { type: 'k', color: 'w', square: 'e1' }
+console.log(startingPosition?.pieces.e1);
+// { type: 'k', color: 'w' }
 
-console.log(startingPosition.pieces.find(p => p.square === 'e8'));
-// { type: 'k', color: 'b', square: 'e8' }
+console.log(startingPosition?.pieces.e8);
+// { type: 'k', color: 'b' }
 ```
 
 #### Create Custom Position
 
 ```typescript
-const customPieces: ChessPiece[] = [
-  { type: 'k', color: 'w', square: 'e1' },
-  { type: 'q', color: 'w', square: 'd1' },
-  { type: 'k', color: 'b', square: 'e8' }
-];
+const customPieces: Record<string, PieceInfo> = {
+  e1: { type: 'k', color: 'w' },
+  d1: { type: 'q', color: 'w' },
+  e8: { type: 'k', color: 'b' }
+};
 
 const customFen = piecesToFenString(customPieces);
-console.log(customFen); // '4k3/8/8/8/8/8/8/3QK3'
+console.log(customFen); // '4k3/8/8/8/8/8/8/8/3QK3'
 ```
 
 #### Validate FEN

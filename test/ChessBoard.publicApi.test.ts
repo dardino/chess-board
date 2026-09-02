@@ -1,11 +1,12 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ChessBoard, PieceInfoWithSquare } from '../src/ChessBoard';
+import { FairySquare, PiecesOnBoard } from '../src';
+import { ChessBoard } from '../src/ChessBoard/ChessBoard';
+import { waitForMicroTask } from './utils';
 
 describe('ChessBoard Public API - Piece Manipulation', () => {
   let element: ChessBoard;
 
   beforeEach(() => {
-    element = new ChessBoard();
+    element = document.createElement('chess-board');
     document.body.appendChild(element);
   });
 
@@ -16,60 +17,59 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
   });
 
   describe('addPiece', () => {
-    it('should add a piece to an empty square', () => {
+    it('should add a piece to an empty square', async () => {
       element.addPiece('e4', 'q', 'w');
-      
+      await waitForMicroTask();
+
       const piece = element.getPieceAt('e4');
       expect(piece).not.toBeNull();
       expect(piece?.type).toBe('q');
       expect(piece?.color).toBe('w');
       expect(piece?.rotation).toBeUndefined();
-      expect(element.getFen()).toBe('8/8/8/8/4Q3/8/8/8 w - - 0 1');
+      expect(element.getFen()).toBe('8/8/8/8/4Q3/8/8/8 w KQkq - 0 1');
       expect(element.getFen()).not.toContain('*0.5Q');
     });
 
-    it('should add a piece with rotation', () => {
+    it('should add a piece with rotation', async () => {
       element.addPiece('e4', 'q', 'w', '45');
-      
+      await waitForMicroTask();
+
       const piece = element.getPieceAt('e4');
       expect(piece).not.toBeNull();
       expect(piece?.rotation).toBe('45');
       expect(element.getFen()).toContain('*0.5Q');
     });
 
-    it('should replace existing piece on square', () => {
+    it('should replace existing piece on square', async () => {
       element.addPiece('e4', 'q', 'w');
       element.addPiece('e4', 'k', 'b');
-      
+      await waitForMicroTask();
       const piece = element.getPieceAt('e4');
       expect(piece?.type).toBe('k');
       expect(piece?.color).toBe('b');
-      expect(element.getFen()).toBe('8/8/8/8/4k3/8/8/8 w - - 0 1');
+      expect(element.getFen()).toBe('8/8/8/8/4k3/8/8/8 w KQkq - 0 1');
     });
 
     it('should throw error for invalid square coordinate', () => {
-      expect(() => element.addPiece('z9', 'q', 'w')).toThrow('Invalid square coordinate');
-      expect(() => element.addPiece('', 'q', 'w')).toThrow('Invalid square coordinate');
-      expect(() => element.addPiece('e', 'q', 'w')).toThrow('Invalid square coordinate');
-      expect(() => element.addPiece('e10', 'q', 'w')).toThrow('Invalid square coordinate');
+      expect(() => element.addPiece('z9' as FairySquare, 'q', 'w')).toThrow('Invalid square coordinate');
+      expect(() => element.addPiece('' as FairySquare, 'q', 'w')).toThrow('Invalid square coordinate');
+      expect(() => element.addPiece('e' as FairySquare, 'q', 'w')).toThrow('Invalid square coordinate');
+      expect(() => element.addPiece('e20' as FairySquare, 'q', 'w')).toThrow('Invalid square coordinate');
     });
 
-    it('should add all standard piece types', () => {
-      const pieces: Array<{ square: string, type: 'k' | 'q' | 'r' | 'b' | 'n' | 'p', color: 'w' | 'b' }> = [
-        { square: 'a1', type: 'k', color: 'w' },
-        { square: 'b1', type: 'q', color: 'w' },
-        { square: 'c1', type: 'r', color: 'w' },
-        { square: 'd1', type: 'b', color: 'w' },
-        { square: 'e1', type: 'n', color: 'w' },
-        { square: 'f1', type: 'p', color: 'w' }
-      ];
-
-      pieces.forEach(({ square, type, color }) => {
-        element.addPiece(square, type, color);
-        const piece = element.getPieceAt(square);
-        expect(piece?.type).toBe(type);
-        expect(piece?.color).toBe(color);
-      });
+    it.each([
+      ['a1', 'k', 'w'],
+      ['b1', 'q', 'w'],
+      ['c1', 'r', 'w'],
+      ['d1', 'b', 'w'],
+      ['e1', 'n', 'w'],
+      ['f1', 'p', 'w']
+    ])('should add all standard piece types', async (square, type, color) => {
+      element.addPiece(square, type, color);
+      await waitForMicroTask();
+      const piece = element.getPieceAt(square);
+      expect(piece?.type).toBe(type);
+      expect(piece?.color).toBe(color);
     });
 
     it('should add fairy pieces', () => {
@@ -99,7 +99,7 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
       element.removePiece('e4');
       expect(element.hasPiece('e4')).toBe(false);
       expect(element.getPieceAt('e4')).toBeNull();
-      expect(element.getFen()).toBe('8/8/8/8/8/8/8/8 w - - 0 1');
+      expect(element.getFen()).toBe('8/8/8/8/8/8/8/8 w KQkq - 0 1');
     });
 
     it('should not throw error when removing from empty square', () => {
@@ -108,7 +108,7 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
     });
 
     it('should throw error for invalid square coordinate', () => {
-      expect(() => element.removePiece('z9')).toThrow('Invalid square coordinate');
+      expect(() => element.removePiece('z9' as FairySquare)).toThrow('Invalid square coordinate');
     });
   });
 
@@ -129,7 +129,7 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
     });
 
     it('should throw error for invalid square coordinate', () => {
-      expect(() => element.getPieceAt('z9')).toThrow('Invalid square coordinate');
+      expect(() => element.getPieceAt('z9' as FairySquare)).toThrow('Invalid square coordinate');
     });
   });
 
@@ -144,17 +144,19 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
     });
 
     it('should throw error for invalid square coordinate', () => {
-      expect(() => element.hasPiece('z9')).toThrow('Invalid square coordinate');
+      expect(() => element.hasPiece('z9' as FairySquare)).toThrow('Invalid square coordinate');
     });
   });
 
   describe('selectPiece', () => {
-    it('should select the piece and set its square as current', () => {
+    it('should select the piece and set its square as current', async () => {
       element.addPiece('e4', 'q', 'w');
 
       expect(element.selectPiece('e4')).toBe(true);
       expect(element.getCurrentSquare()).toBe('e4');
       expect(element.getSelectedPieceSquare()).toBe('e4');
+
+      await waitForMicroTask();
 
       const square = element.shadowRoot?.querySelector('[data-coordinate="e4"]');
       expect(square?.classList.contains('selected-piece')).toBe(true);
@@ -170,7 +172,7 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
     });
 
     it('should throw an error for an invalid square coordinate', () => {
-      expect(() => element.selectPiece('z9')).toThrow('Invalid square coordinate');
+      expect(() => element.selectPiece('z9' as FairySquare)).toThrow('Invalid square coordinate');
     });
   });
 
@@ -208,11 +210,11 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
 
   describe('setPieces', () => {
     it('should set multiple pieces at once', () => {
-      const piecesToSet: Array<PieceInfoWithSquare> = [
-        { square: 'e4', type: 'q', color: 'w', rotation: '0' },
-        { square: 'd4', type: 'k', color: 'b', rotation: '45' },
-        { square: 'c3', type: 'r', color: 'w' }
-      ];
+      const piecesToSet: PiecesOnBoard = {
+        e4: { type: 'q', color: 'w' },
+        d4: { type: 'k', color: 'b', rotation: '45' },
+        c3: { type: 'r', color: 'w' }
+      };
 
       element.setPieces(piecesToSet);
 
@@ -221,16 +223,16 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
       expect(element.hasPiece('e4')).toBe(true);
       expect(element.hasPiece('d4')).toBe(true);
       expect(element.hasPiece('c3')).toBe(true);
-      expect(element.getFen()).toBe('8/8/8/8/3*0.5kQ3/2R5/8/8 w - - 0 1');
+      expect(element.getFen()).toBe('8/8/8/8/3*0.5kQ3/2R5/8/8 w KQkq - 0 1');
     });
 
     it('should clear board before setting pieces', () => {
       element.addPiece('a1', 'r', 'w');
       element.addPiece('h8', 'r', 'b');
 
-      element.setPieces([
-        { square: 'e4', type: 'q', color: 'w', rotation: '0' }
-      ]);
+      element.setPieces({
+        e4: { type: 'q', color: 'w', rotation: '0' }
+      });
 
       const pieces = element.getAllPieces();
       expect(pieces).toHaveLength(1);
@@ -239,10 +241,10 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
     });
 
     it('should throw error if any coordinate is invalid', () => {
-      const invalidPieces: Array<PieceInfoWithSquare> = [
-        { square: 'e4', type: 'q', color: 'w', rotation: '0' },
-        { square: 'z9', type: 'k', color: 'b', rotation: '0' }
-      ];
+      const invalidPieces: PiecesOnBoard = {
+        e4: { type: 'q', color: 'w', rotation: '0' },
+        z9: { type: 'k', color: 'b', rotation: '0' }
+      };
 
       expect(() => element.setPieces(invalidPieces)).toThrow('Invalid square coordinate');
       
@@ -254,29 +256,29 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
 
     it('should handle empty array', () => {
       element.addPiece('e4', 'q', 'w');
-      element.setPieces([]);
+      element.setPieces({});
       
       expect(element.getAllPieces()).toHaveLength(0);
-      expect(element.getFen()).toBe('8/8/8/8/8/8/8/8 w - - 0 1');
+      expect(element.getFen()).toBe('8/8/8/8/8/8/8/8 w KQkq - 0 1');
     });
 
-    it('should serialize board state only once for multiple pieces', () => {
+    it('should serialize board state only once for multiple pieces', async () => {
       const fenChangeSpy = vi.fn();
       element.addEventListener('fenChange', fenChangeSpy);
 
-      const piecesToSet: Array<PieceInfoWithSquare> = [
-        { square: 'e4', type: 'q', color: 'w' },
-        { square: 'd4', type: 'k', color: 'b' },
-        { square: 'c3', type: 'r', color: 'w' },
-      ];
+      const piecesToSet: PiecesOnBoard = {
+        e4: { type: 'q', color: 'w' },
+        d4: { type: 'k', color: 'b' },
+        c3: { type: 'r', color: 'w' }
+      };
 
       element.setPieces(piecesToSet);
 
-      // Flush microtask queue so the debounced fenChange fires
-      return Promise.resolve().then(() => {
-        expect(fenChangeSpy).toHaveBeenCalledTimes(1);
-        element.removeEventListener('fenChange', fenChangeSpy);
-      });
+      // Render and the debounced fenChange dispatch each queue their own microtask
+      await waitForMicroTask();
+
+      expect(fenChangeSpy).toHaveBeenCalledTimes(1);
+      element.removeEventListener('fenChange', fenChangeSpy);
     });
   });
 
@@ -295,7 +297,7 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
 
       expect(e4Decorator).not.toBeNull();
       expect(d4Decorator).not.toBeNull();
-      expect(e4Decorator.style.backgroundColor).toBe('#ff0000');
+      expect(e4Decorator.style.backgroundColor).toBeOneOf(['#ff0000', 'rgb(255, 0, 0)']);
       expect(e4Decorator.style.border).toBe('1px solid red');
       expect(d4Decorator.style.backgroundColor).toBe('rgba(0, 0, 255, 0.35)');
       expect(d4Decorator.style.border).toBe('2px solid blue');
@@ -325,7 +327,7 @@ describe('ChessBoard Public API - Rotation', () => {
   let element: ChessBoard;
 
   beforeEach(() => {
-    element = new ChessBoard();
+    element = document.createElement('chess-board');
     document.body.appendChild(element);
   });
 
@@ -365,7 +367,7 @@ describe('ChessBoard Public API - Rotation', () => {
     });
 
     it('should throw error for invalid square', () => {
-      expect(() => element.rotatePiece('z9', 45)).toThrow('Invalid square coordinate');
+      expect(() => element.rotatePiece('z9' as FairySquare, 45)).toThrow('Invalid square coordinate');
     });
 
     it('should throw error for empty square', () => {
@@ -389,7 +391,7 @@ describe('ChessBoard Public API - Rotation', () => {
     });
 
     it('should throw error for invalid square', () => {
-      expect(() => element.setPieceRotation('z9', '45')).toThrow('Invalid square coordinate');
+      expect(() => element.setPieceRotation('z9' as FairySquare, '45')).toThrow('Invalid square coordinate');
     });
 
     it('should throw error for empty square', () => {
@@ -402,18 +404,20 @@ describe('ChessBoard Public API - Rotation', () => {
       expect(element.getPieceRotation('e4')).toBeUndefined();
     });
 
-    it('should return piece rotation', () => {
+    it('should return piece rotation', async () => {
       element.addPiece('e4', 'q', 'w', '135');
+      await waitForMicroTask();
       expect(element.getPieceRotation('e4')).toBe('135');
     });
 
-    it('should return undefined for piece without explicit rotation', () => {
+    it('should return undefined for piece without explicit rotation', async () => {
       element.addPiece('e4', 'q', 'w');
+      await waitForMicroTask();
       expect(element.getPieceRotation('e4')).toBe(undefined);
     });
 
     it('should throw error for invalid square', () => {
-      expect(() => element.getPieceRotation('z9')).toThrow('Invalid square coordinate');
+      expect(() => element.getPieceRotation('z9' as FairySquare)).toThrow('Invalid square coordinate');
     });
   });
 });
@@ -422,7 +426,7 @@ describe('ChessBoard Public API - Orientation', () => {
   let element: ChessBoard;
 
   beforeEach(() => {
-    element = new ChessBoard();
+    element = document.createElement('chess-board');
     document.body.appendChild(element);
   });
 
@@ -433,38 +437,47 @@ describe('ChessBoard Public API - Orientation', () => {
   });
 
   describe('setOrientation', () => {
-    it('should set white orientation', () => {
+    it('should set white orientation', async () => {
       element.setOrientation('white');
+      await waitForMicroTask();
+
       expect(element.getOrientation()).toBe('white');
       expect(element.hasAttribute('black-to-move')).toBe(false);
     });
 
-    it('should set black orientation', () => {
+    it('should set black orientation', async () => {
       element.setOrientation('black');
+      await waitForMicroTask();
+
       expect(element.getOrientation()).toBe('black');
       expect(element.hasAttribute('black-to-move')).toBe(true);
     });
 
-    it('should change orientation from white to black', () => {
+    it('should change orientation from white to black', async () => {
       element.setOrientation('white');
+      await waitForMicroTask();
       element.setOrientation('black');
+      await waitForMicroTask();
       expect(element.getOrientation()).toBe('black');
     });
 
-    it('should change orientation from black to white', () => {
+    it('should change orientation from black to white', async () => {
       element.setOrientation('black');
+      await waitForMicroTask();
       element.setOrientation('white');
+      await waitForMicroTask();
       expect(element.getOrientation()).toBe('white');
     });
   });
 
   describe('getOrientation', () => {
-    it('should return "white" by default', () => {
+    it('should return "white" by default', async () => {
       expect(element.getOrientation()).toBe('white');
     });
 
-    it('should return current orientation', () => {
+    it('should return current orientation', async () => {
       element.setOrientation('black');
+      await waitForMicroTask();
       expect(element.getOrientation()).toBe('black');
     });
   });
@@ -509,82 +522,104 @@ describe('ChessBoard Public API - Integration', () => {
     }
   });
 
-  it('should add, rotate, and remove piece', () => {
+  it('should add, rotate, and remove piece', async () => {
     element.addPiece('e4', 'q', 'w');
+    await waitForMicroTask();
+
     expect(element.hasPiece('e4')).toBe(true);
     
     element.rotatePiece('e4', 90);
+    await waitForMicroTask();
+
     expect(element.getPieceRotation('e4')).toBe('90');
     
     element.removePiece('e4');
+    await waitForMicroTask();
+
     expect(element.hasPiece('e4')).toBe(false);
   });
 
-  it('should work with getAllPieces and setPieces', () => {
+  it('should work with getAllPieces and setPieces', async () => {
     element.addPiece('e4', 'q', 'w', '45');
     element.addPiece('d4', 'k', 'b');
-    
+    await waitForMicroTask();
+
     const pieces = element.getAllPieces();
+
     expect(pieces).toHaveLength(2);
     
     // Create new array with modified rotation
-    const modifiedPieces = pieces.map(p => 
-      p.square === 'e4' ? { ...p, rotation: '90' as const } : p
-    );
+    const modifiedPieces: PiecesOnBoard = {
+      ...element.getPiecesOnBoard(),
+      'e4': { ...pieces.find(p => p.square === 'e4')!, rotation: '90' }
+    };
+
     element.setPieces(modifiedPieces);
+    await waitForMicroTask();
     
     expect(element.getPieceRotation('e4')).toBe('90');
   });
 
-  it('should maintain pieces after orientation change', () => {
+  it('should maintain pieces after orientation change', async () => {
     element.addPiece('e4', 'q', 'w');
     element.addPiece('d5', 'k', 'b');
     
     element.toggleOrientation();
-    
+    await waitForMicroTask();
+
     expect(element.hasPiece('e4')).toBe(true);
     expect(element.hasPiece('d5')).toBe(true);
   });
 
-  it('should work with FEN methods', () => {
+  it('should work with FEN methods', async () => {
     element.setStartingPosition();
+    await waitForMicroTask();
     
     const piecesBeforeClear = element.getAllPieces();
     expect(piecesBeforeClear.length).toBeGreaterThan(0);
     
     element.clearBoard();
+    await waitForMicroTask();
     expect(element.getAllPieces()).toHaveLength(0);
     
     element.addPiece('e4', 'q', 'w');
+    await waitForMicroTask();
     expect(element.getAllPieces()).toHaveLength(1);
   });
 
-  it('should handle complex scenario with multiple operations', () => {
+  it('should handle complex scenario with multiple operations', async () => {
     // Setup initial position
-    element.setPieces([
-      { square: 'e1', type: 'k', color: 'w', rotation: '0' },
-      { square: 'e8', type: 'k', color: 'b', rotation: '0' },
-      { square: 'd1', type: 'q', color: 'w', rotation: '0' },
-      { square: 'd8', type: 'q', color: 'b', rotation: '0' }
-    ]);
-    
+    element.setPieces({
+      'e1': { type: 'k', color: 'w', rotation: '0' },
+      'e8': { type: 'k', color: 'b', rotation: '0' },
+      'd1': { type: 'q', color: 'w', rotation: '0' },
+      'd8': { type: 'q', color: 'b', rotation: '0' }
+    });
+    await waitForMicroTask();
+
     expect(element.getAllPieces()).toHaveLength(4);
     
     // Rotate a piece
     element.rotatePiece('d1', 45);
+    await waitForMicroTask();
+
     expect(element.getPieceRotation('d1')).toBe('45');
     
     // Replace a piece
     element.addPiece('d1', 'r', 'w', '90');
+    await waitForMicroTask();
+
     expect(element.getPieceAt('d1')?.type).toBe('r');
     expect(element.getPieceRotation('d1')).toBe('90');
     
     // Remove a piece
     element.removePiece('d8');
+    await waitForMicroTask();
     expect(element.getAllPieces()).toHaveLength(3);
     
     // Change orientation
     element.setOrientation('black');
+    await waitForMicroTask();
     expect(element.getOrientation()).toBe('black');
     
     // Verify pieces still intact

@@ -1090,17 +1090,22 @@ const parsedPosition = parseFen(fenString);</pre>
   parsePiecePlacement,
   piecesToFenString,
   parseFfenPieceChar,
-  type FENChessPiece,
+  type PieceInfo,
+  type PiecesOnBoard,
   type ChessPieceType,
   type ChessPieceColor
 } from '@dardino/chess-board';
 
 function parsePiecePlacement(piecePlacement: string): {
-  pieces: FENChessPiece[];
+  pieces: PiecesOnBoard;
   boardSize: { width: number; height: number };
 } | null
 
-function piecesToFenString(pieces: FENChessPiece[], isFfen?: boolean): string
+function piecesToFenString(
+  pieces: PiecesOnBoard,
+  isFfen?: boolean,
+  boardSize?: { width: number; height: number }
+): string
 
 function parseFfenPieceChar(piece: string): {
   type: ChessPieceType;
