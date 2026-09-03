@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type ChessPieceColor, type ChessPieceRotation, type ChessPieceType, StandardPiecesList } from '../src';
 import { ChessPiece } from '../src/ChessPiece/ChessPiece';
 

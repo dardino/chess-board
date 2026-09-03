@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FairySquare, PiecesOnBoard } from '../src';
 import { ChessBoard } from '../src/ChessBoard/ChessBoard';
 import { waitForMicroTask } from './utils';
@@ -58,12 +59,12 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
     });
 
     it.each([
-      ['a1', 'k', 'w'],
-      ['b1', 'q', 'w'],
-      ['c1', 'r', 'w'],
-      ['d1', 'b', 'w'],
-      ['e1', 'n', 'w'],
-      ['f1', 'p', 'w']
+      ['a1' as const, 'k' as const, 'w' as const],
+      ['b1' as const, 'q' as const, 'w' as const],
+      ['c1' as const, 'r' as const, 'w' as const],
+      ['d1' as const, 'b' as const, 'w' as const],
+      ['e1' as const, 'n' as const, 'w' as const],
+      ['f1' as const, 'p' as const, 'w' as const]
     ])('should add all standard piece types', async (square, type, color) => {
       element.addPiece(square, type, color);
       await waitForMicroTask();
@@ -242,9 +243,9 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
 
     it('should throw error if any coordinate is invalid', () => {
       const invalidPieces: PiecesOnBoard = {
-        e4: { type: 'q', color: 'w', rotation: '0' },
-        z9: { type: 'k', color: 'b', rotation: '0' }
-      };
+        'e4': { type: 'q', color: 'w', rotation: '0' },
+        'z9': { type: 'k', color: 'b', rotation: '0' }
+      } as PiecesOnBoard;
 
       expect(() => element.setPieces(invalidPieces)).toThrow('Invalid square coordinate');
       

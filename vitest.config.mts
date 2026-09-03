@@ -8,7 +8,6 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url));
 export default defineConfig({
   test: {
     environment: 'happy-dom',
-    globals: true,
     setupFiles: ['./test/setup.ts'],
     reporters: process.env.GITHUB_ACTIONS === 'true' 
       ? ['default', 
