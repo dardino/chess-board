@@ -5,7 +5,7 @@
 // For example: custom matchers, global mocks, etc.
 
 // Example: Custom element registration for web components
-import { ChessBoard } from '../src/ChessBoard';
+import { ChessBoard } from '../src/ChessBoard/ChessBoard';
 
 // Register the web component globally for tests
 if (!customElements.get('chess-board')) {

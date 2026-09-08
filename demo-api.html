@@ -1,17 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chess Board - Programmatic API Demo</title>
   <link rel="stylesheet" href="./assets/ScacchiPainter.css" />
-  
+
   <link rel="icon" type="image/png" sizes="96x96" href="./assets/favicon-96x96.png">
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" sizes="any">
   <link rel="icon" href="./assets/favicon.ico">
   <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
   <link rel="manifest" href="./assets/site.webmanifest">
-  
+
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
 
@@ -23,7 +24,7 @@
       padding: 2rem;
       background: #f5f5f5;
     }
-    
+
     .back-link {
       display: inline-block;
       margin-bottom: 1rem;
@@ -31,35 +32,35 @@
       text-decoration: none;
       font-weight: 600;
     }
-    
+
     .back-link:hover {
       text-decoration: underline;
     }
-    
+
     h1 {
       color: #333;
       margin-bottom: 0.5rem;
     }
-    
+
     .subtitle {
       color: #666;
       margin-bottom: 2rem;
     }
-    
+
     .container {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 2rem;
       margin-bottom: 2rem;
     }
-    
+
     .board-container {
       background: white;
       padding: 1.5rem;
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
-    
+
     .board-wrapper {
       position: sticky;
       top: 1rem;
@@ -71,18 +72,18 @@
       margin: 0 auto;
       display: block;
     }
-    
+
     .controls {
       background: white;
       padding: 1.5rem;
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
-    
+
     .control-group {
       margin-bottom: 1.5rem;
     }
-    
+
     .control-group h3 {
       margin: 0 0 1rem 0;
       color: #333;
@@ -90,7 +91,7 @@
       border-bottom: 2px solid #e0e0e0;
       padding-bottom: 0.5rem;
     }
-    
+
     .button-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
@@ -131,7 +132,7 @@
     .demo-accordion code {
       font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
     }
-    
+
     button {
       padding: 0.5rem 1rem;
       border: 1px solid #ccc;
@@ -141,43 +142,44 @@
       font-size: 0.9rem;
       transition: all 0.2s;
     }
-    
+
     button:hover {
       background: #f0f0f0;
       border-color: #999;
     }
-    
+
     button:active {
       background: #e0e0e0;
     }
-    
+
     button.danger {
       background: #fee;
       border-color: #fcc;
     }
-    
+
     button.danger:hover {
       background: #fcc;
       border-color: #faa;
     }
-    
+
     .input-group {
       display: flex;
       gap: 0.5rem;
       margin-bottom: 0.5rem;
     }
-    
-    input, select {
+
+    input,
+    select {
       padding: 0.5rem;
       border: 1px solid #ccc;
       border-radius: 4px;
       font-size: 0.9rem;
     }
-    
+
     input {
       flex: 1;
     }
-    
+
     .info-box {
       background: #e3f2fd;
       padding: 1rem;
@@ -189,12 +191,12 @@
       max-height: 150px;
       overflow-y: auto;
     }
-    
+
     .piece-button {
       font-size: 1.5rem;
       padding: 0.75rem;
     }
-    
+
     @media (max-width: 900px) {
       .container {
         grid-template-columns: 1fr;
@@ -202,11 +204,12 @@
     }
   </style>
 </head>
+
 <body>
   <a href="index.html" class="back-link">&larr; Back to Documentation</a>
   <h1>Chess Board - Programmatic API Demo</h1>
   <p class="subtitle">Test the new APIs for programmatic chess board manipulation</p>
-  
+
   <div class="container">
     <!-- Chess Board -->
     <div class="board-container">
@@ -219,7 +222,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Controls -->
     <div class="controls">
       <div class="control-group">
@@ -264,7 +267,7 @@
 board.addPiece('d5', 'n', 'b', '180');</code></pre>
         </details>
       </div>
-      
+
       <div class="control-group">
         <h3>♟️ Quick Pieces (e4)</h3>
         <div class="button-grid">
@@ -288,7 +291,7 @@ board.addPiece('e4', 'q', 'w');
 board.addPiece('e4', 'k', 'b');</code></pre>
         </details>
       </div>
-      
+
       <div class="control-group">
         <h3>✋ Piece Selection & Movement</h3>
         <div class="button-grid">
@@ -296,7 +299,9 @@ board.addPiece('e4', 'k', 'b');</code></pre>
           <button onclick="simulateSpace()">Simulate Space</button>
           <button onclick="clearPieceSelection()">Clear Selection</button>
         </div>
-        <div id="selection-info" style="margin-top: 0.5rem; font-size: 0.9rem; color: #666; padding: 0.75rem; background: #f0f0f0; border-radius: 4px;">Focus the board and press Space or Enter on a square with a piece</div>
+        <div id="selection-info"
+          style="margin-top: 0.5rem; font-size: 0.9rem; color: #666; padding: 0.75rem; background: #f0f0f0; border-radius: 4px;">
+          Focus the board and press Space or Enter on a square with a piece</div>
         <details class="demo-accordion">
           <summary>Show code</summary>
           <pre><code>// Get selected piece square
@@ -316,7 +321,7 @@ console.log(wasSelected); // true when e4 contains a piece
 // 4. Selection clears after move or on Escape/blur</code></pre>
         </details>
       </div>
-      
+
       <div class="control-group">
         <h3>🔄 Rotation (e4)</h3>
         <div class="button-grid">
@@ -349,7 +354,7 @@ board.setPieceRotation('e4', '180');</code></pre>
 });</code></pre>
         </details>
       </div>
-      
+
       <div class="control-group">
         <h3>🎯 Operations</h3>
         <div class="button-grid">
@@ -368,7 +373,7 @@ board.setPieces([
 board.clearBoard();</code></pre>
         </details>
       </div>
-      
+
       <div class="control-group">
         <h3>↔️ Orientation</h3>
         <div class="button-grid">
@@ -383,7 +388,24 @@ board.setOrientation('black');
 board.toggleOrientation();</code></pre>
         </details>
       </div>
-      
+
+      <div class="control-group">
+        <h3>📝 Attributes</h3>
+        <div class="button-grid">
+          <button onclick="board.disabled = !board.disabled">Toggle Disabled</button>
+          <button onclick="board.disablePieceSelection = !board.disablePieceSelection">Toggle Disable Piece
+            Selection</button>
+          <button onclick="board.disablePieceAddition = !board.disablePieceAddition">Toggle Disable Piece
+            Addition</button>
+        </div>
+        <details class="demo-accordion">
+          <summary>Show code</summary>
+          <pre><code>board.disabled = !board.disabled;
+board.disablePieceSelection = !board.disablePieceSelection;
+board.disablePieceAddition = !board.disablePieceAddition;</code></pre>
+        </details>
+      </div>
+
       <div class="control-group">
         <h3>🎬 Animation</h3>
         <div class="button-grid">
@@ -401,15 +423,15 @@ setInterval(() => {
       </div>
     </div>
   </div>
-  
+
   <script type="module">
     import './src/index.ts';
-    
+
     const board = document.getElementById('board');
     const infoBox = document.getElementById('info');
-    
+
     let animationInterval = null;
-    
+
     function updateInfo() {
       const pieces = board.getAllPieces();
       if (pieces.length === 0) {
@@ -419,13 +441,13 @@ setInterval(() => {
           pieces.map(p => `${p.square}: ${p.color} ${p.type} (${p.rotation}°)`).join('\n');
       }
     }
-    
+
     function addPieceHandler() {
       const square = document.getElementById('addSquare').value.toLowerCase();
       const type = document.getElementById('addType').value;
       const color = document.getElementById('addColor').value;
       const rotation = document.getElementById('addRotation').value;
-      
+
       try {
         board.addPiece(square, type, color, rotation);
         updateInfo();
@@ -433,7 +455,7 @@ setInterval(() => {
         alert(e.message);
       }
     }
-    
+
     function quickPiece(square, type, color) {
       try {
         board.addPiece(square, type, color);
@@ -442,7 +464,7 @@ setInterval(() => {
         alert(e.message);
       }
     }
-    
+
     function rotatePieceHandler(square, degrees) {
       try {
         board.rotatePiece(square, degrees);
@@ -451,7 +473,7 @@ setInterval(() => {
         alert(e.message);
       }
     }
-    
+
     function setPieceRotationHandler(square, rotation) {
       try {
         board.setPieceRotation(square, rotation);
@@ -460,7 +482,7 @@ setInterval(() => {
         alert(e.message);
       }
     }
-    
+
     function setupTestPosition() {
       board.setPieces([
         { square: 'e1', type: 'k', color: 'w', rotation: '0' },
@@ -498,23 +520,23 @@ setInterval(() => {
         applyDecoratorDemo();
       }
     }
-    
+
     function removeAllPieces() {
       const pieces = board.getAllPieces();
       pieces.forEach(p => board.removePiece(p.square));
       updateInfo();
     }
-    
+
     function startRotationAnimation() {
       if (animationInterval) {
         stopRotationAnimation();
       }
-      
+
       // Add a queen if not present
       if (!board.hasPiece('d4')) {
         board.addPiece('d4', 'q', 'w', '0');
       }
-      
+
       let rotation = 0;
       animationInterval = setInterval(() => {
         rotation = (rotation + 45) % 360;
@@ -526,14 +548,14 @@ setInterval(() => {
         }
       }, 200);
     }
-    
+
     function stopRotationAnimation() {
       if (animationInterval) {
         clearInterval(animationInterval);
         animationInterval = null;
       }
     }
-    
+
     // Piece selection functions
     function simulateSpace() {
       const selected = board.getSelectedPieceSquare();
@@ -545,7 +567,7 @@ setInterval(() => {
         updateSelectionInfo('e4');
       }
     }
-    
+
     function clearPieceSelection() {
       const selected = board.getSelectedPieceSquare();
       if (selected) {
@@ -553,7 +575,7 @@ setInterval(() => {
       }
       updateSelectionInfo(null);
     }
-    
+
     function updateSelectionInfo(square) {
       const info = document.getElementById('selection-info');
       if (square && board.hasPiece(square)) {
@@ -569,7 +591,7 @@ setInterval(() => {
         info.style.background = '#f0f0f0';
       }
     }
-    
+
     // Make functions globally accessible
     window.addPieceHandler = addPieceHandler;
     window.quickPiece = quickPiece;
@@ -586,7 +608,7 @@ setInterval(() => {
     window.clearPieceSelection = clearPieceSelection;
     window.updateSelectionInfo = updateSelectionInfo;
     window.board = board;
-    
+
     // Listen to board changes
     board.addEventListener('cellClick', (e) => {
       console.log('Cell clicked:', e.detail);
@@ -605,12 +627,13 @@ setInterval(() => {
     board.addEventListener('fenChange', (e) => {
       fenInfo.textContent = e.detail.fen;
     });
-    
+
     // Initial update
     updateInfo();
-    
+
     // Update info when board changes, including fairy metadata changes
     board.addEventListener('fenChange', updateInfo);
   </script>
 </body>
+
 </html>

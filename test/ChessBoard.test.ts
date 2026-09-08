@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ChessPiece } from '../src';
-import { ChessBoard, type CellClickEventDetail } from '../src/ChessBoard';
+import { ChessBoard, type CellClickEventDetail } from '../src/ChessBoard/ChessBoard';
+import { waitForMicroTask } from './utils';
 
 describe('ChessBoard Web Component', () => {
   let element: ChessBoard;
@@ -207,11 +208,13 @@ describe('ChessBoard FEN support', () => {
     expect(element.getFen()).toBe('8/8/8/8/8/8/8/8 w - - 0 1');
   });
 
-  it('should place pieces from FEN string', () => {
+  it('should place pieces from FEN string', async () => {
     // Place a white king on e1
     element.setAttribute('fen', '8/8/8/8/8/8/8/4K3 w - - 0 1');
+    await waitForMicroTask();
 
     const e1Square = element.shadowRoot?.querySelector('[data-coordinate="e1"]');
+
     const piece = e1Square?.querySelector('.piece');
 
     expect(piece).not.toBeNull();
@@ -219,8 +222,9 @@ describe('ChessBoard FEN support', () => {
     expect(piece?.getAttribute('color')).toBe('w');
   });
 
-  it('should place starting position pieces', () => {
+  it('should place starting position pieces', async () => {
     element.setAttribute('fen', 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+    await waitForMicroTask();
 
     // Check white king
     const e1Square = element.shadowRoot?.querySelector('[data-coordinate="e1"]');
@@ -241,12 +245,14 @@ describe('ChessBoard FEN support', () => {
     expect(whiteRook?.getAttribute('color')).toBe('w');
   });
 
-  it('should clear pieces when setting empty FEN', () => {
+  it('should clear pieces when setting empty FEN', async () => {
     // First set starting position
     element.setAttribute('fen', 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+    await waitForMicroTask();
 
     // Then clear
     element.setAttribute('fen', '8/8/8/8/8/8/8/8 w - - 0 1');
+    await waitForMicroTask();
 
     const squares = element.shadowRoot?.querySelectorAll('.square');
     squares?.forEach(square => {
@@ -255,9 +261,10 @@ describe('ChessBoard FEN support', () => {
     });
   });
 
-  it('should handle invalid FEN gracefully', () => {
+  it('should handle invalid FEN gracefully', async () => {
     // Set invalid FEN
     element.setAttribute('fen', 'invalid-fen');
+    await waitForMicroTask();
 
     // Should not crash and should clear any existing pieces
     const squares = element.shadowRoot?.querySelectorAll('.square');
@@ -267,8 +274,9 @@ describe('ChessBoard FEN support', () => {
     });
   });
 
-  it('should support setFen method', () => {
+  it('should support setFen method', async () => {
     element.setFen('8/8/8/8/8/8/8/4K3 w - - 0 1');
+    await waitForMicroTask();
 
     const e1Square = element.shadowRoot?.querySelector('[data-coordinate="e1"]');
     const piece = e1Square?.querySelector('.piece') as ChessPiece | null;
@@ -281,8 +289,9 @@ describe('ChessBoard FEN support', () => {
     expect(element.getFen()).toContain('e1:');
   });
 
-  it('should support setStartingPosition method', () => {
+  it('should support setStartingPosition method', async () => {
     element.setStartingPosition();
+    await waitForMicroTask();
 
     // Check that pieces are placed
     const e1Square = element.shadowRoot?.querySelector('[data-coordinate="e1"]');
@@ -291,12 +300,14 @@ describe('ChessBoard FEN support', () => {
     expect(whiteKing?.getAttribute('color')).toBe('w');
   });
 
-  it('should support clearBoard method', () => {
+  it('should support clearBoard method', async () => {
     // First set some pieces
     element.setFen('8/8/8/8/8/8/8/4K3 w - - 0 1');
+    await waitForMicroTask();
 
     // Then clear
     element.clearBoard();
+    await waitForMicroTask();
 
     const squares = element.shadowRoot?.querySelectorAll('.square');
     squares?.forEach(square => {
@@ -325,9 +336,10 @@ describe('ChessBoard FEN support', () => {
     element.removeEventListener('cellMainClick', eventHandler);
   });
 
-  it('should dispatch cellMainClick event with piece info when square with piece is clicked', () => {
+  it('should dispatch cellMainClick event with piece info when square with piece is clicked', async () => {
     // Set up a position with a piece on e4
     element.setFen('8/8/8/8/4P3/8/8/8 w - - 0 1');
+    await waitForMicroTask();
 
     let eventDetail: CellClickEventDetail | null = null;
     const eventHandler = (event: CustomEvent<CellClickEventDetail>) => {
@@ -339,6 +351,7 @@ describe('ChessBoard FEN support', () => {
     // Click on e4 square (should have a white pawn)
     const e4Square = element.shadowRoot?.querySelector('[data-coordinate="e4"]') as HTMLElement;
     e4Square?.click();
+    await waitForMicroTask();
 
     expect(eventDetail).toBeDefined();
     expect(eventDetail!.square).toBe('e4');
@@ -350,19 +363,12 @@ describe('ChessBoard FEN support', () => {
     element.removeEventListener('cellMainClick', eventHandler);
   });
 
-  it('should dispatch cellMainClick event with rotation and fairy data when present', () => {
-    // Set up a position with a piece on e4
-    element.setFen('8/8/8/8/4P3/8/8/8 w - - 0 1');
+  it('should dispatch cellMainClick event with rotation and fairy data when present', async () => {
+    // Set up a position with a piece on e4, including rotation and fairy data
+    element.addPiece('e4', 'p', 'w', '90', 'GRA', '=');
+    await waitForMicroTask();
 
-    // Add rotation and fairy data to the piece
     const e4Square = element.shadowRoot?.querySelector('[data-coordinate="e4"]') as HTMLElement;
-    const piece = e4Square?.querySelector('chess-piece');
-    
-    if (piece) {
-      piece.setAttribute('rotation', '90');
-      piece.setAttribute('fairy-name', 'GRA');
-      piece.setAttribute('fairy-condition', '=');
-    }
 
     let eventDetail: CellClickEventDetail | null = null;
     const eventHandler = (event: CustomEvent<CellClickEventDetail>) => {
@@ -387,16 +393,12 @@ describe('ChessBoard FEN support', () => {
     element.removeEventListener('cellMainClick', eventHandler);
   });
 
-  it('should dispatch cellMainClick event with neutral color', () => {
-    // Manually create a neutral piece on e4
+  it('should dispatch cellMainClick event with neutral color', async () => {
+    // Set up a neutral empress piece on e4
+    element.addPiece('e4', 'e', 'n');
+    await waitForMicroTask();
+
     const e4Square = element.shadowRoot?.querySelector('[data-coordinate="e4"]') as HTMLElement;
-    
-    // Create a neutral empress piece
-    const piece = document.createElement('chess-piece');
-    piece.setAttribute('piece', 'e');
-    piece.setAttribute('color', 'n');
-    piece.classList.add('piece');
-    e4Square?.appendChild(piece);
 
     let eventDetail: CellClickEventDetail | null = null;
     const eventHandler = (event: CustomEvent<CellClickEventDetail>) => {
@@ -575,12 +577,13 @@ describe('ChessBoard Keyboard Handlers', () => {
     expect(piece).toBeNull();
   });
 
-  it('should clear board when Escape key is pressed', () => {
+  it('should clear board when Escape key is pressed', async () => {
     // Set up starting position
     element.setStartingPosition();
 
     // Select a square
     element.selectSquare('e4');
+    await waitForMicroTask();
 
     // Verify pieces exist
     const e1Square = element.shadowRoot?.querySelector('[data-coordinate="e1"]') as HTMLElement;
@@ -590,6 +593,7 @@ describe('ChessBoard Keyboard Handlers', () => {
     const board = element.shadowRoot?.querySelector('.board') as HTMLElement;
     const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape' });
     board.dispatchEvent(escapeEvent);
+    await waitForMicroTask();
 
     // Verify all pieces were removed
     const squares = element.shadowRoot?.querySelectorAll('.square');
@@ -598,9 +602,10 @@ describe('ChessBoard Keyboard Handlers', () => {
     });
   });
 
-  it('should set starting position when Shift+Escape is pressed', () => {
+  it('should set starting position when Shift+Escape is pressed', async () => {
     // Start with empty board
     element.clearBoard();
+    await waitForMicroTask();
 
     // Verify board is empty
     let e1Square = element.shadowRoot?.querySelector('[data-coordinate="e1"]') as HTMLElement;
@@ -608,6 +613,7 @@ describe('ChessBoard Keyboard Handlers', () => {
 
     // Select a square
     element.selectSquare('e4');
+    await waitForMicroTask();
 
     // Get the board element and trigger Shift+Escape
     const board = element.shadowRoot?.querySelector('.board') as HTMLElement;
@@ -616,6 +622,7 @@ describe('ChessBoard Keyboard Handlers', () => {
       shiftKey: true 
     });
     board.dispatchEvent(shiftEscapeEvent);
+    await waitForMicroTask();
 
     // Verify starting position is set
     e1Square = element.shadowRoot?.querySelector('[data-coordinate="e1"]') as HTMLElement;
@@ -629,14 +636,16 @@ describe('ChessBoard Keyboard Handlers', () => {
     expect(blackKing?.getAttribute('color')).toBe('b');
   });
 
-  it('should select and move a piece when Enter is pressed', () => {
+  it('should select and move a piece when Enter is pressed', async () => {
     element.setFen('8/8/8/8/4P3/8/8/8 w - - 0 1');
     element.selectSquare('e4');
+    await waitForMicroTask();
 
     const board = element.shadowRoot?.querySelector('.board') as HTMLElement;
     board.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
     board.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }));
     board.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    await waitForMicroTask();
 
     const e4Square = element.shadowRoot?.querySelector('[data-coordinate="e4"]') as HTMLElement;
     const f4Square = element.shadowRoot?.querySelector('[data-coordinate="f4"]') as HTMLElement;
@@ -646,9 +655,10 @@ describe('ChessBoard Keyboard Handlers', () => {
     expect(f4Square.querySelector('chess-piece')?.getAttribute('color')).toBe('w');
   });
 
-  it('should not remove piece when Delete is pressed without current square', () => {
+  it('should not remove piece when Delete is pressed without current square', async () => {
     // Set up a position with pieces
     element.setFen('8/8/8/8/4P3/8/8/8 w - - 0 1');
+    await waitForMicroTask();
 
     // Don't select any square (currentSquare is null)
     
@@ -656,6 +666,7 @@ describe('ChessBoard Keyboard Handlers', () => {
     const board = element.shadowRoot?.querySelector('.board') as HTMLElement;
     const deleteEvent = new KeyboardEvent('keydown', { key: 'Delete' });
     board.dispatchEvent(deleteEvent);
+    await waitForMicroTask();
 
     // Verify piece still exists
     const e4Square = element.shadowRoot?.querySelector('[data-coordinate="e4"]') as HTMLElement;
@@ -683,17 +694,19 @@ describe('ChessBoard Keyboard Handlers', () => {
   });
 
   describe('Piece Key Handlers', () => {
-    it('should add white pawn when P key is pressed', () => {
+    it('should add white pawn when P key is pressed', async () => {
       // Start with empty board
       element.clearBoard();
       
       // Select e4 square
       element.selectSquare('e4');
+      await waitForMicroTask();
 
       // Press P key (uppercase = white)
       const board = element.shadowRoot?.querySelector('.board') as HTMLElement;
       const pKeyEvent = new KeyboardEvent('keydown', { key: 'P' });
       board.dispatchEvent(pKeyEvent);
+      await waitForMicroTask();
 
       // Verify white pawn was added
       const e4Square = element.shadowRoot?.querySelector('[data-coordinate="e4"]') as HTMLElement;
@@ -702,17 +715,19 @@ describe('ChessBoard Keyboard Handlers', () => {
       expect(piece?.getAttribute('color')).toBe('w');
     });
 
-    it('should add black pawn when p key is pressed', () => {
+    it('should add black pawn when p key is pressed', async () => {
       // Start with empty board
       element.clearBoard();
       
       // Select e4 square
       element.selectSquare('e4');
+      await waitForMicroTask();
 
       // Press p key (lowercase = black)
       const board = element.shadowRoot?.querySelector('.board') as HTMLElement;
       const pKeyEvent = new KeyboardEvent('keydown', { key: 'p' });
       board.dispatchEvent(pKeyEvent);
+      await waitForMicroTask();
 
       // Verify black pawn was added
       const e4Square = element.shadowRoot?.querySelector('[data-coordinate="e4"]') as HTMLElement;
@@ -721,7 +736,7 @@ describe('ChessBoard Keyboard Handlers', () => {
       expect(piece?.getAttribute('color')).toBe('b');
     });
 
-    it('should add all standard white pieces with uppercase keys', () => {
+    it('should add all standard white pieces with uppercase keys', async () => {
       element.clearBoard();
       
       const pieces = [
@@ -735,19 +750,20 @@ describe('ChessBoard Keyboard Handlers', () => {
 
       const board = element.shadowRoot?.querySelector('.board') as HTMLElement;
 
-      pieces.forEach(({ key, type, square }) => {
+      for (const { key, type, square } of pieces) {
         element.selectSquare(square);
         const keyEvent = new KeyboardEvent('keydown', { key });
         board.dispatchEvent(keyEvent);
+        await waitForMicroTask();
 
         const squareElement = element.shadowRoot?.querySelector(`[data-coordinate="${square}"]`) as HTMLElement;
         const piece = squareElement?.querySelector('chess-piece');
         expect(piece?.getAttribute('piece')).toBe(type);
         expect(piece?.getAttribute('color')).toBe('w');
-      });
+      }
     });
 
-    it('should add all standard black pieces with lowercase keys', () => {
+    it('should add all standard black pieces with lowercase keys', async () => {
       element.clearBoard();
       
       const pieces = [
@@ -761,19 +777,20 @@ describe('ChessBoard Keyboard Handlers', () => {
 
       const board = element.shadowRoot?.querySelector('.board') as HTMLElement;
 
-      pieces.forEach(({ key, type, square }) => {
+      for (const { key, type, square } of pieces) {
         element.selectSquare(square);
         const keyEvent = new KeyboardEvent('keydown', { key });
         board.dispatchEvent(keyEvent);
+        await waitForMicroTask();
 
         const squareElement = element.shadowRoot?.querySelector(`[data-coordinate="${square}"]`) as HTMLElement;
         const piece = squareElement?.querySelector('chess-piece');
         expect(piece?.getAttribute('piece')).toBe(type);
         expect(piece?.getAttribute('color')).toBe('b');
-      });
+      }
     });
 
-    it('should add fairy pieces with uppercase keys', () => {
+    it('should add fairy pieces with uppercase keys', async () => {
       element.clearBoard();
       
       const fairyPieces = [
@@ -784,29 +801,32 @@ describe('ChessBoard Keyboard Handlers', () => {
 
       const board = element.shadowRoot?.querySelector('.board') as HTMLElement;
 
-      fairyPieces.forEach(({ key, type, square }) => {
+      for (const { key, type, square } of fairyPieces) {
         element.selectSquare(square);
         const keyEvent = new KeyboardEvent('keydown', { key });
         board.dispatchEvent(keyEvent);
+        await waitForMicroTask();
 
         const squareElement = element.shadowRoot?.querySelector(`[data-coordinate="${square}"]`) as HTMLElement;
         const piece = squareElement?.querySelector('chess-piece');
         expect(piece?.getAttribute('piece')).toBe(type);
         expect(piece?.getAttribute('color')).toBe('w');
-      });
+      }
     });
 
-    it('should replace existing piece when key is pressed', () => {
+    it('should replace existing piece when key is pressed', async () => {
       // Start with white pawn on e4
       element.setFen('8/8/8/8/4P3/8/8/8 w - - 0 1');
       
       // Select e4 square
       element.selectSquare('e4');
+      await waitForMicroTask();
 
       // Press Q key to replace pawn with queen
       const board = element.shadowRoot?.querySelector('.board') as HTMLElement;
       const qKeyEvent = new KeyboardEvent('keydown', { key: 'Q' });
       board.dispatchEvent(qKeyEvent);
+      await waitForMicroTask();
 
       // Verify queen replaced pawn
       const e4Square = element.shadowRoot?.querySelector('[data-coordinate="e4"]') as HTMLElement;
@@ -855,12 +875,14 @@ describe('ChessBoard Keyboard Handlers', () => {
       expect(element.getSelectedPieceSquare()).toBe('e4');
     });
 
-    it('should move a selected piece to a new square when Enter is pressed again', () => {
+    it('should move a selected piece to a new square when Enter is pressed again', async () => {
       // Set up a position with a piece on e4
       element.setFen('8/8/8/8/4P3/8/8/8 w - - 0 1');
-      
+      await waitForMicroTask();
+
       // Select e4 square
       element.selectSquare('e4');
+      await waitForMicroTask();
 
       // Press Enter to select the piece
       const board = element.shadowRoot?.querySelector('.board') as HTMLElement;
@@ -870,7 +892,10 @@ describe('ChessBoard Keyboard Handlers', () => {
 
       // Move to f4
       element.selectSquare('f4');
+      await waitForMicroTask();
+
       board.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+      await waitForMicroTask();
 
       expect(element.getSelectedPieceSquare()).toBeNull(); // Piece should be moved, no longer selected
 
@@ -898,18 +923,21 @@ describe('ChessBoard Keyboard Handlers', () => {
 
     });
 
-    it('should replace a piece if move piece over another piece', () => {
+    it('should replace a piece if move piece over another piece', async () => {
       // Set up a position with a piece on d4 and e4
       element.setFen('8/8/8/8/3Pp3/8/8/8 w - - 0 1');
       
       // Select d4 square (piece)
       element.selectPiece('d4');
+      await waitForMicroTask();
 
       element.selectSquare('e4'); // Select e4 square (occupied by another piece)
+      await waitForMicroTask();
 
       // Press Enter to attempt to move over the existing piece
       const board = element.shadowRoot?.querySelector('.board') as HTMLElement;
       board.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+      await waitForMicroTask();
 
       expect(element.getSelectedPieceSquare()).toBeNull(); // No piece should be selected
 

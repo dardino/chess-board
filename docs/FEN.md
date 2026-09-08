@@ -26,7 +26,7 @@ rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
 ## Piece Notation
 
 | Piece | White | Black | Description |
-|-------|-------|-------|-------------|
+| ----- | ----- | ----- | ----------- |
 | King | `K` | `k` | ♔ ♚ |
 | Queen | `Q` | `q` | ♕ ♛ |
 | Rook | `R` | `r` | ♖ ♜ |
@@ -49,7 +49,7 @@ const position = parseFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 
 
 if (position) {
   console.log(position.activeColor); // 'w'
-  console.log(position.pieces.length); // 32
+  console.log(Object.keys(position.pieces).length); // 32
 }
 ```
 
@@ -63,10 +63,10 @@ Converts a structured position object back to a FEN string.
 import { positionToFen, type FenPosition } from '@dardino/chess-board';
 
 const position: FenPosition = {
-  pieces: [
-    { type: 'k', color: 'w', square: 'e1' },
-    { type: 'k', color: 'b', square: 'e8' }
-  ],
+  pieces: {
+    e1: { type: 'k', color: 'w' },
+    e8: { type: 'k', color: 'b' }
+  },
   activeColor: 'w',
   castlingRights: 'KQkq',
   enPassantTarget: '-',
@@ -78,35 +78,34 @@ const fen = positionToFen(position);
 console.log(fen); // '4k3/8/8/8/8/8/8/4K3 w KQkq - 0 1'
 ```
 
-#### `parsePiecePlacement(piecePlacement: string): ChessPiece[] | null`
+#### `parsePiecePlacement(piecePlacement: string): { pieces: PiecesOnBoard; boardSize: { width: number; height: number } } | null`
 
-Parses only the piece placement part of FEN (first field).
+Parses only the piece placement part of FEN (first field) into a square-keyed piece map.
 
 ```typescript
 import { parsePiecePlacement } from '@dardino/chess-board';
 
-const pieces = parsePiecePlacement('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR');
+const placement = parsePiecePlacement('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR');
 
-if (pieces) {
-  console.log(pieces.length); // 32
-  const whiteKing = pieces.find(p => p.square === 'e1');
-  console.log(whiteKing); // { type: 'k', color: 'w', square: 'e1' }
+if (placement) {
+  console.log(Object.keys(placement.pieces).length); // 32
+  console.log(placement.pieces.e1); // { type: 'k', color: 'w' }
 }
 ```
 
-**Returns**: Array of `ChessPiece` objects or `null` if invalid.
+**Returns**: A `{ pieces, boardSize }` object, where `pieces` is a square-keyed map, or `null` if invalid.
 
-#### `piecesToFenString(pieces: ChessPiece[]): string`
+#### `piecesToFenString(pieces: PiecesOnBoard, isFfen?: boolean, boardSize?: { width: number; height: number }): string`
 
-Converts an array of pieces back to FEN piece placement string.
+Converts a square-keyed piece map back to the FEN piece placement string.
 
 ```typescript
-import { piecesToFenString, type ChessPiece } from '@dardino/chess-board';
+import { piecesToFenString, type PiecesOnBoard } from '@dardino/chess-board';
 
-const pieces: ChessPiece[] = [
-  { type: 'k', color: 'w', square: 'e1' },
-  { type: 'q', color: 'b', square: 'd8' }
-];
+const pieces: PiecesOnBoard = {
+  e1: { type: 'k', color: 'w' },
+  d8: { type: 'q', color: 'b' }
+};
 
 const fenString = piecesToFenString(pieces);
 console.log(fenString); // '3k4/8/8/8/8/8/8/4K3'
@@ -131,12 +130,12 @@ console.log(parsePieceChar('X')); // null (invalid)
 Converts a piece object back to FEN character.
 
 ```typescript
-import { pieceToChar, type ChessPiece } from '@dardino/chess-board';
+import { pieceToChar, type PieceInfo } from '@dardino/chess-board';
 
-const whiteKing: ChessPiece = { type: 'k', color: 'w', square: 'e1' };
+const whiteKing: PieceInfo = { type: 'k', color: 'w' };
 console.log(pieceToChar(whiteKing)); // 'K'
 
-const blackQueen: ChessPiece = { type: 'q', color: 'b', square: 'd8' };
+const blackQueen: PieceInfo = { type: 'q', color: 'b' };
 console.log(pieceToChar(blackQueen)); // 'q'
 ```
 
@@ -164,13 +163,15 @@ console.log(emptyFen); // '8/8/8/8/8/8/8/8 w - - 0 1'
 
 ## Type Definitions
 
-### `ChessPiece`
+### `PieceInfo`
 
 ```typescript
-interface ChessPiece {
+interface PieceInfo {
   type: ChessPieceType;     // 'k' | 'q' | 'r' | 'b' | 'n' | 'p'
-  color: ChessPieceColor;   // 'w' | 'b'
-  square: string;           // Algebraic notation, e.g., 'e4', 'a1'
+  color: ChessPieceColor;   // 'w' | 'b' | 'n'
+  rotation?: ChessPieceRotation; // Optional 45° increments
+  fairyName?: string;       // Optional fairy metadata
+  fairyCondition?: string;  // Optional fairy condition
 }
 ```
 
@@ -178,7 +179,7 @@ interface ChessPiece {
 
 ```typescript
 interface FenPosition {
-  pieces: ChessPiece[];     // All pieces on the board
+  pieces: PiecesOnBoard; // Square-keyed map, e.g. { e1: { type: 'k', color: 'w' } }
   activeColor: 'w' | 'b';   // Side to move
   castlingRights: string;   // Castling rights, e.g., 'KQkq' or '-'
   enPassantTarget: string;  // En passant target square or '-'
@@ -219,16 +220,16 @@ const endgame = parseFen('8/8/8/8/8/8/8/R3K2k w Q - 0 1');
 ### Creating Custom Positions
 
 ```typescript
-import { piecesToFenString, positionToFen, type ChessPiece } from '@dardino/chess-board';
+import { piecesToFenString, positionToFen, type PieceInfo, type PiecesOnBoard } from '@dardino/chess-board';
 
 // Create a custom piece arrangement
-const pieces: ChessPiece[] = [
-  { type: 'k', color: 'w', square: 'g1' },
-  { type: 'k', color: 'b', square: 'g8' },
-  { type: 'q', color: 'w', square: 'd1' },
-  { type: 'r', color: 'b', square: 'a8' },
-  { type: 'n', color: 'w', square: 'f3' }
-];
+const pieces: PiecesOnBoard = {
+  g1: { type: 'k', color: 'w' },
+  g8: { type: 'k', color: 'b' },
+  d1: { type: 'q', color: 'w' },
+  a8: { type: 'r', color: 'b' },
+  f3: { type: 'n', color: 'w' }
+};
 
 const piecePlacement = piecesToFenString(pieces);
 console.log(piecePlacement); // 'r3k3/8/8/8/8/5N2/8/3QK1K1'

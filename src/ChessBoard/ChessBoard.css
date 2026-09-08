@@ -8,7 +8,7 @@
   --internal-chess-piece-bg: var(--cb-chess-piece-bg, white);
   --internal-chess-outline-focus: var(--cb-chess-outline-focus, blue);
   --internal-chess-label-color: var(--cb-chess-label-color, #666);
-  
+
   user-select: none;
   -webkit-user-select: none;
 }
@@ -17,10 +17,10 @@
   font-family: "ScacchiPainter";
   src: url("./dist/ScacchiPainter.eot");
   src: url("./dist/ScacchiPainter.eot?#iefix") format("embedded-opentype"),
-       url("./dist/ScacchiPainter.woff2") format("woff2"),
-       url("./dist/ScacchiPainter.woff") format("woff"),
-       url("./dist/ScacchiPainter.ttf") format("truetype"),
-       url("./dist/ScacchiPainter.svg#ScacchiPainter") format("svg");
+    url("./dist/ScacchiPainter.woff2") format("woff2"),
+    url("./dist/ScacchiPainter.woff") format("woff"),
+    url("./dist/ScacchiPainter.ttf") format("truetype"),
+    url("./dist/ScacchiPainter.svg#ScacchiPainter") format("svg");
   font-weight: bold;
   font-style: normal;
 }
@@ -30,10 +30,10 @@
   display: grid;
   grid-template-columns: auto 1fr auto;
   grid-template-rows: auto 1fr auto;
-  grid-template-areas: 
-            "empty1 topbar empty2"
-            "leftbar board rightbar"
-            "empty3 bottombar empty4";
+  grid-template-areas:
+    "empty1 topbar empty2"
+    "leftbar board rightbar"
+    "empty3 bottombar empty4";
   width: 100%;
   height: 100%;
   min-width: 200px;
@@ -79,22 +79,25 @@
 .top-labels {
   grid-area: topbar;
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
+  grid-template-columns: repeat(var(--board-width, 8), 1fr);
 }
+
 .left-labels {
   grid-area: leftbar;
   display: grid;
-  grid-template-rows: repeat(8, 1fr);
+  grid-template-rows: repeat(var(--board-height, 8), 1fr);
 }
+
 .right-labels {
   grid-area: rightbar;
   display: grid;
-  grid-template-rows: repeat(8, 1fr);
+  grid-template-rows: repeat(var(--board-height, 8), 1fr);
 }
+
 .bottom-labels {
   grid-area: bottombar;
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
+  grid-template-columns: repeat(var(--board-width, 8), 1fr);
 }
 
 .board {
@@ -103,8 +106,8 @@
   display: grid;
   grid-column: 2 / -2;
   grid-row: 2 / -2;
-  grid-template-columns: repeat(8, 1fr);
-  grid-template-rows: repeat(8, 1fr);
+  grid-template-columns: repeat(var(--board-width, 8), 1fr);
+  grid-template-rows: repeat(var(--board-height, 8), 1fr);
   box-sizing: border-box;
   font-family: ScacchiPainter, monospace;
   aspect-ratio: 1;
@@ -129,11 +132,11 @@
   pointer-events: none;
 }
 
-.square > chess-piece,
-.square > .piece,
-.square > .label,
-.square > .piece-fg,
-.square > .piece-bg {
+.square>chess-piece,
+.square>.piece,
+.square>.label,
+.square>.piece-fg,
+.square>.piece-bg {
   position: relative;
   z-index: 1;
 }
@@ -145,7 +148,8 @@
 .board:focus {
   outline: 2px var(--internal-chess-outline-focus) solid;
 }
-.board:focus > .square.current {
+
+.board:focus>.square.current {
   outline: 2px green solid;
   z-index: 1;
 }
@@ -156,7 +160,7 @@
   z-index: 2;
 }
 
-.square.selected-piece > chess-piece {
+.square.selected-piece>chess-piece {
   transform: scale(1.1);
   filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.95));
 }
@@ -193,19 +197,23 @@
 
   font-family: 'ScacchiPainter', monospace;
   line-height: 1;
-  letter-spacing: 0px; /* to keep legatures working properly */
+  letter-spacing: 0px;
+  /* to keep legatures working properly */
 
 }
-.piece-fg, .piece-bg {
-    grid-column: 1 / -1;
-    inset: 0;
-    display: flex;
-    width: 100%;
-    height: 100%;
-    align-items: center;
-    justify-content: space-around;
-    grid-row: 1/ -1;
+
+.piece-fg,
+.piece-bg {
+  grid-column: 1 / -1;
+  inset: 0;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: space-around;
+  grid-row: 1/ -1;
 }
+
 .piece-bg {
   color: var(--internal-chess-piece-bg);
 }

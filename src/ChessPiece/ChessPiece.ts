@@ -2,9 +2,9 @@
  * ChessPiece Web Component
  * A custom element for displaying individual chess pieces
  */
+import { ChessPieceColor, ChessPieceRotation, ChessPieceType, FairyPieceMetadata, PieceInfo, StandardPieces, StandardPiecesList } from '../Common/Types';
 import style from './ChessPiece.css?raw';
 import template from './ChessPiece.html?raw';
-import { ChessPieceColor, ChessPieceRotation, ChessPieceType, FairyPieceMetadata, StandardPieces, StandardPiecesList } from './fen';
 
 const standardPieceNames = {
   k: 'King',
@@ -23,6 +23,9 @@ const standardPieceNames = {
 
 // Augment DOM typings so addEventListener/removeEventListener recognize the custom 'fairy-metadata-changed' event
 declare global {
+  interface Document {
+    createElement(tagName: 'chess-piece'): ChessPiece;
+  }
   interface HTMLElementEventMap {
     "fairy-metadata-changed": CustomEvent<FairyPieceMetadata>;
   }
@@ -35,6 +38,16 @@ export class ChessPiece extends HTMLElement {
   #rotation: ChessPieceRotation = '0';
   #fairyName: string = '';
   #fairyCondition: string = '';
+
+  toPieceInfo(): PieceInfo {
+    return {
+      type: this.#pieceType,
+      color: this.#pieceColor,
+      rotation: this.#rotation,
+      fairyName: this.#fairyName,
+      fairyCondition: this.#fairyCondition,
+    };
+  }
 
   get #isStandardPiece(): boolean {
     return StandardPiecesList.includes(this.#pieceType as typeof StandardPiecesList[number]);
@@ -262,9 +275,29 @@ export class ChessPiece extends HTMLElement {
     });
     this.dispatchEvent(event);
   }
+
+  equals(other: PieceInfo): boolean {
+    return isSamePiece(this.toPieceInfo(), other);
+  }
 }
 
 // Register the custom element
 if (!customElements.get('chess-piece')) {
   customElements.define('chess-piece', ChessPiece);
+}
+
+/**
+ * Compares two chess pieces for equality.
+ * @param existingPiece The existing piece information to compare
+ * @param piece The new piece information to compare against
+ * @returns True if both pieces are the same, false otherwise
+ */
+export function isSamePiece(existingPiece: PieceInfo | undefined | null, piece: PieceInfo | undefined | null): boolean {
+  if (!existingPiece && !piece) return true;
+  if (!existingPiece || !piece) return false;
+  return existingPiece.type === piece.type &&
+         existingPiece.color === piece.color &&
+         existingPiece.fairyName === piece.fairyName &&
+         existingPiece.fairyCondition === piece.fairyCondition &&
+         existingPiece.rotation === piece.rotation;
 }

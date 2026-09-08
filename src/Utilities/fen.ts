@@ -13,55 +13,14 @@
  * - Fullmove number (incremented after black's move)
  */
 
-export type ChessPieceType = StandardPieces | `${number}` | `'${string}` | `''${string}`;
-export type ChessPieceColor = 'w' | 'b' | 'n';
-export type ChessPieceRotation = '0' | '45' | '90' | '135' | '180' | '225' | '270' | '315';
-
-export const StandardPiecesList = [
-  'k', 'q', 'r', 'b', 'n', 'p', 'e', 't', 'a', 'x', 's', 'c'
-] as const;
-export type StandardPieces = typeof StandardPiecesList[number];
-export const StandardPieceEnum = Object.freeze(StandardPiecesList.reduce((acc, piece) => {
-  acc[piece] = piece;
-  return acc;
-}, {} as Record<string, string>)) as { readonly [K in StandardPieces]: K };
-
-/**
- * Represents a chess piece on the board
- */
-export interface FENChessPiece {
-  /** Piece type: 'k' (king), 'q' (queen), 'r' (rook), 'b' (bishop), 'n' (knight), 'p' (pawn) */
-  type: ChessPieceType;
-  /** Piece color: 'w' (white) or 'b' (black) */
-  color: ChessPieceColor;
-  /** Square coordinate in algebraic notation (e.g., 'e4', 'a1') */
-  square: string;
-  /** Optional: Fairy piece name (FFEN only) */
-  fairyName?: string;
-  /** Optional: Fairy piece condition (FFEN only) */
-  fairyCondition?: string;
-  /** Optional: Rotation in increments of 45° (0, 45, 90, 135, 180, 225, 270, 315) (FFEN only) */
-  rotation?: ChessPieceRotation;
-  /** Optional: Is this a neutral piece? (FFEN only) */
-  isNeutral?: true;
-}
-
-/**
- * Represents fairy piece metadata in FFEN
- */
-export type FairyPieceMetadata = {
-  /** Fairy piece name */
-  fairyName?: string;
-  /** Fairy piece condition */
-  fairyCondition?: string;
-}
+import { ChessPieceColor, ChessPieceRotation, ChessPieceType, FairyPieceMetadata, FairySquare, PieceInfo, PiecesOnBoard, StandardPieces, StandardPiecesList } from "../Common/Types";
 
 /**
  * Represents a complete FEN position
  */
 export interface FenPosition {
   /** List of pieces on the board */
-  pieces: FENChessPiece[];
+  pieces: PiecesOnBoard;
   /** Active color: 'w' for white, 'b' for black */
   activeColor: 'w' | 'b';
   /** Castling rights: combination of 'K', 'Q', 'k', 'q', or '-' for none */
@@ -72,7 +31,19 @@ export interface FenPosition {
   halfmoveClock: number;
   /** Fullmove number (increments after black's move) */
   fullmoveNumber: number;
+  /** Board size for FFEN (optional, defaults to 8x8) */
+  boardSize: { width: number; height: number };
 }
+
+export const StartingPosition: FenPosition = {
+  pieces: {},
+  activeColor: 'w',
+  castlingRights: 'KQkq',
+  enPassantTarget: '-',
+  halfmoveClock: 0,
+  fullmoveNumber: 1,
+  boardSize: { width: 8, height: 8 }
+};
 
 /**
  * Converts a FEN string to a structured position object
@@ -149,9 +120,10 @@ export function parseFen(fen: string): FenPosition | null {
       return null;
     } else {
       // Assign fairy metadata to pieces if applicable
-      for (const piece of pieces) {
-        const metadata = fairyMetadata[piece.square];
-        if (metadata) {
+      for (const square of Object.keys(pieces) as FairySquare[]) {
+        const piece = pieces[square];
+        const metadata = fairyMetadata[square];
+        if (piece && metadata) {
           piece.fairyName = metadata.fairyName;
           piece.fairyCondition = metadata.fairyCondition;
         }
@@ -165,7 +137,8 @@ export function parseFen(fen: string): FenPosition | null {
     castlingRights,
     enPassantTarget,
     halfmoveClock,
-    fullmoveNumber
+    fullmoveNumber,
+    boardSize
   };
 }
 
@@ -176,11 +149,12 @@ export function parseFen(fen: string): FenPosition | null {
  * @returns FEN or FFEN string representation
  */
 export function positionToFen(position: FenPosition): string {
+  const boardSize = position.boardSize ?? { width: 8, height: 8 };
   const isFfen =
-    position.pieces.some(
-      p => p.color === 'n' || p.isNeutral || p.rotation !== undefined || p.fairyName !== undefined || p.fairyCondition !== undefined
+    (Object.values(position.pieces)).some(
+      (p) => p?.color === 'n' || p?.rotation !== undefined || p?.fairyName !== undefined || p?.fairyCondition !== undefined
     );
-  const piecePlacement = piecesToFenString(position.pieces, isFfen);
+  const piecePlacement = piecesToFenString(position.pieces, isFfen, boardSize);
   const fenParts = [
     piecePlacement,
     position.activeColor,
@@ -191,9 +165,11 @@ export function positionToFen(position: FenPosition): string {
   ];
 
   // Add fairy metadata block if present
-  const fairySourceBlock = position.pieces
-    .filter(p => p.fairyName || p.fairyCondition)
-    .map(p => `${p.square}:${p.fairyName || ''}:${p.fairyCondition || ''}`);
+  const fairySourceBlock = Object.entries(position.pieces)
+    .map(([square, p]) => (p?.fairyName || p?.fairyCondition) 
+      ? `${square}:${p?.fairyName || ''}:${p?.fairyCondition || ''}` 
+      : null)
+    .filter(item => item !== null);
 
   if (fairySourceBlock && fairySourceBlock.length > 0) {
     fenParts.push(fairySourceBlock.join(','));
@@ -211,7 +187,7 @@ const RankRx = /(?<piece>(?<rotation>\*(?<degree>[0-3](?:\.[5])?))?(?<figure>(?<
  * @returns Array of pieces or null if invalid
  */
 export function parsePiecePlacement(piecePlacement: string): { 
-  pieces: FENChessPiece[], 
+  pieces: PiecesOnBoard, 
   boardSize: { width: number, height: number }
 } | null {
   if (!piecePlacement || typeof piecePlacement !== 'string') {
@@ -220,7 +196,7 @@ export function parsePiecePlacement(piecePlacement: string): {
   }
   const ranks = piecePlacement.split('/');
 
-  const pieces: FENChessPiece[] = [];
+  const pieces: PiecesOnBoard = {};
   const boardHeight = ranks.length;
   let boardWidth = 0; // Standard chess board width is equal to height, but FFEN can be rectangular
 
@@ -231,24 +207,23 @@ export function parsePiecePlacement(piecePlacement: string): {
     RankRx.lastIndex = 0; // Reset regex state before parsing each rank
     while (null !== (matches = RankRx.exec(rankStr))) {
       const fileChar = matches.groups?.figure || matches.groups?.emptyspaces;
-      if (!fileChar) continue;
+      if (!fileChar) continue;      
       if (/^[0-9]$/.test(fileChar)) {
         currentFile += parseInt(fileChar, 10);
-        continue; // Skip empty spaces        
+        continue; // Skip empty spaces
       }
       const file = currentFile;
-      const info: FENChessPiece = {
+      const square = (String.fromCharCode(97 + file) + (boardHeight - rank).toString()) as FairySquare; // 'a' + file, rank from bottom
+      const info: PieceInfo = {
         type: matches.groups?.letter.toLowerCase() as ChessPieceType,
-        square: String.fromCharCode(97 + file) + (boardHeight - rank).toString(), // 'a' + file, rank from bottom
         color: matches.groups?.letter === matches.groups?.letter?.toLowerCase() ? 'b' : 'w',
       };
       if (matches.groups?.neutral === '-') {
-        info.isNeutral = true;
         info.color = 'n';
       }
       if (matches.groups?.rotation)
         info.rotation = (parseFloat(matches.groups?.degree ?? "0") * 90).toString() as ChessPieceRotation;
-      pieces.push(info);
+      pieces[square] = info;
       currentFile++;
     }
     if (currentFile !== boardWidth && boardWidth !== 0) {
@@ -272,27 +247,17 @@ export function parsePiecePlacement(piecePlacement: string): {
  * @param isFfen - If true, use FFEN extended serialization (neutral pieces, rotations, fairy types)
  * @returns FEN piece placement string
  */
-export function piecesToFenString(pieces: FENChessPiece[], isFfen: boolean = false): string {
-  const board: (FENChessPiece | null)[][] = Array(8).fill(null).map(() => Array(8).fill(null));
-  const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-
-  // Place pieces on board
-  for (const piece of pieces) {
-    const file = files.indexOf(piece.square[0]);
-    const rank = 8 - parseInt(piece.square[1], 10);
-    if (file >= 0 && rank >= 0 && rank < 8) {
-      board[rank][file] = piece;
-    }
-  }
+export function piecesToFenString(pieces: PiecesOnBoard, isFfen: boolean = false, boardSize: { width: number; height: number } = { width: 8, height: 8 }): string {
+  const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k'].slice(0, boardSize.width);
 
   // Convert to FEN ranks
   const ranks: string[] = [];
-  for (let rank = 0; rank < 8; rank++) {
+  for (let rank = 0; rank < boardSize.height; rank++) {
     let rankStr = '';
     let emptyCount = 0;
-
-    for (let file = 0; file < 8; file++) {
-      const piece = board[rank][file];
+    for (let file = 0; file < boardSize.width; file++) {
+      const square = `${files[file]}${boardSize.height - rank}` as FairySquare;      
+      const piece = pieces[square] ?? null;
       if (piece) {
         if (emptyCount > 0) {
           rankStr += emptyCount.toString();
@@ -301,6 +266,11 @@ export function piecesToFenString(pieces: FENChessPiece[], isFfen: boolean = fal
         rankStr += isFfen ? pieceToFfenChar(piece) : pieceToChar(piece);
       } else {
         emptyCount++;
+        // manage big fairy chessboard
+        if (emptyCount === 8) {
+          rankStr += '8';
+          emptyCount = 0;
+        }
       }
     }
 
@@ -475,7 +445,7 @@ export function parseFairyMetadata(fairyBlock: string): Record<string, FairyPiec
  * @param piece - Piece object with optional FFEN extensions
  * @returns FFEN character string (e.g., 'K', '*1B', '-q', '*2.5r')
  */
-export function pieceToFfenChar(piece: FENChessPiece): string {
+export function pieceToFfenChar(piece: PieceInfo): string {
   let result = '';
 
   // Add rotation prefix if present
@@ -501,7 +471,7 @@ export function pieceToFfenChar(piece: FENChessPiece): string {
   }
 
   // Add neutral prefix if neutral
-  result += ((piece.isNeutral) ? "-" : "") + piece.type;
+  result += ((piece.color === 'n') ? "-" : "") + piece.type;
 
   // Set Case by color
   if (piece.color === 'b') {
@@ -519,7 +489,7 @@ export function pieceToFfenChar(piece: FENChessPiece): string {
  * @param piece - Piece object
  * @returns FEN character (e.g., 'K', 'q', 'P')
  */
-export function pieceToChar(piece: FENChessPiece): string {
+export function pieceToChar(piece: PieceInfo): string {
   const char = piece.type.toUpperCase();
   return piece.color === 'w' ? char : char.toLowerCase();
 }
