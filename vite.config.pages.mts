@@ -6,11 +6,11 @@ export default defineConfig({
   clearScreen: true,
   build: {
     outDir: 'github-pages',
-    rolldownOptions: {
+    rollupOptions: {
       input: {
-        "index": 'index.html',
-        "demo": 'demo.html',
-        "api": "demo-api.html"
+        index: 'index.html',
+        demo: 'demo.html',
+        api: 'demo-api.html'
       }
     }
   }
