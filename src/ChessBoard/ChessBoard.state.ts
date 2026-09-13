@@ -1,7 +1,7 @@
 import { CellDecorator, FairySquare, PieceInfo, Square } from "../Common/Types";
 import { FenPosition, parseFen, positionToFen, StartingPosition } from "../Utilities/fen";
 
-export interface ChessBoardStateInterface {
+export type ChessBoardStateInterface = {
   fen: string;
   currentSquare: FairySquare | null;
   selectedPieceSquare: FairySquare | null;
@@ -41,32 +41,50 @@ export class ChessBoardState {
     return this.#state.position;
   }
 
+  pendingUIUpdate = false;
   constructor(initialFEN: string, renderer: RendererFunction) {
     this.#state = { fen: initialFEN, currentSquare: null, selectedPieceSquare: null, cellDecorators: {}, boardOrientation: "w", position: { ...StartingPosition } };
     this.#renderer = renderer;
     this.#state.position = parseFen(initialFEN) ?? { ...StartingPosition };
-    this.#triggerRenderer();
+    this.pendingUIUpdate = false;
+    this.setState(state => ({ ...state }));
   }
 
-  #alreadyQueued = false;
-  #triggerRenderer = (): void => {
-    if (this.#alreadyQueued) return;
-    this.#alreadyQueued = true;
+  private setState(stateModifier: (currentState: ChessBoardStateInterface) => ChessBoardStateInterface): void {
+    if (!this.pendingUIUpdate) { // alla prima chiamata, salva lo stato precedente
+      // Save the previous state before applying the state modifier
+      this.#prevState = this.#state;
+    }
+    // Apply the state modifier to get the new state
+    this.#state = stateModifier(JSON.parse(JSON.stringify(this.#state)));
+    // if Fen has changed, update the position
+    if (this.#state.fen !== this.#prevState?.fen)
+      this.#state.position = parseFen(this.#state.fen) ?? { ...StartingPosition };
+
+    // Now is time to render the new state if not alredy queued
+    if (this.pendingUIUpdate) return;
+    // Trigger the renderer to update the UI with the new state
+    this.pendingUIUpdate = true;
     queueMicrotask(() => {
-      this.#alreadyQueued = false;
+      this.pendingUIUpdate = false;
       this.#renderer({ oldState: this.#prevState, newState: this.#state });
     });
-  };
+  }
 
-  SetState(stateModifier: (currentState: ChessBoardStateInterface) => ChessBoardStateInterface): void {
-    // Save the previous state before applying the state modifier
-    this.#prevState = this.#state;
-    // Apply the state modifier to get the new state
-    this.#state = stateModifier(this.#state);
-    // if Fen has changed, update the position
-    if (this.#state.fen !== this.#prevState?.fen) this.#state.position = parseFen(this.#state.fen) ?? { ...StartingPosition };
-    // Trigger the renderer to update the UI with the new state
-    this.#triggerRenderer();
+  SetFen(fen: string): void {
+    this.setState(currentState => ({ ...currentState, fen }));
+  }
+
+  SetCurrentSquare(square: FairySquare | null): void {
+    this.setState(currentState => ({ ...currentState, currentSquare: square }));
+  }
+
+  SetSelectedPieceSquare(square: FairySquare | null): void {
+    this.setState(currentState => ({ ...currentState, selectedPieceSquare: square }));
+  }
+
+  SetCellDecorators(cellDecorators: Partial<Record<Square, CellDecorator>>): void {
+    this.setState(currentState => ({ ...currentState, cellDecorators: { ...cellDecorators } }));
   }
 
   /**
@@ -113,7 +131,7 @@ export class ChessBoardState {
         break;
     }
 
-    this.SetState(currentState => ({ 
+    this.setState(currentState => ({ 
       ...currentState, 
       fen: positionToFen(this.#state.position)
     }));
@@ -125,7 +143,7 @@ export class ChessBoardState {
    * @param piece The piece information to be added to the specified square.
    */
   AddPiece(square: FairySquare, piece: PieceInfo): void {
-    this.SetState(currentState => ({ 
+    this.setState(currentState => ({ 
       ...currentState, 
       fen: positionToFen({ 
         ...this.#state.position, 
@@ -142,10 +160,13 @@ export class ChessBoardState {
    * @param square The square on the chessboard from which the piece should be removed.
    */
   RemovePiece(square: FairySquare): void {
+    console.log("🚀 ~ ChessBoardState ~ RemovePiece ~ square:", square)
     delete this.#state.position.pieces[square];
-    this.SetState(currentState => ({ 
-      ...currentState, 
-      fen: positionToFen(this.#state.position)
+    const newFen = positionToFen(this.#state.position);
+    console.log("🚀 ~ ChessBoardState ~ RemovePiece ~ newFen:", newFen);
+    this.setState(currentState => ({ 
+      ...currentState,
+      fen: newFen
     }));
   }
 
@@ -156,7 +177,7 @@ export class ChessBoardState {
    * @param orientation The orientation of the chessboard, either "w" for white or "b" for black.
    */
   SetBoardOrientation(orientation: "w" | "b"): void {
-    this.SetState(currentState => ({
+    this.setState(currentState => ({
       ...currentState,
       boardOrientation: orientation
     }));

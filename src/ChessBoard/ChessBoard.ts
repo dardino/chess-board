@@ -398,7 +398,7 @@ export class ChessBoard extends HTMLElement {
     if (oldValue !== newValue) {
       if (name === 'fen') {
         if (this.#state.fen === newValue) return; // No change, no need to update
-        this.#state.SetState((old) => ({ ...old, fen: newValue || '' }));
+        this.#state.SetFen(newValue || '');
       } else if (name === 'hide-labels') {
         this.#updateLabelsVisibility();
       }
@@ -603,12 +603,12 @@ export class ChessBoard extends HTMLElement {
   }
 
   #setCurrentSquare(coordinate: FairySquare): void {
-    this.#state.SetState(state => ({ ...state, currentSquare: coordinate }));
+    this.#state.SetCurrentSquare(coordinate);
   }
 
 
   #clearSelectedPiece(): void {
-    this.#state.SetState(state => ({ ...state, selectedPieceSquare: null }));
+    this.#state.SetSelectedPieceSquare(null);
   }
 
   #moveUp(current: FairySquare, isRotated: boolean): FairySquare | null {
@@ -655,10 +655,7 @@ export class ChessBoard extends HTMLElement {
 
   #removePieceFromCurrentSquare(): void {
     if (!this.#state.currentSquare) return;
-    delete this.#state.position.pieces[this.#state.currentSquare];
-    this.#state.SetState(state => ({ ...state,
-      fen: positionToFen(this.#state.position)
-    }));
+    this.removePiece(this.#state.currentSquare);
   }
 
   /**
@@ -792,7 +789,7 @@ export class ChessBoard extends HTMLElement {
       }
     }
 
-    this.#state.SetState(state => ({ ...state, cellDecorators: { ...decoratorsMap } }));
+    this.#state.SetCellDecorators({ ...decoratorsMap });
     this.#updateCellDecorators();
   }
 
@@ -820,7 +817,7 @@ export class ChessBoard extends HTMLElement {
 
     const newFen = positionToFen(position);
     if (oldFen !== newFen) {
-      this.#state.SetState(currentState => ({ ...currentState, fen: newFen }));
+      this.#state.SetFen(newFen);
       if (triggerChange) this.#triggerFenChangeEvent();
     }
   }
@@ -831,6 +828,7 @@ export class ChessBoard extends HTMLElement {
    */
   #render: RendererFunction = ({oldState, newState}): void => {
     const currentFen = oldState?.fen;
+    console.log("🚀 ~ ChessBoard ~ RENDER - currentFen:", currentFen)
     this.fen = newState.fen;
 
     const width = newState.position.boardSize.width;
@@ -905,7 +903,7 @@ export class ChessBoard extends HTMLElement {
     } else  if (this.#state.selectedPieceSquare === coordinate) {
       this.#clearSelectedPiece();
     } else {
-      this.#state.SetState(state => ({ ...state, selectedPieceSquare: coordinate }));
+      this.#state.SetSelectedPieceSquare(coordinate);
       returnValue = true;
     }
 
@@ -974,7 +972,7 @@ export class ChessBoard extends HTMLElement {
    * @param coordinate - Square coordinate (FairySquare) (e.g., "e4", "a1")
    */
   selectSquare(coordinate: FairySquare): void {
-    this.#state.SetState(state => ({ ...state, currentSquare: coordinate }));
+    this.#state.SetCurrentSquare(coordinate);
   }
 
   /**
@@ -1009,10 +1007,7 @@ export class ChessBoard extends HTMLElement {
     if (!isValidCoordinate(square, this.#state.position.boardSize)) {
       throw new Error(`Invalid square coordinate: ${square}. Must be a valid square from a1 to h8.`);
     }
-    delete this.#state.position.pieces[square];
-    this.#state.SetState(state => ({ ...state,
-      fen: positionToFen(this.#state.position)
-    }));
+    this.#state.RemovePiece(square);
   }
 
   /**
@@ -1077,15 +1072,10 @@ export class ChessBoard extends HTMLElement {
         throw new Error(`Invalid square coordinate: ${square}. Must be a valid square from a1 to h8.`);
       }
     });
-    this.#state.SetState(old => {
-      return { 
-        ...old,
-        fen: positionToFen({
-          ...old.position,
-          pieces
-        })
-      };
-    });
+    this.#state.SetFen(positionToFen({
+      ...this.#state.position,
+      pieces
+    }));
   }
 
   /**
