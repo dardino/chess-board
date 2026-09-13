@@ -115,7 +115,6 @@
 
 .square {
   position: relative;
-  cursor: pointer;
   font-size: 10.5cqw;
   overflow: hidden;
 }

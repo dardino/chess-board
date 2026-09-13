@@ -263,14 +263,11 @@ describe("ChessBoard State", () => {
   });
 
   // --- SetState ---
-  it("should allow custom state modifications via SetState", async () => {
+  it("should allow custom state modifications via dedicated setters", async () => {
     const fn: RendererFunction = vi.fn();
     const state = new ChessBoardState("8/8/8/8/8/8/8/8", fn);
-    state.SetState(current => ({
-      ...current,
-      currentSquare: "e4",
-      selectedPieceSquare: "e2"
-    }));
+    state.SetCurrentSquare("e4");
+    state.SetSelectedPieceSquare("e2");
     await waitForMicroTask();
     expect(fn).toHaveBeenCalled();
     expect(fn).toHaveBeenCalledWith(expect.objectContaining({
@@ -284,7 +281,7 @@ describe("ChessBoard State", () => {
   it("should preserve previous state for renderer callback", async () => {
     const fn: RendererFunction = vi.fn();
     const state = new ChessBoardState("8/8/8/8/8/8/8/8", fn);
-    state.SetState(current => ({ ...current, currentSquare: "e4" }));
+    state.SetCurrentSquare("e4");
     await waitForMicroTask();
     expect(fn).toHaveBeenCalledWith(expect.objectContaining({
       oldState: expect.objectContaining({
@@ -296,14 +293,11 @@ describe("ChessBoard State", () => {
     }));
   });
 
-  it("should update position when FEN changes via SetState", async () => {
+  it("should update position when FEN changes via SetFen", async () => {
     const fn: RendererFunction = vi.fn();
     const state = new ChessBoardState("8/8/8/8/8/8/8/8", fn);
     expect(state.position.pieces).toEqual({});
-    state.SetState(current => ({
-      ...current,
-      fen: "4P3/8/8/8/8/8/8/8"
-    }));
+    state.SetFen("4P3/8/8/8/8/8/8/8");
     await waitForMicroTask();
     expect(state.position.pieces["e8"]).toEqual({ type: "p", color: "w" } satisfies PieceInfo);
   });
@@ -319,7 +313,7 @@ describe("ChessBoard State", () => {
     const fn: RendererFunction = vi.fn();
     const state = new ChessBoardState("8/8/8/8/8/8/8/8", fn);
     expect(state.currentSquare).toBeNull();
-    state.SetState(current => ({ ...current, currentSquare: "e4" }));
+    state.SetCurrentSquare("e4");
     await waitForMicroTask();
     expect(state.currentSquare).toBe("e4");
   });
@@ -328,7 +322,7 @@ describe("ChessBoard State", () => {
     const fn: RendererFunction = vi.fn();
     const state = new ChessBoardState("8/8/8/8/8/8/8/8", fn);
     expect(state.selectedPieceSquare).toBeNull();
-    state.SetState(current => ({ ...current, selectedPieceSquare: "e2" }));
+    state.SetSelectedPieceSquare("e2");
     await waitForMicroTask();
     expect(state.selectedPieceSquare).toBe("e2");
   });
@@ -337,10 +331,7 @@ describe("ChessBoard State", () => {
     const fn: RendererFunction = vi.fn();
     const state = new ChessBoardState("8/8/8/8/8/8/8/8", fn);
     expect(state.cellDecorators).toEqual({});
-    state.SetState(current => ({
-      ...current,
-      cellDecorators: { e4: { backgroundColor: "yellow", innerBorder: "red" } }
-    }));
+    state.SetCellDecorators({ e4: { backgroundColor: "yellow", innerBorder: "red" } });
     await waitForMicroTask();
     expect(state.cellDecorators["e4"]).toEqual({ backgroundColor: "yellow", innerBorder: "red" });
   });
@@ -359,9 +350,9 @@ describe("ChessBoard State", () => {
   it("should batch multiple state changes into single renderer call", async () => {
     const fn: RendererFunction = vi.fn();
     const state = new ChessBoardState("8/8/8/8/8/8/8/8", fn);
-    state.SetState(current => ({ ...current, currentSquare: "e4" }));
-    state.SetState(current => ({ ...current, currentSquare: "e5" }));
-    state.SetState(current => ({ ...current, currentSquare: "e6" }));
+    state.SetCurrentSquare("e4");
+    state.SetCurrentSquare("e5");
+    state.SetCurrentSquare("e6");
     await waitForMicroTask();
     // Only one call due to #alreadyQueued deduplication
     expect(fn).toHaveBeenCalledTimes(1);
@@ -375,11 +366,11 @@ describe("ChessBoard State", () => {
   it("should allow subsequent renderer calls after microtask completes", async () => {
     const fn: RendererFunction = vi.fn();
     const state = new ChessBoardState("8/8/8/8/8/8/8/8", fn);
-    state.SetState(current => ({ ...current, currentSquare: "e4" }));
+    state.SetCurrentSquare("e4");
     await waitForMicroTask();
     expect(fn).toHaveBeenCalledTimes(1);
 
-    state.SetState(current => ({ ...current, currentSquare: "e5" }));
+    state.SetCurrentSquare("e5");
     await waitForMicroTask();
     expect(fn).toHaveBeenCalledTimes(2);
   });
@@ -490,10 +481,7 @@ describe("ChessBoard State", () => {
   it("should persist cell decorators across state changes", async () => {
     const fn: RendererFunction = vi.fn();
     const state = new ChessBoardState("8/8/8/8/8/8/8/8", fn);
-    state.SetState(current => ({
-      ...current,
-      cellDecorators: { e4: { backgroundColor: "green", innerBorder: "blue" } }
-    }));
+    state.SetCellDecorators({ e4: { backgroundColor: "green", innerBorder: "blue" } });
     await waitForMicroTask();
 
     state.MovePiece("e2", "e4");
