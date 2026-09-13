@@ -13,12 +13,13 @@ import template from './ChessBoard.html?raw';
 import { drawAllCells, drawBoardLabels, setCurrentSelectedPiece, setCurrentSquare, syncPiecesToCell } from './ChessBoard.renderer';
 import { ChessBoardState, RendererFunction } from './ChessBoard.state';
 
-type ModifierKeys = Pick<MouseEvent, 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'>;
+export type ModifierKeys = Pick<MouseEvent, 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'>;
 
 export interface CellClickEventDetail {
   square: string;
   piece?: PieceInfo;
   button: "main" | "context" | "auxiliary";
+  modifiers: ModifierKeys;
 }
 
 const buttonMap: Record<number, "main" | "context" | "auxiliary"> = {
@@ -483,6 +484,12 @@ export class ChessBoard extends HTMLElement {
         square,
         piece,
         button: "context",
+        modifiers: {
+          shiftKey: ev.shiftKey,
+          ctrlKey: ev.ctrlKey,
+          altKey: ev.altKey,
+          metaKey: ev.metaKey,
+        }
       } satisfies CellClickEventDetail,
       bubbles: true,
       composed: true,
@@ -548,6 +555,7 @@ export class ChessBoard extends HTMLElement {
           square: cell,
           piece,
           button,
+          modifiers: mods,
         } satisfies CellClickEventDetail,
         bubbles: true,
         composed: true,
