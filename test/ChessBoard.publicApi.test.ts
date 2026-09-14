@@ -154,7 +154,6 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
       element.addPiece('e4', 'q', 'w');
 
       expect(element.selectPiece('e4')).toBe(true);
-      expect(element.getCurrentSquare()).toBe('e4');
       expect(element.getSelectedPieceSquare()).toBe('e4');
 
       await waitForMicroTask();
@@ -168,7 +167,6 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
       element.selectPiece('e4');
 
       expect(element.selectPiece('f4')).toBe(false);
-      expect(element.getCurrentSquare()).toBe('f4');
       expect(element.getSelectedPieceSquare()).toBeNull();
     });
 

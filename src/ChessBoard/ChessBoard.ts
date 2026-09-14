@@ -5,7 +5,7 @@
 import { ChessPiece } from '../ChessPiece/ChessPiece';
 import { CellDecorator, ChessPieceColor, ChessPieceRotation, ChessPieceType, FairyPieceMetadata, FairySquare, PieceInfo, PieceInfoWithSquare, PiecesOnBoard, Square } from '../Common/Types';
 import { isValidCoordinate } from '../Utilities/board';
-import { FenPosition, positionToFen } from '../Utilities/fen';
+import { positionToFen } from '../Utilities/fen';
 import { checkModifiers } from '../Utilities/keyboard';
 import { applyTemplateAndCss, bindToAttribute } from '../Utilities/webcomponent';
 import style from './ChessBoard.css?raw';
@@ -66,7 +66,7 @@ declare global {
 
 export class ChessBoard extends HTMLElement {
   static get observedAttributes(): string[] {
-    return ['fen', 'hide-labels', 'disabled', 'black-to-move'];
+    return ['fen', 'disabled', 'black-to-move'];
   }
 
   #shadow: ShadowRoot;
@@ -116,6 +116,16 @@ export class ChessBoard extends HTMLElement {
    * Whether piece addition is disabled on the chessboard.
    */
   public disablePieceAddition: boolean = false;  
+  @bindToAttribute('disable-piece-removal', "boolean")
+  /**
+   * Whether piece removal is disabled on the chessboard.
+   */
+  public disablePieceRemoval: boolean = false;
+  @bindToAttribute('disable-piece-movement', "boolean")
+  /**
+   * Whether piece movement is disabled on the chessboard.
+   */
+  public disablePieceMovement: boolean = false;  
   @bindToAttribute('ignore-fen-active-color', "boolean")
   /**
    * Whether to ignore the active color specified in the FEN string.
@@ -156,7 +166,7 @@ export class ChessBoard extends HTMLElement {
     const newSquare = this.#moveUp(this.#state.currentSquare!, this.blackToMove);
     if (newSquare) {
       event.preventDefault();
-      this.#setCurrentSquare(newSquare);
+      this.#state.SetCurrentSquare(newSquare);
     }
   };
   #handleArrowDown = (event: KeyboardEvent): void => {
@@ -174,7 +184,7 @@ export class ChessBoard extends HTMLElement {
     const newSquare = this.#moveDown(this.#state.currentSquare!, this.blackToMove);
     if (newSquare) {
       event.preventDefault();
-      this.#setCurrentSquare(newSquare);
+      this.#state.SetCurrentSquare(newSquare);
     }
   };
   #handleArrowLeft = (event: KeyboardEvent): void => {
@@ -187,7 +197,7 @@ export class ChessBoard extends HTMLElement {
     const newSquare = this.#moveLeft(this.#state.currentSquare!);
     if (newSquare) {
       event.preventDefault();
-      this.#setCurrentSquare(newSquare);
+      this.#state.SetCurrentSquare(newSquare);
     }
   };
   #handleArrowRight = (event: KeyboardEvent): void => {
@@ -200,21 +210,20 @@ export class ChessBoard extends HTMLElement {
     const newSquare = this.#moveRight(this.#state.currentSquare!);
     if (newSquare) {
       event.preventDefault();
-      this.#setCurrentSquare(newSquare);
+      this.#state.SetCurrentSquare(newSquare);
     }
   };
   #handleDelete = (event: KeyboardEvent): void => {
     if (!checkModifiers(event)) return;
     this.#removePieceFromCurrentSquare();
-    this.#clearSelectedPiece();
-    this.#serializeBoardState(true);
+    this.#state.SetSelectedPieceSquare(null);
     event.preventDefault();
   };
   #handleEscape = (event: KeyboardEvent): void => {
     if (!checkModifiers(event)) return;
     // If a piece is selected, clear the selection
     if (this.#state.selectedPieceSquare !== null) {
-      this.#clearSelectedPiece();
+      this.#state.SetSelectedPieceSquare(null);
     } else if (event.shiftKey) {
       this.setStartingPosition();
     } else {
@@ -241,7 +250,7 @@ export class ChessBoard extends HTMLElement {
     }
     // If the current square has a piece and a piece is already selected, toggle selection
     else if (currentSquareHasPiece && currentSelection === this.#state.currentSquare) {
-      this.#clearSelectedPiece();
+      this.#state.SetSelectedPieceSquare(null);
       return;
     }
     // If the current square does not have a piece and no piece is selected, do nothing
@@ -256,6 +265,7 @@ export class ChessBoard extends HTMLElement {
   };
   
   #movePiece = (fromSquare: FairySquare, toSquare: FairySquare, cloneMode: "clone" | "changecolor" | "none"): void => {
+    if (this.disablePieceMovement) return;
     const piece = this.#getPieceAtSquare(fromSquare);
     if (piece) {
       if (cloneMode === "none") {
@@ -268,8 +278,7 @@ export class ChessBoard extends HTMLElement {
       }
       this.#state.AddPiece(toSquare, piece);
     }
-    this.#clearSelectedPiece();
-    this.#serializeBoardState(true);
+    this.#state.SetSelectedPieceSquare(null);
   };
 
   #handleAddPiece = (pieceType: ChessPieceType, color: ChessPieceColor): (event: KeyboardEvent) => void => {
@@ -280,7 +289,6 @@ export class ChessBoard extends HTMLElement {
         type: pieceType,
         color
       });
-      this.#serializeBoardState(true);
       event.preventDefault();
     };
   };
@@ -371,9 +379,8 @@ export class ChessBoard extends HTMLElement {
         && event.key !== 'Control'
         && event.key !== 'Alt'
         && event.key !== 'Meta'
-      ) this.#clearSelectedPiece();
-    
-    this.#serializeBoardState(true);
+      ) this.#state.SetSelectedPieceSquare(null);
+   
   }
   //#endregion
 
@@ -399,9 +406,8 @@ export class ChessBoard extends HTMLElement {
     if (oldValue !== newValue) {
       if (name === 'fen') {
         if (this.#state.fen === newValue) return; // No change, no need to update
+        this.#skipFenChangeEvent = true;
         this.#state.SetFen(newValue || '');
-      } else if (name === 'hide-labels') {
-        this.#updateLabelsVisibility();
       }
 
       if (name === "disabled") {
@@ -417,11 +423,10 @@ export class ChessBoard extends HTMLElement {
   #firstRender(): void {
     if (this.#firstRenderDone) return;
     this.#firstRenderDone = true;    // Update labels visibility based on attribute
-    this.#updateLabelsVisibility();
 
     // Restore current square selection if it exists
     if (this.#state.currentSquare) {
-      this.#setCurrentSquare(this.#state.currentSquare);
+      this.#state.SetCurrentSquare(this.#state.currentSquare);
     }
 
   }
@@ -511,9 +516,9 @@ export class ChessBoard extends HTMLElement {
     // If the square is already current, call SelectedPiece logic to toggle selection or move piece
     const alreadyCurrent = this.#state.currentSquare === square;
     if (alreadyCurrent) {
-      this.selectPiece(square);
+      this.#setSelectedPiece(square);
     } else {
-      this.#setCurrentSquare(square);
+      this.#state.SetCurrentSquare(square);
       // check if a piece is selected and if so, move it to the clicked square
       if (this.#state.selectedPieceSquare !== square && this.#state.selectedPieceSquare) {
         const piece = this.getPieceAt(this.#state.selectedPieceSquare);
@@ -527,7 +532,7 @@ export class ChessBoard extends HTMLElement {
         }
       } else if (this.autoSelectPieceOnClick) {
         // else if auto-select is enabled, select the piece on the clicked square if it has one
-        this.selectPiece(square);
+        this.#setSelectedPiece(square);
       }
     }    
   }
@@ -542,7 +547,6 @@ export class ChessBoard extends HTMLElement {
   #handleSquareClick(square: HTMLElement, button: "main" | "context" | "auxiliary", mods: ModifierKeys): boolean {
     const cell = square.getAttribute('data-coordinate') as FairySquare | null;
     if (!cell) return false; // ensure the square has a valid coordinate
-
     const piece = this.getPieceAt(cell) ?? undefined;
     const eventNames = button === 'main'
       ? ['cellMainClick', 'cellClick']
@@ -576,6 +580,8 @@ export class ChessBoard extends HTMLElement {
     
     actionToDo(cell, mods);
 
+    this.#state.SetCurrentSquare(cell);
+
     return true;
   }
 
@@ -583,12 +589,12 @@ export class ChessBoard extends HTMLElement {
     if (this.disabled) return;
     // If no current square is set, select a1
     if (!this.#state.currentSquare) {
-      this.#setCurrentSquare('a1');
+      this.#state.SetCurrentSquare(null);
     }
   }
 
   #handleBlur = (): void => {
-    this.#clearSelectedPiece();
+    this.#state.SetSelectedPieceSquare(null);
   }
 
   // Syncs fairy metadata edited directly on a chess-piece element (bypassing the state API) back into the state.
@@ -597,26 +603,18 @@ export class ChessBoard extends HTMLElement {
     const square = target?.closest('.square')?.getAttribute('data-coordinate') as FairySquare | null;
     const piece = square ? this.#state.position.pieces[square] : null;
     if (!square || !piece) return;
-
-    const oldFen = this.#state.fen;
-    this.#state.AddPiece(square, { ...piece, fairyName: ev.detail.fairyName, fairyCondition: ev.detail.fairyCondition });
-    if (this.#state.fen !== oldFen) this.#triggerFenChangeEvent();
+    this.#state.AddPiece(square, {
+      ...piece,
+      fairyName: ev.detail.fairyName,
+      fairyCondition: ev.detail.fairyCondition
+    });
   }
-
+  
   #updateDisabledState(): void {
     const isDisabled = this.hasAttribute('disabled');
     if (this.#board) {
       this.#board.style.pointerEvents = isDisabled ? 'none' : 'auto';
     }
-  }
-
-  #setCurrentSquare(coordinate: FairySquare): void {
-    this.#state.SetCurrentSquare(coordinate);
-  }
-
-
-  #clearSelectedPiece(): void {
-    this.#state.SetSelectedPieceSquare(null);
   }
 
   #moveUp(current: FairySquare, isRotated: boolean): FairySquare | null {
@@ -730,19 +728,6 @@ export class ChessBoard extends HTMLElement {
     return pieceatsquare;
   }
 
-  #updateLabelsVisibility(): void {
-    const hideLabels = this.hasAttribute('hide-labels');
-    const labels = this.#shadow.querySelectorAll('.top-labels, .bottom-labels, .left-labels, .right-labels');
-
-    labels.forEach(label => {
-      if (hideLabels) {
-        (label as HTMLElement).style.display = 'none';
-      } else {
-        (label as HTMLElement).style.display = '';
-      }
-    });
-  }
-
   /**
    * Updates the cell decorators based on the current decorators map.
    */
@@ -801,42 +786,12 @@ export class ChessBoard extends HTMLElement {
     this.#updateCellDecorators();
   }
 
-  #serializeBoardState(triggerChange: boolean): void {
-    const oldFen = this.#state.fen;
-
-    const position: FenPosition = {
-      pieces: this.getAllPieces().reduce((acc, piece) => {
-        acc[piece.square] = {
-          type: piece.type,
-          color: piece.color,
-          fairyCondition: piece.fairyCondition,
-          fairyName: piece.fairyName,
-          rotation: piece.rotation,
-        };
-        return acc;
-      }, {} as PiecesOnBoard),
-      activeColor: this.#state.position.activeColor,
-      castlingRights: this.#state.position.castlingRights,
-      enPassantTarget: this.#state.position.enPassantTarget,
-      halfmoveClock: this.#state.position.halfmoveClock,
-      fullmoveNumber: this.#state.position.fullmoveNumber,
-      boardSize: this.#state.position.boardSize,
-    };
-
-    const newFen = positionToFen(position);
-    if (oldFen !== newFen) {
-      this.#state.SetFen(newFen);
-      if (triggerChange) this.#triggerFenChangeEvent();
-    }
-  }
-
   /**
    * Synchronizes the board state with the new State of the chessboard.
    * @param param0 
    */
   #render: RendererFunction = ({oldState, newState}): void => {
     const currentFen = oldState?.fen;
-    console.log("🚀 ~ ChessBoard ~ RENDER - currentFen:", currentFen)
     this.fen = newState.fen;
 
     const width = newState.position.boardSize.width;
@@ -874,6 +829,7 @@ export class ChessBoard extends HTMLElement {
   }
 
   #iseventqueued = false;
+  #skipFenChangeEvent = false;
   #triggerFenChangeEvent(): void {
     // Prevent multiple events from being queued simultaneously
     if (this.#iseventqueued) return;
@@ -882,8 +838,13 @@ export class ChessBoard extends HTMLElement {
     this.#iseventqueued = true;
     queueMicrotask(() => {
       this.#iseventqueued = false;
+      if (this.#skipFenChangeEvent) {
+        this.#skipFenChangeEvent = false;
+        return;
+      }
+      const fen = this.#state.fen;
       this.dispatchEvent(new CustomEvent('fenChange', {
-        detail: { fen: this.#state.fen } satisfies FenChangeEventDetail,
+        detail: { fen } satisfies FenChangeEventDetail,
         bubbles: true,
         composed: true
       }));
@@ -903,13 +864,13 @@ export class ChessBoard extends HTMLElement {
       throw new Error(`Invalid square coordinate: ${coordinate}`);
     }
 
-    this.#setCurrentSquare(coordinate);
+    this.#state.SetCurrentSquare(coordinate);
     let returnValue: boolean = false;
 
     if (!this.hasPiece(coordinate)) {
-      this.#clearSelectedPiece();
+      this.#state.SetSelectedPieceSquare(null);
     } else  if (this.#state.selectedPieceSquare === coordinate) {
-      this.#clearSelectedPiece();
+      this.#state.SetSelectedPieceSquare(null);
     } else {
       this.#state.SetSelectedPieceSquare(coordinate);
       returnValue = true;
@@ -927,7 +888,7 @@ export class ChessBoard extends HTMLElement {
    * @param fen - Forsyth-Edwards Notation string
    */
   setFen(fen: string): void {
-    this.setAttribute('fen', fen);
+    this.#state.SetFen(fen);
   }
 
   /**
@@ -972,7 +933,23 @@ export class ChessBoard extends HTMLElement {
    * @throws Error if coordinate is invalid
    */
   selectPiece(coordinate: FairySquare): boolean {
-    return this.#setSelectedPiece(coordinate);
+    if (!isValidCoordinate(coordinate, this.#state.position.boardSize)) {
+      throw new Error(`Invalid square coordinate: ${coordinate}`);
+    }
+    if (this.#getPieceAtSquare(coordinate)){
+      this.#state.SetSelectedPieceSquare(coordinate);
+      return true;
+    } else {
+      this.#state.SetSelectedPieceSquare(null);
+      return false;
+    }
+  }
+
+  /**
+   * Unselects the currently selected piece, if any.
+   */
+  unselectPiece(): void {
+    this.#state.SetSelectedPieceSquare(null);
   }
 
   /**
@@ -1015,6 +992,7 @@ export class ChessBoard extends HTMLElement {
     if (!isValidCoordinate(square, this.#state.position.boardSize)) {
       throw new Error(`Invalid square coordinate: ${square}. Must be a valid square from a1 to h8.`);
     }
+    if (this.disablePieceRemoval) return;
     this.#state.RemovePiece(square);
   }
 
@@ -1137,7 +1115,6 @@ export class ChessBoard extends HTMLElement {
    * @param orientation - 'white' for white at bottom, 'black' for black at bottom
    */
   setOrientation(orientation: 'white' | 'black'): void {
-    console.log("🚀 ~ ChessBoard ~ setOrientation ~ orientation:", orientation)
     this.blackToMove = orientation === 'black';
   }
 

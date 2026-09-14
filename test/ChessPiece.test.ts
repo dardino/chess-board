@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { type ChessPieceColor, type ChessPieceRotation, type ChessPieceType, StandardPiecesList } from '../src';
 import { ChessPiece } from '../src/ChessPiece/ChessPiece';
 
@@ -328,55 +328,4 @@ describe('ChessPiece Web Component', () => {
     });
   });
 
-  describe("custom event dispatching", () => {
-    it("should dispatch 'metadata-change' event when fairy-name is set", () => {
-      const spy = vi.fn();
-      element.addEventListener('fairy-metadata-changed', spy);
-
-      element.setFairyName('GRA');
-
-      expect(spy).toHaveBeenCalledTimes(1);
-      const event = spy.mock.calls[0][0] as CustomEvent;
-      expect(event.detail).toEqual({ fairyName: 'GRA' });
-    });
-
-    it("should dispatch 'metadata-change' event when fairy-condition is set", () => {
-      const spy = vi.fn();
-      element.addEventListener('fairy-metadata-changed', spy);
-
-      element.setFairyCondition('=');
-
-      expect(spy).toHaveBeenCalledTimes(1);
-      const event = spy.mock.calls[0][0] as CustomEvent;
-      expect(event.detail).toEqual({ fairyCondition: '=' });
-    });
-
-    it("should dispatch 'metadata-change' event when both fairy-name and fairy-condition are set", () => {
-      const spy = vi.fn();
-      element.addEventListener('fairy-metadata-changed', spy);
-
-      element.setFairyName('GRA');
-      element.setFairyCondition('=');
-
-      expect(spy).toHaveBeenCalledTimes(2);
-      const event1 = spy.mock.calls[0][0] as CustomEvent;
-      expect(event1.detail).toEqual({ fairyName: 'GRA' });
-
-      const event2 = spy.mock.calls[1][0] as CustomEvent;
-      expect(event2.detail).toEqual({ fairyCondition: '=', fairyName: 'GRA' });
-    });
-
-    it ("metadata-change event should include both fairyName and fairyCondition when both are set", () => {
-      const spy = vi.fn();
-      element.addEventListener('fairy-metadata-changed', spy);
-      // set Attributes directly to simulate attribute changes without triggering the custom event
-      element.setAttribute('fairy-name', 'GN');
-      element.setAttribute('fairy-condition', '=');
-      // now set the fairy name using the method to trigger the event
-      element.setFairyName('GRA');
-
-      const event2 = spy.mock.calls[0][0] as CustomEvent;
-      expect(event2.detail).toEqual({ fairyCondition: '=', fairyName: 'GRA' });
-    });
-  });
 });

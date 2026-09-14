@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { ChessPiece } from '../src';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ChessPiece, FairySquare } from '../src';
 import { ChessBoard, type CellClickEventDetail } from '../src/ChessBoard/ChessBoard';
 import { waitForMicroTask } from './utils';
 
@@ -274,19 +274,42 @@ describe('ChessBoard FEN support', () => {
     });
   });
 
+  it("changing fen attribute shouldn't trigger fenChange event unnecessarily", async () => {
+    const fenChangeHandler = vi.fn();
+    element.addEventListener('fenChange', fenChangeHandler);
+    element.setAttribute('fen', '8/8/8/8/8/8/8/4K3 w - - 0 1');
+    await waitForMicroTask();
+    expect(fenChangeHandler).toHaveBeenCalledTimes(0);
+
+    // Setting the same FEN again should not trigger the event
+    element.setAttribute('fen', '8/8/8/8/8/8/8/4K3 w - - 0 1');
+    await waitForMicroTask();
+    expect(fenChangeHandler).toHaveBeenCalledTimes(0);
+  });
+
   it('should support setFen method', async () => {
+    const fenChangeHandler = vi.fn();
+    element.addEventListener('fenChange', fenChangeHandler);
     element.setFen('8/8/8/8/8/8/8/4K3 w - - 0 1');
     await waitForMicroTask();
+    expect(fenChangeHandler).toHaveBeenCalledTimes(1);
 
     const e1Square = element.shadowRoot?.querySelector('[data-coordinate="e1"]');
     const piece = e1Square?.querySelector('.piece') as ChessPiece | null;
     piece?.setFairyName('GRA');
     piece?.setFairyCondition('Imitator');
+    await waitForMicroTask(); 
+    expect(fenChangeHandler).toHaveBeenCalledTimes(2);
+    expect(fenChangeHandler).toHaveBeenCalledWith(expect.objectContaining({
+      detail: expect.objectContaining({
+        fen: "8/8/8/8/8/8/8/4K3 w - - 0 1 e1:GRA:Imitator"
+      })
+    }));
 
     expect(piece).not.toBeNull();
     expect(piece?.getAttribute('piece')).toBe('k');
     expect(piece?.getAttribute('color')).toBe('w');
-    expect(element.getFen()).toContain('e1:');
+    expect(element.getFen()).toContain('e1:GRA:Imitator');
   });
 
   it('should support setStartingPosition method', async () => {
@@ -746,7 +769,7 @@ describe('ChessBoard Keyboard Handlers', () => {
         { key: 'B', type: 'b', square: 'c1' },
         { key: 'N', type: 'n', square: 'b1' },
         { key: 'P', type: 'p', square: 'e2' }
-      ];
+      ] as { key: string; type: string; square: FairySquare }[];
 
       const board = element.shadowRoot?.querySelector('.board') as HTMLElement;
 
@@ -773,7 +796,7 @@ describe('ChessBoard Keyboard Handlers', () => {
         { key: 'b', type: 'b', square: 'c8' },
         { key: 'n', type: 'n', square: 'b8' },
         { key: 'p', type: 'p', square: 'e7' }
-      ];
+      ] as { key: string; type: string; square: FairySquare }[];
 
       const board = element.shadowRoot?.querySelector('.board') as HTMLElement;
 
@@ -797,7 +820,7 @@ describe('ChessBoard Keyboard Handlers', () => {
         { key: 'E', type: 'e', square: 'd4' }, // Empress
         { key: 'T', type: 't', square: 'e4' }, // Dragon
         { key: 'A', type: 'a', square: 'f4' }  // Angel/Archbishop
-      ];
+      ] as { key: string; type: string; square: FairySquare }[];
 
       const board = element.shadowRoot?.querySelector('.board') as HTMLElement;
 
