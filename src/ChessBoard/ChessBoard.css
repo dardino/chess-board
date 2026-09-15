@@ -10,7 +10,8 @@
   --internal-chess-label-color: var(--cb-chess-label-color, #666);
   --internal-chess-label-font-weight: var(--cb-chess-label-font-weight, 300);
   --internal-chess-label-font-size: var(--cb-chess-label-font-size, 4cqw);
-  --internal-chess-label-font-family: var(--cb-chess-label-font-family, Arial, sans-serif);
+  --fallback-font-family: Arial, sans-serif;
+  --internal-chess-label-font-family: var(--cb-chess-label-font-family, var(--fallback-font-family));
 
   user-select: none;
   -webkit-user-select: none;
@@ -174,7 +175,7 @@
   font-size: var(--internal-chess-label-font-size);
   font-weight: var(--internal-chess-label-font-weight);
   color: var(--internal-chess-label-color);
-  font-family: var(--internal-chess-label-font-family);
+  font-family: var(--internal-chess-label-font-family), sans-serif;
   padding: 0.2em 0.5em;
   text-transform: uppercase;
 }
