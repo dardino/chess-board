@@ -572,7 +572,24 @@ console.log(wasSelected); // true when e4 contains a piece
 const currentSquare = board.getCurrentSquare(); // string | null
 
 // Set the current square without selecting a piece
-board.selectSquare('e4');</code></pre>
+board.selectSquare('e4');
+
+// Select and unselect a piece programmatically
+const wasSelected = board.selectPiece('e4');
+console.log(wasSelected); // true when e4 contains a piece
+board.unselectPiece();</code></pre>
+
+      <h3>Selection & Removal lifecycle</h3>
+      <pre><code>const board = document.querySelector('chess-board');
+board.setFen('8/8/8/8/8/8/8/8 w - - 0 1');
+board.addPiece('e4', 'q', 'w');
+
+board.selectPiece('e4');
+board.removePiece('e4');
+console.log(board.getSelectedPieceSquare()); // null
+console.log(board.getCurrentSquare()); // null</code></pre>
+      <p>Removing a piece clears the selected-piece state and the active square so the board doesn't keep a stale cell
+        selection after the deletion.</p>
 
       <h3>Events</h3>
       <pre><code>// Preferred event name for the main mouse button
@@ -632,8 +649,9 @@ const orientation = board.getOrientation();  // 'white' | 'black'
 board.toggleOrientation();</code></pre>
 
       <h3>Element Attributes</h3>
-      <p><code>chess-board</code> supports the boolean <code>disabled</code> and <code>auto-select-piece-on-click</code>
-        attributes, along with <code>fen</code> and the boolean <code>hide-labels</code> attribute. Its
+      <p><code>chess-board</code> supports the boolean <code>disabled</code>, <code>hide-labels</code>,
+        <code>disable-piece-removal</code>, <code>disable-piece-movement</code>, and
+        <code>auto-select-piece-on-click</code> attributes, along with <code>fen</code>. Its
         <code>black-to-move</code> attribute is managed by the orientation API and by the active color in FEN.
       </p>
       <p><code>chess-piece</code> supports <code>piece</code>, <code>color</code>, <code>rotation</code>,
@@ -653,10 +671,30 @@ const fen = board.getFen();</code></pre>
       <pre><code>&lt;chess-board hide-labels&gt;&lt;/chess-board&gt;
 
 const board = document.querySelector('chess-board');
-board.hideLabels = true;
-board.hideLabels = false;</code></pre>
+board.toggleAttribute('hide-labels', true);
+board.toggleAttribute('hide-labels', false);
+// equivalent to the DOM attribute usage above</code></pre>
       <p>When enabled, the board hides square labels such as file and rank markers for a cleaner visual presentation.
-      </p>
+        This is a pure rendering toggle: it does not affect FEN, piece logic, or the board state itself.</p>
+
+      <h4>disable-piece-removal</h4>
+      <pre><code>&lt;chess-board disable-piece-removal&gt;&lt;/chess-board&gt;
+
+const board = document.querySelector('chess-board');
+board.disablePieceRemoval = true;
+board.removePiece('e4'); // ignored while enabled</code></pre>
+      <p>When set, the component blocks remove operations and delete-style interactions. This is handy for read-only
+        scoreboards or custom editing flows that handle deletions elsewhere.</p>
+
+      <h4>disable-piece-movement</h4>
+      <pre><code>&lt;chess-board disable-piece-movement&gt;&lt;/chess-board&gt;
+
+const board = document.querySelector('chess-board');
+board.disablePieceMovement = true;
+board.selectPiece('e4');
+board.selectSquare('d4'); // current square changes, but a move is prevented</code></pre>
+      <p>When set, selected pieces can still be chosen, but moving them to another square is disabled. This is useful
+        for review or inspection boards that need selection without allowed edits.</p>
 
       <h4>disabled</h4>
       <pre><code>&lt;chess-board disabled&gt;&lt;/chess-board&gt;

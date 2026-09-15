@@ -109,6 +109,28 @@
       <chess-board hide-labels></chess-board>
     </div>
 
+    <h2>Selection, removal and edit locks</h2>
+    <p>The selection API is explicit: <code>selectPiece()</code> sets the selected piece and current square, while
+      <code>unselectPiece()</code> clears only the selection state. When a removal happens on the currently active cell,
+      the board automatically drops that active square to avoid stale highlights.
+    </p>
+    <div class="board-container board-medium">
+      <chess-board id="lock-demo-board" fen="8/8/8/8/8/8/8/8 w - - 0 1"></chess-board>
+    </div>
+    <div class="code-example">
+      <pre><code>const board = document.getElementById('lock-demo-board');
+board.addPiece('e4', 'q', 'w');
+
+board.selectPiece('e4');
+board.unselectPiece();
+board.disablePieceRemoval = true;
+board.removePiece('e4'); // ignored
+
+board.disablePieceMovement = true;
+board.selectPiece('e4');
+board.selectSquare('d4'); // selected piece stays put</code></pre>
+    </div>
+
     <h2>Gray Themed Board</h2>
     <p>This board demonstrates how to customize the chess board colors using CSS custom properties. The
       <code>gray-board</code> class applies gray tones instead of the traditional brown colors. You can customize the

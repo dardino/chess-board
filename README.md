@@ -464,7 +464,9 @@ The `chess-board` element renders a complete 8x8 chess board with:
 
 #### Attributes
 
-- `hide-labels`: When present, hides all coordinate labels, showing only the chess board squares
+- `hide-labels`: Boolean attribute to hide file/rank labels without affecting board logic or piece placement. Use it as a DOM attribute (`<chess-board hide-labels>`) or with `toggleAttribute('hide-labels', true/false)`. When set to `false` explicitly, the attribute is treated as off.
+- `disable-piece-removal`: Boolean attribute that disables calls to `removePiece()` and delete-style interactions; the board stays visually editable but no piece can be removed until the attribute is cleared.
+- `disable-piece-movement`: Boolean attribute that disables moving a selected piece to another square while preserving the ability to select pieces.
 - `fen`: Standard FEN or FFEN string to set the board position. The component auto-detects whether the input is a normal FEN or a fairy-aware FFEN string.
 
 #### Methods
@@ -480,10 +482,26 @@ The `chess-board` element renders a complete 8x8 chess board with:
 
 ##### Square Selection
 
-- `getCurrentSquare(): string | null`: Get currently selected square coordinate
-- `selectSquare(coordinate: string)`: Set currently selected square
+- `getCurrentSquare(): string | null`: Get the current keyboard-navigation square
+- `selectSquare(coordinate: string)`: Set the current square without selecting a piece
 - `getSelectedPieceSquare(): string | null`: Get the selected piece's square, if any
 - `selectPiece(coordinate: string): boolean`: Set the current square and select its piece. Returns `true` when the square contains a piece; otherwise clears the current piece selection and returns `false`. Throws an error for an invalid coordinate.
+- `unselectPiece(): void`: Clears the selected-piece state without changing the underlying board position
+
+```javascript
+const board = document.querySelector('chess-board');
+
+const selected = board.selectPiece('e4');
+console.log(selected); // true
+
+board.unselectPiece();
+console.log(board.getSelectedPieceSquare()); // null
+
+board.removePiece('e4');
+console.log(board.getCurrentSquare()); // null when the removed square was current
+```
+
+When a piece is removed from the current square, the board also clears the current-square state so the UI does not keep a stale active cell.
 
 ##### Programmatic Piece Manipulation
 
@@ -514,6 +532,25 @@ if (piece) {
   // Output: "Piece at d4: b k, rotation: 45"
 }
 ```
+
+###### Disabling interactive edits
+
+```html
+<chess-board disable-piece-removal disable-piece-movement hide-labels></chess-board>
+```
+
+```javascript
+const board = document.querySelector('chess-board');
+
+board.disablePieceRemoval = true;
+board.disablePieceMovement = true;
+board.toggleAttribute('hide-labels', true);
+
+board.selectPiece('e4');
+board.unselectPiece();
+```
+
+The `disable-piece-removal` and `disable-piece-movement` attributes are useful when the board is used for display-only scenarios or when a custom interaction layer handles move and deletion logic explicitly.
 
 **Methods:**
 

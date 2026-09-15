@@ -8,6 +8,10 @@
   --internal-chess-piece-bg: var(--cb-chess-piece-bg, white);
   --internal-chess-outline-focus: var(--cb-chess-outline-focus, blue);
   --internal-chess-label-color: var(--cb-chess-label-color, #666);
+  --internal-chess-label-font-weight: var(--cb-chess-label-font-weight, 300);
+  --internal-chess-label-font-size: var(--cb-chess-label-font-size, 4cqw);
+  --fallback-font-family: Arial, sans-serif;
+  --internal-chess-label-font-family: var(--cb-chess-label-font-family, var(--fallback-font-family));
 
   user-select: none;
   -webkit-user-select: none;
@@ -41,22 +45,22 @@
   box-sizing: border-box;
 }
 
-/* Hide labels when hide-labels attribute is present */
-:host([hide-labels]) .top-labels,
-:host([hide-labels]) .left-labels,
-:host([hide-labels]) .right-labels,
-:host([hide-labels]) .bottom-labels {
+/* Hide labels when hide-labels attribute is present and not set to 'false' */
+:host([hide-labels]:not([hide-labels="false"])) .top-labels,
+:host([hide-labels]:not([hide-labels="false"])) .left-labels,
+:host([hide-labels]:not([hide-labels="false"])) .right-labels,
+:host([hide-labels]:not([hide-labels="false"])) .bottom-labels {
   display: none;
 }
 
 /* Adjust grid layout when labels are hidden */
-:host([hide-labels]) .board-container {
+:host([hide-labels]:not([hide-labels="false"])) .board-container {
   grid-template-columns: 1fr;
   grid-template-rows: 1fr;
   grid-template-areas: "board";
 }
 
-:host([hide-labels]) .board {
+:host([hide-labels]:not([hide-labels="false"])) .board {
   grid-column: 1;
   grid-row: 1;
 }
@@ -168,10 +172,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 4cqw;
-  font-weight: bold;
+  font-size: var(--internal-chess-label-font-size);
+  font-weight: var(--internal-chess-label-font-weight);
   color: var(--internal-chess-label-color);
-  font-family: Arial, sans-serif;
+  font-family: var(--internal-chess-label-font-family), sans-serif;
   padding: 0.2em 0.5em;
   text-transform: uppercase;
 }

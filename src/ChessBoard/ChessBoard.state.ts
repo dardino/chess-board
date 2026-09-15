@@ -19,7 +19,18 @@ export type MoveOptions = {
   changeColor?: boolean
 };
 
-export class ChessBoardState {
+export interface ChessBoardStateAPI {
+  SetFen(fen: string): void;
+  SetCurrentSquare(square: FairySquare | null): void;
+  SetSelectedPieceSquare(square: FairySquare | null): void;
+  SetCellDecorators(cellDecorators: Partial<Record<Square, CellDecorator>>): void;
+  MovePiece(from: FairySquare, to: FairySquare, options?: MoveOptions): void;
+  AddPiece(square: FairySquare, piece: PieceInfo): void;
+  RemovePiece(square: FairySquare): void;
+  SetBoardOrientation(orientation: "w" | "b"): void;
+}
+
+export class ChessBoardState implements ChessBoardStateAPI {
 
   #state: ChessBoardStateInterface = { fen: '', currentSquare: null, selectedPieceSquare: null, cellDecorators: {}, boardOrientation: "w", position: { ...StartingPosition } };
   #renderer: RendererFunction;
@@ -41,19 +52,19 @@ export class ChessBoardState {
     return this.#state.position;
   }
 
-  pendingUIUpdate = false;
+  #pendingUIUpdate = false;
   constructor(initialFEN: string, renderer: RendererFunction) {
     this.#state = { fen: initialFEN, currentSquare: null, selectedPieceSquare: null, cellDecorators: {}, boardOrientation: "w", position: { ...StartingPosition } };
     this.#renderer = renderer;
     this.#state.position = parseFen(initialFEN) ?? { ...StartingPosition };
-    this.pendingUIUpdate = false;
+    this.#pendingUIUpdate = false;
     this.setState(state => ({ ...state }));
   }
 
-  private setState(stateModifier: (currentState: ChessBoardStateInterface) => ChessBoardStateInterface): void {
-    if (!this.pendingUIUpdate) { // alla prima chiamata, salva lo stato precedente
+  private setState = (stateModifier: (currentState: ChessBoardStateInterface) => ChessBoardStateInterface): void => {
+    if (!this.#pendingUIUpdate) { // alla prima chiamata, salva lo stato precedente
       // Save the previous state before applying the state modifier
-      this.#prevState = this.#state;
+      this.#prevState = JSON.parse(JSON.stringify(this.#state));
     }
     // Apply the state modifier to get the new state
     this.#state = stateModifier(JSON.parse(JSON.stringify(this.#state)));
@@ -62,12 +73,14 @@ export class ChessBoardState {
       this.#state.position = parseFen(this.#state.fen) ?? { ...StartingPosition };
 
     // Now is time to render the new state if not alredy queued
-    if (this.pendingUIUpdate) return;
+    if (this.#pendingUIUpdate) return;
     // Trigger the renderer to update the UI with the new state
-    this.pendingUIUpdate = true;
+    this.#pendingUIUpdate = true;
     queueMicrotask(() => {
-      this.pendingUIUpdate = false;
-      this.#renderer({ oldState: this.#prevState, newState: this.#state });
+      const oldState = this.#prevState;
+      const newState = this.#state;
+      this.#renderer({ oldState, newState });
+      this.#pendingUIUpdate = false;
     });
   }
 
@@ -160,10 +173,8 @@ export class ChessBoardState {
    * @param square The square on the chessboard from which the piece should be removed.
    */
   RemovePiece(square: FairySquare): void {
-    console.log("🚀 ~ ChessBoardState ~ RemovePiece ~ square:", square)
     delete this.#state.position.pieces[square];
     const newFen = positionToFen(this.#state.position);
-    console.log("🚀 ~ ChessBoardState ~ RemovePiece ~ newFen:", newFen);
     this.setState(currentState => ({ 
       ...currentState,
       fen: newFen

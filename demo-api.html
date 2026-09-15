@@ -230,6 +230,25 @@
         <div class="info-box" id="info">No pieces on the board</div>
       </div>
       <div class="control-group">
+        <h3>🎯 Selection & edit locks</h3>
+        <div class="button-grid">
+          <button onclick="board.selectPiece('e4')">Select e4</button>
+          <button onclick="board.unselectPiece()">Unselect</button>
+          <button onclick="board.disablePieceRemoval = !board.disablePieceRemoval">Toggle remove lock</button>
+          <button onclick="board.disablePieceMovement = !board.disablePieceMovement">Toggle move lock</button>
+          <button onclick="board.toggleAttribute('hide-labels', !board.hasAttribute('hide-labels'))">Toggle hide
+            labels</button>
+        </div>
+        <details class="demo-accordion">
+          <summary>Show code</summary>
+          <pre><code>board.selectPiece('e4');
+board.unselectPiece();
+board.disablePieceRemoval = true;
+board.disablePieceMovement = true;
+board.toggleAttribute('hide-labels', true);</code></pre>
+        </details>
+      </div>
+      <div class="control-group">
         <h3>➕ Add Piece</h3>
         <div class="input-group">
           <input type="text" id="addSquare" placeholder="Square (e.g. e4)" maxlength="2">
@@ -525,6 +544,12 @@ setInterval(() => {
       const pieces = board.getAllPieces();
       pieces.forEach(p => board.removePiece(p.square));
       updateInfo();
+    }
+
+    function setupSelectionDemo() {
+      board.setStartingPosition();
+      board.selectPiece('e4');
+      updateSelectionInfo('e4');
     }
 
     function startRotationAnimation() {
