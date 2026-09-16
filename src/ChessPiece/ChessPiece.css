@@ -10,6 +10,7 @@
   --internal-fn-text-transform: var(--cb-fairyname-font-transform, uppercase);
   --internal-fn-font-weight: var(--cb-fairyname-font-weight, bold);
   --internal-fn-font-size: var(--cb-fairyname-font-size, 0.3em);
+  --internal-chess-piece-shadow-fg: var(--cb-chess-piece-shadow-fg, none);
 
   display: flex;
   align-items: center;
@@ -59,7 +60,6 @@
   grid-row: 1 / -1;
   width: 100%;
   height: 100%;
-  text-shadow: var(--internal-chess-piece-shadow);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -81,6 +81,11 @@
 
 .piece-bg {
   color: var(--internal-chess-piece-bg);
+  text-shadow: var(--internal-chess-piece-shadow);
+}
+
+.piece-fg {
+  text-shadow: var(--internal-chess-piece-shadow-fg);
 }
 
 .fairy-name {
