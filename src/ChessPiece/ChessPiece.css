@@ -20,9 +20,14 @@
 
   user-select: none;
   -webkit-user-select: none;
+  box-sizing: border-box;
 }
 
-.piece {
+* {
+  box-sizing: border-box;
+}
+
+:host>.piece {
   display: grid;
   grid-template-columns: 1fr;
   grid-template-rows: 1fr;
