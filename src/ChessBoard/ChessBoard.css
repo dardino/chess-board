@@ -15,6 +15,12 @@
 
   user-select: none;
   -webkit-user-select: none;
+
+  box-sizing: border-box;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 @font-face {
@@ -35,13 +41,16 @@
   grid-template-columns: auto 1fr auto;
   grid-template-rows: auto 1fr auto;
   grid-template-areas:
-    "empty1 topbar empty2"
-    "leftbar board rightbar"
-    "empty3 bottombar empty4";
+    ".       topbar    ."
+    "leftbar board     rightbar"
+    ".       bottombar .";
   width: 100%;
   height: 100%;
-  min-width: 200px;
-  min-height: 200px;
+  max-width: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  min-width: var(--cb-min-width, 200px);
+  min-height: var(--cb-min-height, 200px);
   box-sizing: border-box;
 }
 
@@ -51,18 +60,6 @@
 :host([hide-labels]:not([hide-labels="false"])) .right-labels,
 :host([hide-labels]:not([hide-labels="false"])) .bottom-labels {
   display: none;
-}
-
-/* Adjust grid layout when labels are hidden */
-:host([hide-labels]:not([hide-labels="false"])) .board-container {
-  grid-template-columns: 1fr;
-  grid-template-rows: 1fr;
-  grid-template-areas: "board";
-}
-
-:host([hide-labels]:not([hide-labels="false"])) .board {
-  grid-column: 1;
-  grid-row: 1;
 }
 
 /* Rotate board when black is to move */
@@ -83,43 +80,45 @@
 .top-labels {
   grid-area: topbar;
   display: grid;
-  grid-template-columns: repeat(var(--board-width, 8), 1fr);
+  grid-template-columns: repeat(var(--board-col-count, 8), 1fr);
 }
 
 .left-labels {
   grid-area: leftbar;
   display: grid;
-  grid-template-rows: repeat(var(--board-height, 8), 1fr);
+  grid-template-rows: repeat(var(--board-row-count, 8), 1fr);
 }
 
 .right-labels {
   grid-area: rightbar;
   display: grid;
-  grid-template-rows: repeat(var(--board-height, 8), 1fr);
+  grid-template-rows: repeat(var(--board-row-count, 8), 1fr);
 }
 
 .bottom-labels {
   grid-area: bottombar;
   display: grid;
-  grid-template-columns: repeat(var(--board-width, 8), 1fr);
+  grid-template-columns: repeat(var(--board-col-count, 8), 1fr);
 }
 
 .board {
+  grid-area: board;
   container-type: inline-size;
   border: 1px solid var(--internal-chess-border-color);
   display: grid;
-  grid-column: 2 / -2;
-  grid-row: 2 / -2;
-  grid-template-columns: repeat(var(--board-width, 8), 1fr);
-  grid-template-rows: repeat(var(--board-height, 8), 1fr);
+  grid-template-columns: repeat(var(--board-col-count, 8), 1fr);
+  grid-template-rows: repeat(var(--board-row-count, 8), 1fr);
   box-sizing: border-box;
   font-family: ScacchiPainter, monospace;
   aspect-ratio: 1;
+
+  * {
+    box-sizing: border-box;
+  }
 }
 
 .square {
   position: relative;
-  font-size: 10.5cqw;
   overflow: hidden;
 }
 
@@ -169,6 +168,7 @@
 }
 
 .label {
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -190,19 +190,7 @@
 /* .corner-label { } */
 
 .piece {
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: 1fr;
   color: var(--internal-chess-piece-color);
-  width: 100%;
-  height: 100%;
-  font-size: 0.8em;
-
-  font-family: 'ScacchiPainter', monospace;
-  line-height: 1;
-  letter-spacing: 0px;
-  /* to keep legatures working properly */
-
 }
 
 .piece-fg,

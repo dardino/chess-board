@@ -796,8 +796,8 @@ export class ChessBoard extends HTMLElement {
 
     const width = newState.position.boardSize.width;
     const height = newState.position.boardSize.height;
-    this.#boardContainer?.style.setProperty('--board-width', width.toString());
-    this.#boardContainer?.style.setProperty('--board-height', height.toString());
+    this.#boardContainer?.style.setProperty('--board-col-count', width.toString());
+    this.#boardContainer?.style.setProperty('--board-row-count', height.toString());
 
     // Only re-derive the turn indicator when the FEN actually changed, so a manual
     // orientation flip isn't clobbered by a render triggered by unrelated state changes.
