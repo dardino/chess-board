@@ -107,6 +107,10 @@ function updateOrCreatePieceAt(coordinate: FairySquare, piece: PieceInfo, boardC
     if (!pieceElement) {
       pieceElement = document.createElement('chess-piece');
     }
+    // ensure the element is a ChessPiece instance
+    if (!(pieceElement instanceof ChessPiece)) {
+      throw new Error('Element is not a ChessPiece instance');
+    }
     pieceElement.setAttribute('data-file', coordinate[0]);
     pieceElement.setAttribute('data-rank', coordinate.slice(1));
     pieceElement.classList.add('piece');
@@ -122,6 +126,7 @@ function updateOrCreatePieceAt(coordinate: FairySquare, piece: PieceInfo, boardC
   } catch (error) {
     console.error(error);
     console.error(`Failed to update or create piece at ${coordinate}:`, error);
+    throw error;
   }
 
 }
