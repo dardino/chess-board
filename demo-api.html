@@ -446,6 +446,8 @@ setInterval(() => {
           <button onclick="board.setAttribute('translating', 'right')">Translate Right</button>
           <button onclick="board.setAttribute('translating', 'up')">Translate Up</button>
           <button onclick="board.setAttribute('translating', 'down')">Translate Down</button>
+          <button onclick="board.setAttribute('mirroring', 'horizontal')">Mirror Horizontal</button>
+          <button onclick="board.setAttribute('mirroring', 'vertical')">Mirror Vertical</button>
         </div>
         <details class="demo-accordion">
           <summary>Show code</summary>
@@ -456,6 +458,8 @@ setInterval(() => {
 &lt;button onclick="board.setAttribute('translating', 'right')">Translate Right&lt;/button>
 &lt;button onclick="board.setAttribute('translating', 'up')">Translate Up&lt;/button>
 &lt;button onclick="board.setAttribute('translating', 'down')">Translate Down&lt;/button>
+&lt;button onclick="board.setAttribute('mirroring', 'horizontal')">Mirror Horizontal&lt;/button>
+&lt;button onclick="board.setAttribute('mirroring', 'vertical')">Mirror Vertical&lt;/button>
           </code></pre>
         </details>
       </div>
@@ -668,6 +672,9 @@ setInterval(() => {
 
     board.addEventListener('animationend', (e) => {
       alert('Animation ended');
+      board.removeAttribute('rotating');
+      board.removeAttribute('mirroring');
+      board.removeAttribute('translating');
       console.log('Animation ended:', e);
     });
 
