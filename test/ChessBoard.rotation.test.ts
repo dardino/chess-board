@@ -3,11 +3,15 @@ import { ChessBoard } from '../src/ChessBoard/ChessBoard';
 import { ChessPiece } from '../src/ChessPiece/ChessPiece';
 import { waitForMicroTask } from './utils';
 
+const selectorForPiecesBoard = '.level.pieces';
+
 describe('ChessBoard - Piece Rotation', () => {
   let board: ChessBoard;
 
   beforeEach(async () => {
     board = new ChessBoard();
+    const piece = new ChessPiece();
+    board.appendChild(piece);
     document.body.appendChild(board);
     board.setFen('8/8/8/8/4N3/8/8/8 w - - 0 1'); // White knight on e4
     board.selectSquare('e4');
@@ -15,7 +19,8 @@ describe('ChessBoard - Piece Rotation', () => {
   });
 
   it('should rotate piece counter-clockwise with Alt+Left', async () => {
-    const square = board.shadowRoot!.querySelector('[data-coordinate="e4"]') as HTMLElement;
+    const square = board.shadowRoot!.querySelector(`${selectorForPiecesBoard} [data-coordinate="e4"]`) as HTMLElement;
+    console.log("🚀 ~ square:", square.outerHTML)
     const piece = square.querySelector('chess-piece') as ChessPiece;
     
     // Initial rotation should be 0
@@ -27,7 +32,7 @@ describe('ChessBoard - Piece Rotation', () => {
       altKey: true,
       bubbles: true 
     });
-    board.shadowRoot!.querySelector('.board')!.dispatchEvent(event);
+    board.shadowRoot!.querySelector(`${selectorForPiecesBoard}`)!.dispatchEvent(event);
     await waitForMicroTask();
     
     // Should rotate to 315° (counter-clockwise)
@@ -35,7 +40,7 @@ describe('ChessBoard - Piece Rotation', () => {
   });
 
   it('should rotate piece clockwise with Alt+Right', async () => {
-    const square = board.shadowRoot!.querySelector('[data-coordinate="e4"]') as HTMLElement;
+    const square = board.shadowRoot!.querySelector(`${selectorForPiecesBoard} [data-coordinate="e4"]`) as HTMLElement;
     const piece = square.querySelector('chess-piece') as ChessPiece;
     
     expect(piece.getRotation()).toBe('0');
@@ -46,7 +51,7 @@ describe('ChessBoard - Piece Rotation', () => {
       altKey: true,
       bubbles: true 
     });
-    board.shadowRoot!.querySelector('.board')!.dispatchEvent(event);
+    board.shadowRoot!.querySelector(`${selectorForPiecesBoard}`)!.dispatchEvent(event);
     await waitForMicroTask();
     
     // Should rotate to 45° (clockwise)
@@ -55,7 +60,7 @@ describe('ChessBoard - Piece Rotation', () => {
   });
 
   it('should reset rotation to 0° with Alt+Up', async () => {
-    const square = board.shadowRoot!.querySelector('[data-coordinate="e4"]') as HTMLElement;
+    const square = board.shadowRoot!.querySelector(`${selectorForPiecesBoard} [data-coordinate="e4"]`) as HTMLElement;
     const piece = square.querySelector('chess-piece') as ChessPiece;
     
     // Set initial rotation to 135
@@ -69,7 +74,7 @@ describe('ChessBoard - Piece Rotation', () => {
       altKey: true,
       bubbles: true 
     });
-    board.shadowRoot!.querySelector('.board')!.dispatchEvent(event);
+    board.shadowRoot!.querySelector(`${selectorForPiecesBoard}`)!.dispatchEvent(event);
     await waitForMicroTask();
     
     // Should reset to 0°
@@ -77,7 +82,7 @@ describe('ChessBoard - Piece Rotation', () => {
   });
 
   it('should set rotation to 180° with Alt+Down', async () => {
-    const square = board.shadowRoot!.querySelector('[data-coordinate="e4"]') as HTMLElement;
+    const square = board.shadowRoot!.querySelector(`${selectorForPiecesBoard} [data-coordinate="e4"]`) as HTMLElement;
     const piece = square.querySelector('chess-piece') as ChessPiece;
     
     expect(piece.getRotation()).toBe('0');
@@ -88,7 +93,7 @@ describe('ChessBoard - Piece Rotation', () => {
       altKey: true,
       bubbles: true 
     });
-    board.shadowRoot!.querySelector('.board')!.dispatchEvent(event);
+    board.shadowRoot!.querySelector(`${selectorForPiecesBoard}`)!.dispatchEvent(event);
     await waitForMicroTask();
     
     // Should set to 180°
@@ -96,10 +101,10 @@ describe('ChessBoard - Piece Rotation', () => {
   });
 
   it('should handle multiple rotations correctly', async () => {
-    const square = board.shadowRoot!.querySelector('[data-coordinate="e4"]') as HTMLElement;
+    const square = board.shadowRoot!.querySelector(`${selectorForPiecesBoard} [data-coordinate="e4"]`) as HTMLElement;
     const piece = square.querySelector('chess-piece') as ChessPiece;
     
-    const boardElement = board.shadowRoot!.querySelector('.board')!;
+    const boardElement = board.shadowRoot!.querySelector(`${selectorForPiecesBoard}`)!;
     
     // Rotate clockwise 45° three times
     for (let i = 0; i < 3; i++) {
@@ -129,9 +134,9 @@ describe('ChessBoard - Piece Rotation', () => {
   });
 
   it('should wrap around from 315° to 0° when rotating clockwise', async () => {
-    const square = board.shadowRoot!.querySelector('[data-coordinate="e4"]') as HTMLElement;
+    const square = board.shadowRoot!.querySelector(`${selectorForPiecesBoard} [data-coordinate="e4"]`) as HTMLElement;
     const piece = square.querySelector('chess-piece') as ChessPiece;
-    
+    expect(piece.getRotation()).toBe('0');
     board.setPieceRotation('e4', '315');
     await waitForMicroTask();
     
@@ -140,7 +145,7 @@ describe('ChessBoard - Piece Rotation', () => {
       altKey: true,
       bubbles: true 
     });
-    board.shadowRoot!.querySelector('.board')!.dispatchEvent(event);
+    board.shadowRoot!.querySelector(`${selectorForPiecesBoard}`)!.dispatchEvent(event);
     await waitForMicroTask();
     
     // Should wrap to 0°
@@ -158,7 +163,7 @@ describe('ChessBoard - Piece Rotation', () => {
     
     // Should not throw error
     expect(() => {
-      board.shadowRoot!.querySelector('.board')!.dispatchEvent(event);
+      board.shadowRoot!.querySelector(`${selectorForPiecesBoard}`)!.dispatchEvent(event);
     }).not.toThrow();
   });
 });
@@ -168,6 +173,8 @@ describe('ChessBoard - Board Orientation', () => {
 
   beforeEach(async () => {
     board = new ChessBoard();
+    const piece = new ChessPiece();
+    board.appendChild(piece);
     document.body.appendChild(board);
     board.setFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
     board.selectSquare('e4');
@@ -185,7 +192,7 @@ describe('ChessBoard - Board Orientation', () => {
       shiftKey: true,
       bubbles: true 
     });
-    board.shadowRoot!.querySelector('.board')!.dispatchEvent(event);
+    board.shadowRoot!.querySelector(`${selectorForPiecesBoard}`)!.dispatchEvent(event);
     await waitForMicroTask();
     
     // Should be white perspective
@@ -202,7 +209,7 @@ describe('ChessBoard - Board Orientation', () => {
       shiftKey: true,
       bubbles: true 
     });
-    board.shadowRoot!.querySelector('.board')!.dispatchEvent(event);
+    board.shadowRoot!.querySelector(`${selectorForPiecesBoard}`)!.dispatchEvent(event);
     await waitForMicroTask();
 
     // Should be black perspective
@@ -218,7 +225,7 @@ describe('ChessBoard - Board Orientation', () => {
       shiftKey: true,
       bubbles: true 
     });
-    board.shadowRoot!.querySelector('.board')!.dispatchEvent(event);
+    board.shadowRoot!.querySelector(`${selectorForPiecesBoard}`)!.dispatchEvent(event);
     await waitForMicroTask();
     
     // Current square should still be e4
@@ -230,7 +237,7 @@ describe('ChessBoard - Board Orientation', () => {
     board.selectSquare('e4');
     await waitForMicroTask();
     
-    const square = board.shadowRoot!.querySelector('[data-coordinate="e4"]') as HTMLElement;
+    const square = board.shadowRoot!.querySelector(`${selectorForPiecesBoard} [data-coordinate="e4"]`) as HTMLElement;
     const piece = square.querySelector('chess-piece') as ChessPiece;
     
     expect(piece.getRotation()).toBe('0');
@@ -241,7 +248,7 @@ describe('ChessBoard - Board Orientation', () => {
       shiftKey: true,
       bubbles: true 
     });
-    board.shadowRoot!.querySelector('.board')!.dispatchEvent(event);
+    board.shadowRoot!.querySelector(`${selectorForPiecesBoard}`)!.dispatchEvent(event);
     await waitForMicroTask();
 
     // Piece rotation should still be 0
@@ -262,8 +269,8 @@ describe('ChessBoard - Piece Selection and Move', () => {
   });
 
   it('should toggle selection with Space on an occupied square', async () => {
-    const boardElement = board.shadowRoot!.querySelector('.board')!;
-    const square = board.shadowRoot!.querySelector('[data-coordinate="e4"]') as HTMLElement;
+    const boardElement = board.shadowRoot!.querySelector(`${selectorForPiecesBoard}`)!;
+    const square = board.shadowRoot!.querySelector(`${selectorForPiecesBoard} [data-coordinate="e4"]`) as HTMLElement;
 
     const event = new KeyboardEvent('keydown', { key: ' ', bubbles: true });
     boardElement.dispatchEvent(event);
@@ -281,14 +288,14 @@ describe('ChessBoard - Piece Selection and Move', () => {
   });
 
   it('should move the selected piece to an empty square with Space and reset selection', async () => {
-    const boardElement = board.shadowRoot!.querySelector('.board')!;
-    const square = board.shadowRoot!.querySelector('[data-coordinate="e4"]') as HTMLElement;
+    const boardElement = board.shadowRoot!.querySelector(`${selectorForPiecesBoard}`)!;
+    const square = board.shadowRoot!.querySelector(`${selectorForPiecesBoard} [data-coordinate="e4"]`) as HTMLElement;
 
     const selectEvent = new KeyboardEvent('keydown', { key: ' ', bubbles: true });
     boardElement.dispatchEvent(selectEvent);
     await waitForMicroTask();
 
-    const destination = board.shadowRoot!.querySelector('[data-coordinate="d4"]') as HTMLElement;
+    const destination = board.shadowRoot!.querySelector(`${selectorForPiecesBoard} [data-coordinate="d4"]`) as HTMLElement;
     board.selectSquare('d4');
     await waitForMicroTask();
 
@@ -304,8 +311,8 @@ describe('ChessBoard - Piece Selection and Move', () => {
   });
 
   it('should clear selection on Escape and on blur', async () => {
-    const boardElement = board.shadowRoot!.querySelector('.board')!;
-    const square = board.shadowRoot!.querySelector('[data-coordinate="e4"]') as HTMLElement;
+    const boardElement = board.shadowRoot!.querySelector(`${selectorForPiecesBoard}`)!;
+    const square = board.shadowRoot!.querySelector(`${selectorForPiecesBoard} [data-coordinate="e4"]`) as HTMLElement;
 
     boardElement.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
     await waitForMicroTask();
@@ -342,16 +349,16 @@ describe('ChessBoard - Keyboard Modifier Conflicts', () => {
   });
 
   it('should prioritize Alt+Arrow over regular Arrow', async () => {
-    const square = board.shadowRoot!.querySelector('[data-coordinate="e4"]') as HTMLElement;
+    const square = board.shadowRoot!.querySelector(`${selectorForPiecesBoard} [data-coordinate="e4"]`) as HTMLElement;
     const piece = square.querySelector('chess-piece') as ChessPiece;
-    
+    expect(piece).not.toBeNull();
     // Alt+Right should rotate, not navigate
     const event = new KeyboardEvent('keydown', { 
       key: 'ArrowRight', 
       altKey: true,
       bubbles: true 
     });
-    board.shadowRoot!.querySelector('.board')!.dispatchEvent(event);
+    board.shadowRoot!.querySelector(`${selectorForPiecesBoard}`)!.dispatchEvent(event);
     await waitForMicroTask();
     
     // Piece should be rotated
@@ -370,7 +377,7 @@ describe('ChessBoard - Keyboard Modifier Conflicts', () => {
       shiftKey: true,
       bubbles: true 
     });
-    board.shadowRoot!.querySelector('.board')!.dispatchEvent(event);
+    board.shadowRoot!.querySelector(`${selectorForPiecesBoard}`)!.dispatchEvent(event);
     await waitForMicroTask();
     
     // Board orientation should change
@@ -381,9 +388,6 @@ describe('ChessBoard - Keyboard Modifier Conflicts', () => {
   });
 
   it('should not trigger piece rotation with Shift+Alt+Arrow', async () => {
-    const square = board.shadowRoot!.querySelector('[data-coordinate="e4"]') as HTMLElement;
-    const piece = square.querySelector('chess-piece') as ChessPiece;
-    
     // Shift+Alt+Right should not rotate (both modifiers)
     const event = new KeyboardEvent('keydown', { 
       key: 'ArrowRight', 
@@ -391,10 +395,12 @@ describe('ChessBoard - Keyboard Modifier Conflicts', () => {
       shiftKey: true,
       bubbles: true 
     });
-    board.shadowRoot!.querySelector('.board')!.dispatchEvent(event);
+    board.shadowRoot!.querySelector(`${selectorForPiecesBoard}`)!.dispatchEvent(event);
     await waitForMicroTask();
     
     // Piece should NOT be rotated
+    const square = board.shadowRoot!.querySelector(`${selectorForPiecesBoard} [data-coordinate="e4"]`) as HTMLElement;
+    const piece = square.querySelector('chess-piece') as ChessPiece;
     expect(piece.getRotation()).toBe('0');
   });
 });

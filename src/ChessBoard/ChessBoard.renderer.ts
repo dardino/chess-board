@@ -98,27 +98,32 @@ function getCoordinateFromIndex(index: number, width: number, height: number) {
 }
 
 function updateOrCreatePieceAt(coordinate: FairySquare, piece: PieceInfo, boardContainer: HTMLElement): void {
-  const rotation = piece.rotation ?? '0';
-  const fairyName = piece.fairyName ?? '';
-  const fairyCondition = piece.fairyCondition ?? '';
-  let pieceElement = boardContainer.querySelector(`.square[data-coordinate="${coordinate}"]>chess-piece`) as ChessPiece | null;
-  const isNew = !pieceElement;
-  if (!pieceElement) {
-    pieceElement = document.createElement('chess-piece');
+  try {
+    const rotation = piece.rotation ?? '0';
+    const fairyName = piece.fairyName ?? '';
+    const fairyCondition = piece.fairyCondition ?? '';
+    let pieceElement = boardContainer.querySelector(`.square[data-coordinate="${coordinate}"]>chess-piece`) as ChessPiece | null;
+    const isNew = !pieceElement;
+    if (!pieceElement) {
+      pieceElement = document.createElement('chess-piece');
+    }
+    pieceElement.setAttribute('data-file', coordinate[0]);
+    pieceElement.setAttribute('data-rank', coordinate.slice(1));
+    pieceElement.classList.add('piece');
+    pieceElement.setPiece(piece.type, piece.color);
+    if (fairyName) pieceElement.setFairyName(fairyName);
+    else pieceElement.removeAttribute('data-fairy-name');
+    if (fairyCondition) pieceElement.setFairyCondition(fairyCondition);
+    else pieceElement.removeAttribute('data-fairy-condition');
+    pieceElement.setRotation(rotation);
+    if (isNew) {
+      boardContainer.querySelector(`.square[data-coordinate="${coordinate}"]`)?.appendChild(pieceElement);
+    }
+  } catch (error) {
+    console.error(error);
+    console.error(`Failed to update or create piece at ${coordinate}:`, error);
   }
-  pieceElement.setAttribute('data-file', coordinate[0]);
-  pieceElement.setAttribute('data-rank', coordinate.slice(1));
-  pieceElement.classList.add('piece');
-  pieceElement.setPiece(piece.type, piece.color);
-  if (fairyName) pieceElement.setFairyName(fairyName);
-  else pieceElement.removeAttribute('data-fairy-name');
-  if (fairyCondition) pieceElement.setFairyCondition(fairyCondition);
-  else pieceElement.removeAttribute('data-fairy-condition');
-  if (rotation !== '0') pieceElement.setRotation(rotation);
-  else pieceElement.removeAttribute('data-rotation');
-  if (isNew) {
-    boardContainer.querySelector(`.square[data-coordinate="${coordinate}"]`)?.appendChild(pieceElement);
-  }
+
 }
 
 export function syncPiecesToCell(position: FenPosition, boardContainer: HTMLElement | null): void {

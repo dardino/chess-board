@@ -1,14 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FairySquare, PiecesOnBoard } from '../src';
 import { ChessBoard } from '../src/ChessBoard/ChessBoard';
+import { ChessPiece } from '../src/ChessPiece/ChessPiece';
 import { waitForMicroTask } from './utils';
 
 describe('ChessBoard Public API - Piece Manipulation', () => {
   let element: ChessBoard;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     element = document.createElement('chess-board');
+    const piece = document.createElement('chess-piece');
+    expect(piece).toBeInstanceOf(ChessPiece);
     document.body.appendChild(element);
+    await waitForMicroTask();
   });
 
   afterEach(() => {
@@ -152,13 +156,15 @@ describe('ChessBoard Public API - Piece Manipulation', () => {
   describe('selectPiece', () => {
     it('should select the piece and set its square as current', async () => {
       element.addPiece('e4', 'q', 'w');
-
-      expect(element.selectPiece('e4')).toBe(true);
-      expect(element.getSelectedPieceSquare()).toBe('e4');
-
       await waitForMicroTask();
 
-      const square = element.shadowRoot?.querySelector('[data-coordinate="e4"]');
+      expect(element.selectPiece('e4')).toBe(true);
+      await waitForMicroTask();
+      expect(element.getSelectedPieceSquare()).toBe('e4');
+
+
+      const square = element.shadowRoot?.querySelector('.level.pieces .square[data-coordinate="e4"]');
+      expect(square).toBeTruthy();
       expect(square?.classList.contains('selected-piece')).toBe(true);
     });
 
