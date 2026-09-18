@@ -14,7 +14,7 @@
   --cb-piece-rotation: 0deg;
   --cb-piece-scale-x: 1;
   --cb-piece-scale-y: 1;
-  --cb-piece-transform: rotate(var(--cb-piece-rotation, 0deg)) scale(var(--cb-piece-scale-x, 1), var(--cb-piece-scale-y, 1));
+  --cb-piece-transform: none;
 
   display: flex;
   align-items: center;

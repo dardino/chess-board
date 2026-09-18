@@ -3,7 +3,7 @@
  * A custom element for displaying a chess board
  */
 import { ChessPiece } from '../ChessPiece/ChessPiece';
-import { CellDecorator, ChessPieceColor, ChessPieceMirror, ChessPieceRotation, ChessPieceType, FairyPieceMetadata, FairySquare, PieceInfo, PieceInfoWithSquare, PiecesOnBoard, Square } from '../Common/Types';
+import { CellDecorator, ChessPieceColor, ChessPieceRotation, ChessPieceType, FairyPieceMetadata, FairySquare, PieceInfo, PieceInfoWithSquare, PiecesOnBoard, Square } from '../Common/Types';
 import { isValidCoordinate } from '../Utilities/board';
 import { positionToFen } from '../Utilities/fen';
 import { checkModifiers } from '../Utilities/keyboard';
