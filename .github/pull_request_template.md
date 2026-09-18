@@ -2,7 +2,7 @@
 
 ## Description
 
-<!-- Provide a clear and concise description of the changes. What does this PR do and why? -->
+This PR adds two CSS-only mirror animations for individual chess pieces: `horizontal` and `vertical`. Both follow the same piece-transform pattern as the existing rotation behavior, preserve compatibility with current piece transforms, and are documented with usage examples and CSS variable options.
 
 ## Type of Change
 

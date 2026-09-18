@@ -2,7 +2,7 @@
  * ChessPiece Web Component
  * A custom element for displaying individual chess pieces
  */
-import { ChessPieceColor, ChessPieceRotation, ChessPieceType, FairyPieceMetadata, PieceInfo, StandardPieces, StandardPiecesList } from '../Common/Types';
+import { ChessPieceColor, ChessPieceMirror, ChessPieceRotation, ChessPieceType, FairyPieceMetadata, PieceInfo, StandardPieces, StandardPiecesList } from '../Common/Types';
 import style from './ChessPiece.css?raw';
 import template from './ChessPiece.html?raw';
 
@@ -36,6 +36,7 @@ export class ChessPiece extends HTMLElement {
   #pieceType: ChessPieceType = 'p';
   #pieceColor: ChessPieceColor = 'w';
   #rotation: ChessPieceRotation = '0';
+  #mirror: ChessPieceMirror = 'none';
   #fairyName: string = '';
   #fairyCondition: string = '';
 
@@ -44,6 +45,7 @@ export class ChessPiece extends HTMLElement {
       type: this.#pieceType,
       color: this.#pieceColor,
       rotation: this.#rotation,
+      mirror: this.#mirror,
       fairyName: this.#fairyName,
       fairyCondition: this.#fairyCondition,
     };
@@ -58,7 +60,7 @@ export class ChessPiece extends HTMLElement {
   }
 
   static get observedAttributes(): string[] {
-    return ['piece', 'color', 'rotation', 'fairy-name', 'fairy-condition'];
+    return ['piece', 'color', 'rotation', 'mirror', 'fairy-name', 'fairy-condition'];
   }
 
   constructor() {
@@ -90,6 +92,7 @@ export class ChessPiece extends HTMLElement {
     const piece = this.getAttribute('piece') as ChessPieceType;
     const color = this.getAttribute('color') as ChessPieceColor;
     const rotation = this.getAttribute('rotation') as ChessPieceRotation;
+    const mirror = this.getAttribute('mirror') as ChessPieceMirror | null;
     const fairyName = this.getAttribute('fairy-name');
     const fairyCondition = this.getAttribute('fairy-condition');
 
@@ -104,6 +107,12 @@ export class ChessPiece extends HTMLElement {
       this.#rotation = rotation;
     } else {
       this.#rotation = '0';
+    }
+
+    if (mirror && ['none', 'horizontal', 'vertical'].includes(mirror)) {
+      this.#mirror = mirror;
+    } else {
+      this.#mirror = 'none';
     }
 
     // Validate fairy-name: max 3 characters
@@ -161,10 +170,28 @@ export class ChessPiece extends HTMLElement {
 
     // Apply color class
     pieceInner.classList.add(`color-${this.#pieceColor}`);
-    // Apply rotation
+
+    const transforms: string[] = [];
     if (this.#rotation !== '0') {
-      pieceInner.style.transform = `rotate(${this.#rotation}deg)`;
+      transforms.push(`rotate(${this.#rotation}deg)`);
+    }
+
+    if (this.#mirror === 'horizontal') {
+      transforms.push('scale(-1, 1)');
+    } else if (this.#mirror === 'vertical') {
+      transforms.push('scale(1, -1)');
+    }
+
+    pieceInner.style.setProperty('--cb-piece-rotation', this.#rotation === '0' ? '0deg' : `${this.#rotation}deg`);
+    pieceInner.style.setProperty('--cb-piece-scale-x', this.#mirror === 'horizontal' ? '-1' : '1');
+    pieceInner.style.setProperty('--cb-piece-scale-y', this.#mirror === 'vertical' ? '-1' : '1');
+
+    if (transforms.length > 0) {
+      pieceInner.style.transform = transforms.join(' ');
       pieceInner.classList.add('rotated');
+    } else {
+      pieceInner.style.transform = '';
+      pieceInner.classList.remove('rotated');
     }
 
     // Update fairy-name
@@ -213,6 +240,14 @@ export class ChessPiece extends HTMLElement {
 
   setRotation(rotation: ChessPieceRotation): void {
     this.setAttribute('rotation', rotation);
+  }
+
+  getMirror(): ChessPieceMirror {
+    return this.#mirror;
+  }
+
+  setMirror(mirror: ChessPieceMirror): void {
+    this.setAttribute('mirror', mirror);
   }
 
   getFairyName(): string {
@@ -299,5 +334,6 @@ export function isSamePiece(existingPiece: PieceInfo | undefined | null, piece: 
          existingPiece.color === piece.color &&
          existingPiece.fairyName === piece.fairyName &&
          existingPiece.fairyCondition === piece.fairyCondition &&
-         existingPiece.rotation === piece.rotation;
+         existingPiece.rotation === piece.rotation &&
+         existingPiece.mirror === piece.mirror;
 }

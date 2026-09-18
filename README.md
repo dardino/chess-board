@@ -160,7 +160,29 @@ pnpm add @dardino/chess-board
 
 ## Chess Pieces
 
-The components use ligature-based font rendering for chess pieces:
+The components use ligature-based font rendering for chess pieces. The piece transform system supports both rotation and CSS-only mirror effects through the `mirror` attribute and the CSS variables below.
+
+### Mirror animations
+
+```html
+<chess-piece piece="q" color="w" mirror="horizontal"></chess-piece>
+<chess-piece piece="q" color="b" mirror="vertical"></chess-piece>
+```
+
+```css
+chess-piece {
+  --cb-piece-scale-x: -1;
+  --cb-piece-scale-y: 1;
+  --cb-piece-rotation: 45deg;
+}
+```
+
+- `mirror="horizontal"`: flips the piece across the vertical axis (`scale(-1, 1)`).
+- `mirror="vertical"`: flips the piece across the horizontal axis (`scale(1, -1)`).
+- `mirror="none"` (default): leaves the piece unmirrored.
+- `--cb-piece-scale-x`: horizontal mirror factor (`1` default, `-1` for horizontal mirroring).
+- `--cb-piece-scale-y`: vertical mirror factor (`1` default, `-1` for vertical mirroring).
+- `--cb-piece-rotation`: rotation value used by the same CSS transform pipeline as the existing `rotate` animation.
 
 ### Standard Pieces
 

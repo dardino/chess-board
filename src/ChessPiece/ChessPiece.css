@@ -11,6 +11,10 @@
   --internal-fn-font-weight: var(--cb-fairyname-font-weight, bold);
   --internal-fn-font-size: var(--cb-fairyname-font-size, 0.3em);
   --internal-chess-piece-shadow-fg: var(--cb-chess-piece-shadow-fg, none);
+  --cb-piece-rotation: 0deg;
+  --cb-piece-scale-x: 1;
+  --cb-piece-scale-y: 1;
+  --cb-piece-transform: rotate(var(--cb-piece-rotation, 0deg)) scale(var(--cb-piece-scale-x, 1), var(--cb-piece-scale-y, 1));
 
   display: flex;
   align-items: center;
@@ -49,6 +53,8 @@
   display: grid;
   grid-template-columns: 1fr;
   grid-template-rows: 1fr;
+  transform: var(--cb-piece-transform, rotate(var(--cb-piece-rotation, 0deg)) scale(var(--cb-piece-scale-x, 1), var(--cb-piece-scale-y, 1)));
+  transform-origin: center;
 }
 
 .piece-fg,

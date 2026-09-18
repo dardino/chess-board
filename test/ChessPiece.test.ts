@@ -201,6 +201,29 @@ describe('ChessPiece Web Component', () => {
       element.setAttribute('rotation', 'invalid');
       expect(element.getRotation()).toBe('0');
     });
+
+    it('should support horizontal and vertical mirror transforms', () => {
+      element.setMirror('horizontal');
+      expect(element.getMirror()).toBe('horizontal');
+      expect((element.shadowRoot?.querySelector('.piece .piece-inner') as HTMLElement)?.style.transform).toBe('scale(-1, 1)');
+
+      element.setMirror('vertical');
+      expect(element.getMirror()).toBe('vertical');
+      expect((element.shadowRoot?.querySelector('.piece .piece-inner') as HTMLElement)?.style.transform).toBe('scale(1, -1)');
+
+      element.setAttribute('mirror', 'invalid');
+      expect(element.getMirror()).toBe('none');
+    });
+
+    it('should combine rotation and mirror transforms without clobbering either', () => {
+      element.setRotation('90');
+      element.setMirror('horizontal');
+
+      const pieceElement = element.shadowRoot?.querySelector('.piece .piece-inner') as HTMLElement;
+      expect(pieceElement?.style.transform).toBe('rotate(90deg) scale(-1, 1)');
+      expect(element.getRotation()).toBe('90');
+      expect(element.getMirror()).toBe('horizontal');
+    });
   });
 
   // Test fairy notation functionality

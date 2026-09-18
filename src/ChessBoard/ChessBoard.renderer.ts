@@ -93,6 +93,8 @@ export function syncPiecesToCell(position: FenPosition, boardContainer: HTMLElem
       }
       const rotation = piece.rotation ?? '0';
       if (existingElement.getRotation() !== rotation) existingElement.setRotation(rotation);
+      const mirror = piece.mirror ?? 'none';
+      if (existingElement.getMirror() !== mirror) existingElement.setMirror(mirror);
       const fairyName = piece.fairyName ?? '';
       if (existingElement.getFairyName() !== fairyName) existingElement.setFairyName(fairyName);
       const fairyCondition = piece.fairyCondition ?? '';
@@ -106,6 +108,7 @@ export function syncPiecesToCell(position: FenPosition, boardContainer: HTMLElem
     if (piece.fairyName) pieceElement.setFairyName(piece.fairyName);
     if (piece.fairyCondition) pieceElement.setFairyCondition(piece.fairyCondition);
     if (piece.rotation) pieceElement.setRotation(piece.rotation);
+    if (piece.mirror) pieceElement.setMirror(piece.mirror);
     cell.appendChild(pieceElement);
   });
 }

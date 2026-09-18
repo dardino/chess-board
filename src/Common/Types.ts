@@ -2,6 +2,7 @@
 export type ChessPieceType = StandardPieces | `${number}` | `'${string}` | `''${string}`;
 export type ChessPieceColor = 'w' | 'b' | 'n';
 export type ChessPieceRotation = '0' | '45' | '90' | '135' | '180' | '225' | '270' | '315';
+export type ChessPieceMirror = 'none' | 'horizontal' | 'vertical';
 
 /**
  * List of standard chess pieces
@@ -32,6 +33,7 @@ export interface PieceInfo extends FairyPieceMetadata {
   type: ChessPieceType;
   color: ChessPieceColor;
   rotation?: ChessPieceRotation;
+  mirror?: ChessPieceMirror;
 }
 
 export type File = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h';
