@@ -288,6 +288,7 @@
   animation: translateDown var(--internal-chess-animating-duration) linear;
 }
 
+/* eslint-disable css/no-invalid-properties */
 @keyframes translateLeft {
   from {
     transform: translateX(0);
@@ -327,3 +328,5 @@
     transform: translateY(var(--internal-chess-translate-down));
   }
 }
+
+/* eslint-enable css/no-invalid-properties */
