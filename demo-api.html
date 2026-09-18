@@ -439,6 +439,29 @@ setInterval(() => {
   board.setPieceRotation('d4', String(rotation));
 }, 200);</code></pre>
         </details>
+        <div class="button-grid">
+          <button onclick="board.setAttribute('rotating', 'left')">Rotate Left</button>
+          <button onclick="board.setAttribute('rotating', 'right')">Rotate Right</button>
+          <button onclick="board.setAttribute('translating', 'left')">Translate Left</button>
+          <button onclick="board.setAttribute('translating', 'right')">Translate Right</button>
+          <button onclick="board.setAttribute('translating', 'up')">Translate Up</button>
+          <button onclick="board.setAttribute('translating', 'down')">Translate Down</button>
+          <button onclick="board.setAttribute('mirroring', 'horizontal')">Mirror Horizontal</button>
+          <button onclick="board.setAttribute('mirroring', 'vertical')">Mirror Vertical</button>
+        </div>
+        <details class="demo-accordion">
+          <summary>Show code</summary>
+          <pre><code>
+&lt;button onclick="board.setAttribute('rotating', 'left')">Rotate Left&lt;/button>
+&lt;button onclick="board.setAttribute('rotating', 'right')">Rotate Right&lt;/button>
+&lt;button onclick="board.setAttribute('translating', 'left')">Translate Left&lt;/button>
+&lt;button onclick="board.setAttribute('translating', 'right')">Translate Right&lt;/button>
+&lt;button onclick="board.setAttribute('translating', 'up')">Translate Up&lt;/button>
+&lt;button onclick="board.setAttribute('translating', 'down')">Translate Down&lt;/button>
+&lt;button onclick="board.setAttribute('mirroring', 'horizontal')">Mirror Horizontal&lt;/button>
+&lt;button onclick="board.setAttribute('mirroring', 'vertical')">Mirror Vertical&lt;/button>
+          </code></pre>
+        </details>
       </div>
     </div>
   </div>
@@ -645,6 +668,14 @@ setInterval(() => {
           }
         });
       }
+    });
+
+    board.addEventListener('animationend', (e) => {
+      alert('Animation ended');
+      board.removeAttribute('rotating');
+      board.removeAttribute('mirroring');
+      board.removeAttribute('translating');
+      console.log('Animation ended:', e);
     });
 
     const fenInfo = document.getElementById('current-fen-sync-info');

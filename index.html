@@ -443,6 +443,11 @@
           <h3>🖼️ Full html2canvas compatible</h3>
           <p>Fully compatible with html2canvas for capturing the board as an image</p>
         </div>
+
+        <div class="feature-card">
+          <h3>🎬 Animations</h3>
+          <p>Smooth animations for piece movements and board rotations</p>
+        </div>
       </div>
 
       <h2 id="demo">🎮 Live Demo</h2>
@@ -713,6 +718,43 @@ board.autoSelectPieceOnClick = true;
 board.autoSelectPieceOnClick = false;</code></pre>
       <p>When enabled, clicking a piece automatically selects it, which is helpful for one-click move workflows. The
         attribute can be toggled through the DOM or through the <code>autoSelectPieceOnClick</code> property.</p>
+
+      <h4>rotating / translating / mirroring</h4>
+      <pre><code>&lt;chess-board rotating="left" translating="right" mirroring="horizontal"&gt;&lt;/chess-board&gt;
+
+const board = document.querySelector('chess-board');
+board.setAttribute('rotating', 'left');
+board.setAttribute('rotating', 'right');
+board.setAttribute('translating', 'left');
+board.setAttribute('translating', 'right');
+board.setAttribute('translating', 'up');
+board.setAttribute('translating', 'down');
+board.setAttribute('mirroring', 'horizontal');
+board.setAttribute('mirroring', 'vertical');
+</code></pre>
+      <p>
+        The <code>rotating</code>, <code>translating</code>, and <code>mirroring</code> attributes control the board's
+        rotation, translation, and mirroring animations.
+        You can set <code>mirroring</code> to <code>horizontal</code> or <code>vertical</code> to trigger the matching CSS
+        transforms.
+        You can control animation props with CSS custom properties:
+      <ul>
+        <li><code>--cb-chess-animating-duration</code>: Duration of the rotation, translation, and mirroring animations</li>
+        <li><code>--cb-chess-rotating-left</code>: Transform value for left rotation (default: rotate(-90deg))</li>
+        <li><code>--cb-chess-rotating-right</code>: Transform value for right rotation (default: rotate(90deg))</li>
+        <li><code>--cb-chess-translate-left</code>: Transform value for left translation (default: -1 cell calculated in
+          percentage based on the board size)</li>
+        <li><code>--cb-chess-translate-right</code>: Transform value for right translation (default: 1 cell calculated
+          in percentage based on the board size)</li>
+        <li><code>--cb-chess-translate-up</code>: Transform value for up translation (default: -1 cell calculated in
+          percentage based on the board size)</li>
+        <li><code>--cb-chess-translate-down</code>: Transform value for down translation (default: 1 cell calculated in
+          percentage based on the board size)</li>
+        <li><code>--cb-chess-mirroring-horizontal</code>: Transform value for horizontal mirroring (default: scaleX(-1))</li>
+        <li><code>--cb-chess-mirroring-vertical</code>: Transform value for vertical mirroring (default: scaleY(-1))</li>
+      </ul>
+      You can see the effects in <a href="demo-api.html">the API demo</a>.
+      </p>
 
       <h3>FEN Support</h3>
       <pre><code>// Set position from FEN

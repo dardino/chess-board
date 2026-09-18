@@ -1,6 +1,9 @@
 /* ChessBoard Component Styles */
 
 :host {
+  --internal-col-count: var(--board-col-count, 8);
+  --internal-row-count: var(--board-row-count, 8);
+
   --internal-chess-border-color: var(--cb-chess-border-color, #000);
   --internal-chess-light-square: var(--cb-chess-light-square, #f0d9b5);
   --internal-chess-dark-square: var(--cb-chess-dark-square, #b58863);
@@ -12,6 +15,16 @@
   --internal-chess-label-font-size: var(--cb-chess-label-font-size, 4cqw);
   --fallback-font-family: Arial, sans-serif;
   --internal-chess-label-font-family: var(--cb-chess-label-font-family, var(--fallback-font-family));
+  /* variables for Animations */
+  --internal-chess-animating-duration: var(--cb-chess-animating-duration, 0.5s);
+  --internal-chess-rotating-left: var(--cb-chess-rotating-left, rotate(-90deg));
+  --internal-chess-rotating-right: var(--cb-chess-rotating-right, rotate(90deg));
+  --internal-chess-translate-left: calc(-100% / var(--internal-col-count));
+  --internal-chess-translate-right: calc(100% / var(--internal-col-count));
+  --internal-chess-translate-up: calc(-100% / var(--internal-row-count));
+  --internal-chess-translate-down: calc(100% / var(--internal-row-count));
+  --internal-chess-mirroring-horizontal: var(--cb-chess-mirroring-horizontal, scaleX(-1));
+  --internal-chess-mirroring-vertical: var(--cb-chess-mirroring-vertical, scaleY(-1));
 
   user-select: none;
   -webkit-user-select: none;
@@ -80,25 +93,25 @@
 .top-labels {
   grid-area: topbar;
   display: grid;
-  grid-template-columns: repeat(var(--board-col-count, 8), 1fr);
+  grid-template-columns: repeat(var(--internal-col-count), 1fr);
 }
 
 .left-labels {
   grid-area: leftbar;
   display: grid;
-  grid-template-rows: repeat(var(--board-row-count, 8), 1fr);
+  grid-template-rows: repeat(var(--internal-row-count), 1fr);
 }
 
 .right-labels {
   grid-area: rightbar;
   display: grid;
-  grid-template-rows: repeat(var(--board-row-count, 8), 1fr);
+  grid-template-rows: repeat(var(--internal-row-count), 1fr);
 }
 
 .bottom-labels {
   grid-area: bottombar;
   display: grid;
-  grid-template-columns: repeat(var(--board-col-count, 8), 1fr);
+  grid-template-columns: repeat(var(--internal-col-count), 1fr);
 }
 
 .board {
@@ -106,8 +119,8 @@
   container-type: inline-size;
   border: 1px solid var(--internal-chess-border-color);
   display: grid;
-  grid-template-columns: repeat(var(--board-col-count, 8), 1fr);
-  grid-template-rows: repeat(var(--board-row-count, 8), 1fr);
+  grid-template-columns: repeat(var(--internal-col-count), 1fr);
+  grid-template-rows: repeat(var(--internal-row-count), 1fr);
   box-sizing: border-box;
   font-family: ScacchiPainter, monospace;
   aspect-ratio: 1;
@@ -147,11 +160,11 @@
   background-color: var(--internal-chess-dark-square);
 }
 
-.board:focus {
+:focus {
   outline: 2px var(--internal-chess-outline-focus) solid;
 }
 
-.board:focus>.square.current {
+:focus .square.current {
   outline: 2px green solid;
   z-index: 1;
 }
@@ -163,7 +176,7 @@
 }
 
 .square.selected-piece>chess-piece {
-  transform: scale(1.1);
+  transform: scale(1.15);
   filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.95));
 }
 
@@ -208,3 +221,178 @@
 .piece-bg {
   color: var(--internal-chess-piece-bg);
 }
+
+.level {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-template-rows: subgrid;
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
+}
+
+.level.background {
+  z-index: 0;
+}
+
+.level.pieces {
+  z-index: 1;
+}
+
+:host([rotating="left"]) .level.pieces {
+  animation: rotateLeft var(--internal-chess-animating-duration) linear;
+}
+
+:host([rotating="right"]) .level.pieces {
+  animation: rotateRight var(--internal-chess-animating-duration) linear;
+}
+
+:host([rotating="left"]) .level.pieces .square {
+  animation: rotateRight var(--internal-chess-animating-duration) linear;
+}
+
+:host([rotating="right"]) .level.pieces .square {
+  animation: rotateLeft var(--internal-chess-animating-duration) linear;
+}
+
+:host([mirroring="horizontal"]) .level.pieces {
+  animation: mirrorHorizontal var(--internal-chess-animating-duration) linear;
+}
+
+:host([mirroring="vertical"]) .level.pieces {
+  animation: mirrorVertical var(--internal-chess-animating-duration) linear;
+}
+
+:host([mirroring="vertical"]) .level.pieces .square {
+  animation: mirrorVerticalPiece var(--internal-chess-animating-duration) linear;
+}
+
+:host([mirroring="horizontal"]) .level.pieces .square {
+  animation: mirrorHorizontalPiece var(--internal-chess-animating-duration) linear;
+}
+
+@keyframes rotateLeft {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: var(--internal-chess-rotating-left);
+  }
+}
+
+@keyframes rotateRight {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: var(--internal-chess-rotating-right);
+  }
+}
+
+@keyframes mirrorHorizontal {
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: var(--internal-chess-mirroring-horizontal);
+  }
+}
+
+@keyframes mirrorVertical {
+  from {
+    transform: scaleY(1);
+  }
+
+  to {
+    transform: var(--internal-chess-mirroring-vertical);
+  }
+}
+
+/* Flip each piece immediately after the board passes through scaleY(0). */
+@keyframes mirrorVerticalPiece {
+
+  0%,
+  50% {
+    transform: scaleY(1);
+  }
+
+  50.001%,
+  100% {
+    transform: scaleY(-1);
+  }
+}
+
+/* Flip each piece immediately after the board passes through scaleX(0). */
+@keyframes mirrorHorizontalPiece {
+
+  0%,
+  50% {
+    transform: scaleX(1);
+  }
+
+  50.001%,
+  100% {
+    transform: scaleX(-1);
+  }
+}
+
+:host([translating="left"]) .level.pieces {
+  animation: translateLeft var(--internal-chess-animating-duration) linear;
+}
+
+:host([translating="right"]) .level.pieces {
+  animation: translateRight var(--internal-chess-animating-duration) linear;
+}
+
+:host([translating="up"]) .level.pieces {
+  animation: translateUp var(--internal-chess-animating-duration) linear;
+}
+
+:host([translating="down"]) .level.pieces {
+  animation: translateDown var(--internal-chess-animating-duration) linear;
+}
+
+/* eslint-disable css/no-invalid-properties */
+@keyframes translateLeft {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(var(--internal-chess-translate-left));
+  }
+}
+
+@keyframes translateRight {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(var(--internal-chess-translate-right));
+  }
+}
+
+@keyframes translateUp {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(var(--internal-chess-translate-up));
+  }
+}
+
+@keyframes translateDown {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(var(--internal-chess-translate-down));
+  }
+}
+
+/* eslint-enable css/no-invalid-properties */
