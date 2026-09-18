@@ -445,6 +445,7 @@ export class ChessBoard extends HTMLElement {
       this.#piecesLayer.addEventListener('focus', this.#handleFocus);
       this.#piecesLayer.addEventListener('blur', this.#handleBlur);
       this.#piecesLayer.addEventListener('fairy-metadata-changed', this.#handleFairyMetadataChange);
+      this.#piecesLayer.addEventListener('animationend', this.#handleAnimationEnd);
     }
   }
 
@@ -457,6 +458,17 @@ export class ChessBoard extends HTMLElement {
       this.#piecesLayer.removeEventListener('focus', this.#handleFocus);
       this.#piecesLayer.removeEventListener('blur', this.#handleBlur);
       this.#piecesLayer.removeEventListener('fairy-metadata-changed', this.#handleFairyMetadataChange);
+      this.#piecesLayer.removeEventListener('animationend', this.#handleAnimationEnd);
+    }
+  }
+
+  #handleAnimationEnd = (ev: AnimationEvent): void => {
+    if (ev.target === this.#piecesLayer) {
+      const animationEvent = new AnimationEvent('animationend', ev);
+      this.dispatchEvent(animationEvent);
+    } else {
+      ev.preventDefault();
+      ev.stopImmediatePropagation();
     }
   }
 

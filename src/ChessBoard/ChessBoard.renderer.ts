@@ -101,7 +101,7 @@ function updateOrCreatePieceAt(coordinate: FairySquare, piece: PieceInfo, boardC
   const rotation = piece.rotation ?? '0';
   const fairyName = piece.fairyName ?? '';
   const fairyCondition = piece.fairyCondition ?? '';
-  let pieceElement = boardContainer.querySelector(`chess-piece[data-coordinate="${coordinate}"]`) as ChessPiece | null;
+  let pieceElement = boardContainer.querySelector(`.square[data-coordinate="${coordinate}"]>chess-piece`) as ChessPiece | null;
   const isNew = !pieceElement;
   if (!pieceElement) {
     pieceElement = document.createElement('chess-piece');
