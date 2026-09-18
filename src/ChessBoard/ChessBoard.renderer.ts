@@ -1,5 +1,5 @@
-import { ChessPiece, isSamePiece } from "../ChessPiece/ChessPiece";
-import { FairySquare } from "../Common/Types";
+import { ChessPiece } from "../ChessPiece/ChessPiece";
+import { FairySquare, PieceInfo } from "../Common/Types";
 import { FenPosition } from "../Utilities/fen";
 
 export function getLabelElement(type: 'column' | 'row'): HTMLElement {
@@ -37,77 +37,108 @@ export function drawBoardLabels(total: number, topContainer: HTMLElement | null,
 
 export function drawAllCells(width: number, height: number, boardContainer: HTMLElement | null): void {
   if (!boardContainer) return;
+  const backgroundLayer = boardContainer.querySelector('.background') as HTMLElement | null;
+  const piecesLayer = boardContainer.querySelector('.pieces') as HTMLElement | null;
+  if (!backgroundLayer || !piecesLayer) return;
   
   const sizeHasChanged = boardContainer.childElementCount !== width * height;
   if (!sizeHasChanged) return;
   // Remove excess cells if any
-  while (boardContainer.childElementCount > width * height) {
-    boardContainer.removeChild(boardContainer.lastChild!);
+  while (backgroundLayer.childElementCount > width * height) {
+    backgroundLayer.removeChild(backgroundLayer.lastChild!);
+  }
+  while (piecesLayer.childElementCount > width * height) {
+    piecesLayer.removeChild(piecesLayer.lastChild!);
   }
   
   // Add missing cells
-  for (let i = boardContainer.childElementCount; i < width * height; i++) {
+  for (let i = backgroundLayer.childElementCount; i < width * height; i++) {
     const cell = document.createElement('div');
     cell.classList.add('square');
-    boardContainer.appendChild(cell);
+    backgroundLayer.appendChild(cell);
+  }
+  for (let i = piecesLayer.childElementCount; i < width * height; i++) {
+    const cell = document.createElement('div');
+    cell.classList.add('square');
+    piecesLayer.appendChild(cell);
   }
 
   // recolor existing cells based on their position
-  const allCells = boardContainer.querySelectorAll('.square');
-  for (let i = 0; i < allCells.length; i++) {
-    const cell = allCells[i] as HTMLElement;
-    const row = Math.floor(i / width);
-    const col = i % width;
+  const allBgCells = backgroundLayer.querySelectorAll<HTMLElement>('.square');
+  allBgCells.forEach((cell, i) => {
+    const { row, col } = getCoordinateFromIndex(i, width, height);
     const isDark = (row + col) % 2 === 1;
     cell.classList.remove('dark', 'light');
     cell.classList.add(isDark ? 'dark' : 'light');
-    const file = String.fromCharCode(97 + col);
-    const rank = String(height - row);
+  });
+  const allPCells = piecesLayer.querySelectorAll<HTMLElement>('.square');
+  allPCells.forEach((cell, i) => {
+    const { file, rank } = getCoordinateFromIndex(i, width, height);
+    cell.setAttribute('data-file', file);
+    cell.setAttribute('data-rank', rank);
     cell.setAttribute('data-coordinate', `${file}${rank}`);
-  }
+  });
+}
 
+function getCoordinateFromIndex(index: number, width: number, height: number) {
+  const row = Math.floor(index / width);
+  const col = index % width;
+  const file = String.fromCharCode(97 + col);
+  const rank = String(height - row);
+  return {
+    /** The file (a-h) of the square */
+    file,
+    /** The rank (1-8) of the square */
+    rank,
+    /** The row (0-based) of the square */
+    row,
+    /** The column (0-based) of the square */
+    col
+  }
+}
+
+function updateOrCreatePieceAt(coordinate: FairySquare, piece: PieceInfo, boardContainer: HTMLElement): void {
+  const rotation = piece.rotation ?? '0';
+  const fairyName = piece.fairyName ?? '';
+  const fairyCondition = piece.fairyCondition ?? '';
+  let pieceElement = boardContainer.querySelector(`chess-piece[data-coordinate="${coordinate}"]`) as ChessPiece | null;
+  const isNew = !pieceElement;
+  if (!pieceElement) {
+    pieceElement = document.createElement('chess-piece');
+  }
+  pieceElement.setAttribute('data-file', coordinate[0]);
+  pieceElement.setAttribute('data-rank', coordinate.slice(1));
+  pieceElement.classList.add('piece');
+  pieceElement.setPiece(piece.type, piece.color);
+  if (fairyName) pieceElement.setFairyName(fairyName);
+  else pieceElement.removeAttribute('data-fairy-name');
+  if (fairyCondition) pieceElement.setFairyCondition(fairyCondition);
+  else pieceElement.removeAttribute('data-fairy-condition');
+  if (rotation !== '0') pieceElement.setRotation(rotation);
+  else pieceElement.removeAttribute('data-rotation');
+  if (isNew) {
+    boardContainer.querySelector(`.square[data-coordinate="${coordinate}"]`)?.appendChild(pieceElement);
+  }
 }
 
 export function syncPiecesToCell(position: FenPosition, boardContainer: HTMLElement | null): void {
   if (!boardContainer) return;
 
-  const allCells = boardContainer.querySelectorAll('.square');
-  allCells.forEach(cell => {
-    const coordinate = cell.getAttribute('data-coordinate') as FairySquare;
-    if (!coordinate) return;
-    const piece = position.pieces[coordinate];
-    const existingElement = cell.querySelector<ChessPiece>('chess-piece');
-    const existingPiece = existingElement?.toPieceInfo();
-    if (isSamePiece(existingPiece, piece)) return;
-
-    if (!piece) {
-      cell.innerHTML = '';
-      return;
-    }
-
-    if (existingElement) {
-      // Update the element in place instead of recreating it, so DOM references
-      // taken before a state change (e.g. via querySelector) stay valid after render.
-      if (existingElement.getPiece() !== piece.type || existingElement.getColor() !== piece.color) {
-        existingElement.setPiece(piece.type, piece.color);
-      }
-      const rotation = piece.rotation ?? '0';
-      if (existingElement.getRotation() !== rotation) existingElement.setRotation(rotation);
-      const fairyName = piece.fairyName ?? '';
-      if (existingElement.getFairyName() !== fairyName) existingElement.setFairyName(fairyName);
-      const fairyCondition = piece.fairyCondition ?? '';
-      if (existingElement.getFairyCondition() !== fairyCondition) existingElement.setFairyCondition(fairyCondition);
-      return;
-    }
-
-    const pieceElement = document.createElement('chess-piece');
-    pieceElement.classList.add('piece');
-    pieceElement.setPiece(piece.type, piece.color);
-    if (piece.fairyName) pieceElement.setFairyName(piece.fairyName);
-    if (piece.fairyCondition) pieceElement.setFairyCondition(piece.fairyCondition);
-    if (piece.rotation) pieceElement.setRotation(piece.rotation);
-    cell.appendChild(pieceElement);
+  // update existing pieces (or create them if they do not exist)
+  Object.entries(position.pieces).forEach(([coordinate, piece]) => {
+    if (!piece) return;
+    updateOrCreatePieceAt(coordinate as FairySquare, piece as PieceInfo, boardContainer);
   });
+
+  // remove pieces that are no longer present in the current position
+  const cellWithPieces = Object.keys(position.pieces);
+  const allPieces = boardContainer.querySelectorAll('chess-piece');
+  allPieces.forEach(pieceElement => {
+    const coordinate = pieceElement.closest('.square')?.getAttribute('data-coordinate');
+    if (!coordinate || cellWithPieces.includes(coordinate)) return;
+    pieceElement.remove();
+  });
+
 }
 
 export function setCurrentSquare(coordinate: string | null, boardContainer: HTMLElement | null): void {

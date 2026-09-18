@@ -75,6 +75,10 @@ export class ChessBoard extends HTMLElement {
     const board = this.#shadow.querySelector<HTMLElement>('.board');
     return board;
   }
+  get #piecesLayer(): HTMLElement | null {
+    const layer = this.#shadow.querySelector<HTMLElement>('.pieces');
+    return layer;
+  }
   get #squares(): NodeListOf<HTMLElement> | null {
     const squares = this.#shadow.querySelectorAll<HTMLElement>('.square');
     return squares;
@@ -431,28 +435,28 @@ export class ChessBoard extends HTMLElement {
 
   }
 
-  #setupEventListeners(): void {    
+  #setupEventListeners(): void {
     // Add keyboard navigation
-    if (this.#board) {
-      this.#board.addEventListener("click", this.#handleBoardClick);
-      this.#board.addEventListener("contextmenu", this.#handleContextMenuClick);
-      this.#board.addEventListener("auxclick", this.#handleBoardClick);
-      this.#board.addEventListener('keydown', this.#handleKeyDown);
-      this.#board.addEventListener('focus', this.#handleFocus);
-      this.#board.addEventListener('blur', this.#handleBlur);
-      this.#board.addEventListener('fairy-metadata-changed', this.#handleFairyMetadataChange);
+    if (this.#piecesLayer) {
+      this.#piecesLayer.addEventListener("click", this.#handleBoardClick);
+      this.#piecesLayer.addEventListener("contextmenu", this.#handleContextMenuClick);
+      this.#piecesLayer.addEventListener("auxclick", this.#handleBoardClick);
+      this.#piecesLayer.addEventListener('keydown', this.#handleKeyDown);
+      this.#piecesLayer.addEventListener('focus', this.#handleFocus);
+      this.#piecesLayer.addEventListener('blur', this.#handleBlur);
+      this.#piecesLayer.addEventListener('fairy-metadata-changed', this.#handleFairyMetadataChange);
     }
   }
 
   #removeEventListeners(): void {
-    if (this.#board) {
-      this.#board.removeEventListener("click", this.#handleBoardClick);
-      this.#board.removeEventListener("auxclick", this.#handleBoardClick);
-      this.#board.removeEventListener("contextmenu", this.#handleContextMenuClick);
-      this.#board.removeEventListener('keydown', this.#handleKeyDown);
-      this.#board.removeEventListener('focus', this.#handleFocus);
-      this.#board.removeEventListener('blur', this.#handleBlur);
-      this.#board.removeEventListener('fairy-metadata-changed', this.#handleFairyMetadataChange);
+    if (this.#piecesLayer) {
+      this.#piecesLayer.removeEventListener("click", this.#handleBoardClick);
+      this.#piecesLayer.removeEventListener("auxclick", this.#handleBoardClick);
+      this.#piecesLayer.removeEventListener("contextmenu", this.#handleContextMenuClick);
+      this.#piecesLayer.removeEventListener('keydown', this.#handleKeyDown);
+      this.#piecesLayer.removeEventListener('focus', this.#handleFocus);
+      this.#piecesLayer.removeEventListener('blur', this.#handleBlur);
+      this.#piecesLayer.removeEventListener('fairy-metadata-changed', this.#handleFairyMetadataChange);
     }
   }
 
@@ -460,17 +464,15 @@ export class ChessBoard extends HTMLElement {
     if (this.disabled) return;
     const button = buttonMap[ev.button];
     const target = ev.target as HTMLElement | null;
-    const square = target?.closest('.square') as HTMLElement | null;
+    const square = target?.closest('[data-coordinate]') as HTMLElement | null;
     if (!square) return;
-    if (square.classList.contains('square')) {
-      const prevent = this.#handleSquareClick(square, button, {
-        shiftKey: ev.shiftKey,
-        ctrlKey: ev.ctrlKey,
-        altKey: ev.altKey,
-        metaKey: ev.metaKey,
-      });
-      if (prevent) ev.preventDefault();
-    }
+    const prevent = this.#handleSquareClick(square, button, {
+      shiftKey: ev.shiftKey,
+      ctrlKey: ev.ctrlKey,
+      altKey: ev.altKey,
+      metaKey: ev.metaKey,
+    });
+    if (prevent) ev.preventDefault();
   }
 
   #handleContextMenuClick = (ev: MouseEvent): void => {
@@ -612,8 +614,8 @@ export class ChessBoard extends HTMLElement {
   
   #updateDisabledState(): void {
     const isDisabled = this.hasAttribute('disabled');
-    if (this.#board) {
-      this.#board.style.pointerEvents = isDisabled ? 'none' : 'auto';
+    if (this.#piecesLayer) {
+      this.#piecesLayer.style.pointerEvents = isDisabled ? 'none' : 'auto';
     }
   }
 
@@ -817,11 +819,11 @@ export class ChessBoard extends HTMLElement {
     // draw all cells
     drawAllCells(newState.position.boardSize.width, newState.position.boardSize.height, this.#board);
     // add pieces to cells
-    syncPiecesToCell(newState.position, this.#board);
+    syncPiecesToCell(newState.position, this.#piecesLayer);
     // update the current square highlight
-    setCurrentSquare(newState.currentSquare, this.#board);
+    setCurrentSquare(newState.currentSquare, this.#piecesLayer);
     // update the selected piece highlight
-    setCurrentSelectedPiece(this.#state.selectedPieceSquare, this.#board);
+    setCurrentSelectedPiece(this.#state.selectedPieceSquare, this.#piecesLayer);
 
     if (currentFen !== newState.fen) {
       this.#triggerFenChangeEvent();

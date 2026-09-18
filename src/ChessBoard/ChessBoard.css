@@ -147,11 +147,11 @@
   background-color: var(--internal-chess-dark-square);
 }
 
-.board:focus {
+:focus {
   outline: 2px var(--internal-chess-outline-focus) solid;
 }
 
-.board:focus>.square.current {
+:focus .square.current {
   outline: 2px green solid;
   z-index: 1;
 }
@@ -163,7 +163,7 @@
 }
 
 .square.selected-piece>chess-piece {
-  transform: scale(1.1);
+  transform: scale(1.15);
   filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.95));
 }
 
@@ -207,4 +207,20 @@
 
 .piece-bg {
   color: var(--internal-chess-piece-bg);
+}
+
+.level {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-template-rows: subgrid;
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
+}
+
+.level.background {
+  z-index: 0;
+}
+
+.level.pieces {
+  z-index: 1;
 }
