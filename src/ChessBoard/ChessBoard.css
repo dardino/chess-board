@@ -23,6 +23,8 @@
   --internal-chess-translate-right: calc(100% / var(--internal-col-count));
   --internal-chess-translate-up: calc(-100% / var(--internal-row-count));
   --internal-chess-translate-down: calc(100% / var(--internal-row-count));
+  --internal-chess-mirroring-horizontal: var(--cb-chess-mirroring-horizontal, scaleX(-1));
+  --internal-chess-mirroring-vertical: var(--cb-chess-mirroring-vertical, scaleY(-1));
 
   user-select: none;
   -webkit-user-select: none;
@@ -252,6 +254,14 @@
   animation: rotateLeft var(--internal-chess-animating-duration) linear;
 }
 
+:host([mirroring="horizontal"]) .level.pieces {
+  animation: mirrorHorizontal var(--internal-chess-animating-duration) linear;
+}
+
+:host([mirroring="vertical"]) .level.pieces {
+  animation: mirrorVertical var(--internal-chess-animating-duration) linear;
+}
+
 @keyframes rotateLeft {
   from {
     transform: rotate(0deg);
@@ -269,6 +279,26 @@
 
   to {
     transform: var(--internal-chess-rotating-right);
+  }
+}
+
+@keyframes mirrorHorizontal {
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: var(--internal-chess-mirroring-horizontal);
+  }
+}
+
+@keyframes mirrorVertical {
+  from {
+    transform: scaleY(1);
+  }
+
+  to {
+    transform: var(--internal-chess-mirroring-vertical);
   }
 }
 

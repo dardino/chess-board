@@ -191,6 +191,32 @@ The components use ligature-based font rendering for chess pieces:
 
 ## Usage
 
+### Animation Attributes
+
+The board supports a small set of CSS-driven animation attributes that are controlled entirely through CSS variables and the host element state.
+
+```html
+<chess-board rotating="left" translating="right" mirroring="horizontal"></chess-board>
+```
+
+```css
+chess-board {
+  --cb-chess-animating-duration: 0.5s;
+  --cb-chess-rotating-left: rotate(-90deg);
+  --cb-chess-rotating-right: rotate(90deg);
+  --cb-chess-translate-left: -12.5%;
+  --cb-chess-translate-right: 12.5%;
+  --cb-chess-mirroring-horizontal: scaleX(-1);
+  --cb-chess-mirroring-vertical: scaleY(-1);
+}
+```
+
+Supported animation controls:
+
+- `rotating="left" | "right"`: animate a 90° turn in either direction.
+- `translating="left" | "right" | "up" | "down"`: shift the piece layer by one cell along the selected axis.
+- `mirroring="horizontal" | "vertical"`: flip the piece layer along a single axis.
+
 ### Basic Usage
 
 ```html

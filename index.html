@@ -719,8 +719,8 @@ board.autoSelectPieceOnClick = false;</code></pre>
       <p>When enabled, clicking a piece automatically selects it, which is helpful for one-click move workflows. The
         attribute can be toggled through the DOM or through the <code>autoSelectPieceOnClick</code> property.</p>
 
-      <h4>rotating / translating</h4>
-      <pre><code>&lt;chess-board rotating="left" translating="right"&gt;&lt;/chess-board&gt;
+      <h4>rotating / translating / mirroring</h4>
+      <pre><code>&lt;chess-board rotating="left" translating="right" mirroring="horizontal"&gt;&lt;/chess-board&gt;
 
 const board = document.querySelector('chess-board');
 board.setAttribute('rotating', 'left');
@@ -729,14 +729,17 @@ board.setAttribute('translating', 'left');
 board.setAttribute('translating', 'right');
 board.setAttribute('translating', 'up');
 board.setAttribute('translating', 'down');
+board.setAttribute('mirroring', 'horizontal');
+board.setAttribute('mirroring', 'vertical');
 </code></pre>
       <p>
-        The <code>rotating</code> and <code>translating</code> attributes control the board's rotation and translation
-        animations.
-        You can set them to <code>left</code> or <code>right</code> to trigger the corresponding animations.
-        You can control animations props with css custom properties:
+        The <code>rotating</code>, <code>translating</code>, and <code>mirroring</code> attributes control the board's
+        rotation, translation, and mirroring animations.
+        You can set <code>mirroring</code> to <code>horizontal</code> or <code>vertical</code> to trigger the matching CSS
+        transforms.
+        You can control animation props with CSS custom properties:
       <ul>
-        <li><code>--cb-chess-animating-duration</code>: Duration of the rotation and translation animations</li>
+        <li><code>--cb-chess-animating-duration</code>: Duration of the rotation, translation, and mirroring animations</li>
         <li><code>--cb-chess-rotating-left</code>: Transform value for left rotation (default: rotate(-90deg))</li>
         <li><code>--cb-chess-rotating-right</code>: Transform value for right rotation (default: rotate(90deg))</li>
         <li><code>--cb-chess-translate-left</code>: Transform value for left translation (default: -1 cell calculated in
@@ -747,6 +750,8 @@ board.setAttribute('translating', 'down');
           percentage based on the board size)</li>
         <li><code>--cb-chess-translate-down</code>: Transform value for down translation (default: 1 cell calculated in
           percentage based on the board size)</li>
+        <li><code>--cb-chess-mirroring-horizontal</code>: Transform value for horizontal mirroring (default: scaleX(-1))</li>
+        <li><code>--cb-chess-mirroring-vertical</code>: Transform value for vertical mirroring (default: scaleY(-1))</li>
       </ul>
       You can see the effects in <a href="demo-api.html">the API demo</a>.
       </p>
