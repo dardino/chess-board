@@ -3,6 +3,7 @@
  * A custom element for displaying individual chess pieces
  */
 import { ChessPieceColor, ChessPieceRotation, ChessPieceType, FairyPieceMetadata, PieceInfo, StandardPieces, StandardPiecesList } from '../Common/Types';
+import { applyCssToShadow } from '../Utilities/webcomponent';
 import style from './ChessPiece.css?raw';
 import template from './ChessPiece.html?raw';
 
@@ -124,10 +125,7 @@ export class ChessPiece extends HTMLElement {
     // Clear existing content
     this.#shadow.innerHTML = '';
 
-    // Add styles
-    const sheet = new CSSStyleSheet();
-    sheet.replaceSync(style);
-    this.#shadow.adoptedStyleSheets = [sheet];
+    applyCssToShadow(this.#shadow, style);
 
     // Create container from imported HTML template
     const templateContainer = document.createElement('template');

@@ -79,6 +79,39 @@ export function bindToAttribute<T, V>(attributeName: string, type: PropTypesForA
   };
 }
 
+export interface ShadowCssOptions {
+  nonce?: string;
+}
+
+export function applyCssToShadow(shadow: ShadowRoot, css: string, options: ShadowCssOptions = {}): void {
+  if (!css) {
+    return;
+  }
+
+  const fallbackToStyleElement = (): void => {
+    const styleElement = document.createElement('style');
+    if (options.nonce) {
+      styleElement.setAttribute('nonce', options.nonce);
+    }
+    styleElement.textContent = css;
+    shadow.appendChild(styleElement);
+  };
+
+  try {
+    if (typeof CSSStyleSheet !== 'undefined' && 'adoptedStyleSheets' in shadow) {
+      const sheet = new CSSStyleSheet();
+      sheet.replaceSync(css);
+      shadow.adoptedStyleSheets = [sheet];
+      return;
+    }
+  } catch {
+    // Some browsers (notably older Safari builds) do not support this path reliably.
+    // Fall through to the plain style element fallback instead of crashing the component.
+  }
+
+  fallbackToStyleElement();
+}
+
 /**
  * Applies the given HTML template and CSS style to the specified shadow root.
  * @param shadow The shadow root to which the template and style will be applied.
@@ -87,14 +120,9 @@ export function bindToAttribute<T, V>(attributeName: string, type: PropTypesForA
  */
 export function applyTemplateAndCss(shadow: ShadowRoot, template: string, style: string): void {
   shadow.innerHTML = ''; // Clear any existing content
-  // Create container from imported HTML template
   const templateContainer = document.createElement('template');
   templateContainer.innerHTML = template;
 
-  // Add styles
-  const sheet = new CSSStyleSheet();
-  sheet.replaceSync(style);
-  shadow.adoptedStyleSheets = [sheet];
-
+  applyCssToShadow(shadow, style);
   shadow.appendChild(templateContainer.content.cloneNode(true));
 }

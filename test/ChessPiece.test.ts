@@ -1,6 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type ChessPieceColor, type ChessPieceRotation, type ChessPieceType, StandardPiecesList } from '../src';
 import { ChessPiece } from '../src/ChessPiece/ChessPiece';
+import { applyCssToShadow } from '../src/Utilities/webcomponent';
 
 describe('ChessPiece Web Component', () => {
   let element: ChessPiece;
@@ -135,6 +136,57 @@ describe('ChessPiece Web Component', () => {
     expect(customElements.get('chess-piece')).toBeDefined();
   });
 
+  describe('CSS compatibility layer', () => {
+    it('uses CSSStyleSheet when the modern API is available', () => {
+      const shadowRoot = document.createElement('div').attachShadow({ mode: 'open' });
+      const css = '.demo { color: red; }';
+      const sheet = { replaceSync: vi.fn() } as unknown as CSSStyleSheet;
+      const originalCSSStyleSheet = globalThis.CSSStyleSheet;
+
+      Object.defineProperty(globalThis, 'CSSStyleSheet', {
+        value: class {
+          replaceSync = sheet.replaceSync;
+        },
+        configurable: true,
+      });
+
+      try {
+        applyCssToShadow(shadowRoot, css);
+
+        expect(shadowRoot.adoptedStyleSheets).toHaveLength(1);
+        expect(shadowRoot.adoptedStyleSheets[0]).toBeDefined();
+      } finally {
+        Object.defineProperty(globalThis, 'CSSStyleSheet', {
+          value: originalCSSStyleSheet,
+          configurable: true,
+        });
+      }
+    });
+
+    it('falls back to a style element when CSSStyleSheet is unavailable', () => {
+      const shadowRoot = document.createElement('div').attachShadow({ mode: 'open' });
+      const css = '.demo { color: red; }';
+      const originalCSSStyleSheet = globalThis.CSSStyleSheet;
+
+      Object.defineProperty(globalThis, 'CSSStyleSheet', {
+        value: undefined,
+        configurable: true,
+      });
+
+      try {
+        applyCssToShadow(shadowRoot, css);
+
+        const styleTag = shadowRoot.querySelector('style');
+        expect(styleTag).toBeTruthy();
+        expect(styleTag?.textContent).toContain('.demo');
+      } finally {
+        Object.defineProperty(globalThis, 'CSSStyleSheet', {
+          value: originalCSSStyleSheet,
+          configurable: true,
+        });
+      }
+    });
+  });
 
   it.each([
     { piece: 'k' as ChessPieceType, color: 'w' as ChessPieceColor, expected: 'w_k' },
