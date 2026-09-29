@@ -20,7 +20,7 @@ describe('ChessBoard - Piece Rotation', () => {
 
   it('should rotate piece counter-clockwise with Alt+Left', async () => {
     const square = board.shadowRoot!.querySelector(`${selectorForPiecesBoard} [data-coordinate="e4"]`) as HTMLElement;
-    console.log("🚀 ~ square:", square.outerHTML)
+
     const piece = square.querySelector('chess-piece') as ChessPiece;
     
     // Initial rotation should be 0
