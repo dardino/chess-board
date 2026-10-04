@@ -16,7 +16,7 @@ import { ChessBoardState, RendererFunction } from './ChessBoard.state';
 export type ModifierKeys = Pick<MouseEvent, 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'>;
 
 export interface CellClickEventDetail {
-  square: string;
+  square: FairySquare;
   piece?: PieceInfo;
   button: "main" | "context" | "auxiliary";
   modifiers: ModifierKeys;
